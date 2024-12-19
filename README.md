@@ -13,7 +13,7 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 
 1. Clone the repository:
 	```sh
-	git clone https://github.com/yourusername/notion-electron.git /usr/share/notion-electron
+	git clone https://github.com/anechunaev/notion-electron.git /usr/share/notion-electron
 	```
 2. Install dependencies:
 	```sh
