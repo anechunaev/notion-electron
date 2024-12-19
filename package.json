@@ -1,0 +1,26 @@
+{
+  "name": "notion-electron",
+  "version": "1.0.1",
+  "main": "index.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "electron .",
+    "make": "electron-packager . notion-electron --platform=linux --arch=x64 --out=dist/ --icon=./assets/icons/desktop.png --overwrite && chmod -R 777 ./dist/notion-electron-linux-x64/",
+    "pack": "electron-installer-redhat --src dist/notion-electron-linux-x64/ --dest dist/installers/ --arch x86_64 --icon=./assets/icons/desktop.png",
+    "build": "npm run make && npm run pack",
+    "install": "desktop-file-install --dir=$HOME/.local/share/applications ./notion-electron.desktop",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Artem Nechunaev <artem@nechunaev.com>",
+  "license": "MIT",
+  "description": "Unofficial Notion desktop client made with Electron for Linux",
+  "devDependencies": {
+    "@electron/packager": "^18.3.6",
+    "electron": "^33.2.1",
+    "electron-installer-redhat": "^3.4.0"
+  },
+  "dependencies": {
+    "electron-store": "^10.0.0"
+  }
+}
