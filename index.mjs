@@ -21,6 +21,10 @@ function createWindow() {
 		width: WIN_WIDTH,
 		height: WIN_HEIGHT,
 		icon: path.join(__dirname, '/assets/icons/desktop.png'),
+		show: !process.argv.includes("--hide-on-startup"),
+		webPreferences: {
+			spellcheck: !process.argv.includes("--disable-spellcheck"),
+		}
 	});
 
 	if (isMaximized) {
@@ -113,25 +117,26 @@ function createTray() {
 	return tray;
 }
 
-app.whenReady().then(() => {
-	mainWindow = createWindow();
-	tray = createTray();
-});
-
-app.on('window-all-closed', (event) => {
-	if (process.platform !== 'darwin') {
-		event.preventDefault();
-	}
-});
-
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
+	process.exit(0);
 } else {
 	app.on('second-instance', () => {
 		if (mainWindow) {
 			if (mainWindow.isMinimized()) mainWindow.restore();
 			mainWindow.show();
 			mainWindow.focus();
+		}
+	});
+
+	app.whenReady().then(() => {
+		mainWindow = createWindow();
+		tray = createTray();
+	});
+
+	app.on('window-all-closed', (event) => {
+		if (process.platform !== 'darwin') {
+			event.preventDefault();
 		}
 	});
 }
