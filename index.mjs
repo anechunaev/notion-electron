@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, Tray, Menu, screen } from 'electron';
+import { app, BrowserWindow, shell, Tray, Menu, screen, session } from 'electron';
 import Store from 'electron-store';
 import { URL, fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -18,6 +18,7 @@ function createWindow() {
 	const startLocation = store.get('location', '/');
 
 	const mainWindow = new BrowserWindow({
+		title: 'Notion Electorn',
 		width: WIN_WIDTH,
 		height: WIN_HEIGHT,
 		icon: path.join(__dirname, '/assets/icons/desktop.png'),
@@ -49,7 +50,7 @@ function createWindow() {
 		}
 	}
 
-	mainWindow.loadURL(`https://www.notion.com${startLocation}`);
+	mainWindow.loadURL(`https://www.notion.com${startLocation}`, { userAgent: "Chrome" });
 
 	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
 		const u = new URL(url);
@@ -130,6 +131,12 @@ if (!app.requestSingleInstanceLock()) {
 	});
 
 	app.whenReady().then(() => {
+		session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+			details.requestHeaders["User-Agent"] = "Chrome";
+			callback({ cancel: false, requestHeaders: details.requestHeaders });
+		});
+		session.defaultSession.setUserAgent("Chrome");
+
 		mainWindow = createWindow();
 		tray = createTray();
 	});
