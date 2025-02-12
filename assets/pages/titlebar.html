@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Title</title>
+	<style>
+:root {
+	--bg: #191919;
+	--bg-sidebar: #202020;
+	--bg-selected: rgba(255, 255, 255, 0.055);
+	--border-sidebar: rgba(255, 255, 255, 0.05);
+	--border-sidebar-hover: rgba(255, 255, 255, 0.1);
+
+	--color: #9b9b9b;
+	--color-hover: #fff;
+
+	--font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+	--font: 500 14px/22px var(--font-family);
+}
+body {
+	app-region: drag;
+	user-select: none;
+	padding: 0;
+	margin: 0;
+	background-color: var(--bg);
+}
+
+.titlebar {
+	display: flex;
+	width: calc(100% - 96px);
+	height: 44px;
+	background-color: var(--bg);
+	align-items: center;
+	gap: 1px;
+	color: var(--color);
+	font: var(--font);
+	box-sizing: border-box;
+}
+.titlebar.inverted {
+	background-color: var(--bg-sidebar);
+}
+.titlebar.inverted .tab:hover,
+.titlebar.inverted .tab.selected {
+	background-color: var(--bg);
+}
+
+.controls {
+	width: 108px;
+	display: flex;
+	flex: 0 0 108px;
+}
+.control {
+	display: flex;
+	flex: 0 0 36px;
+	height: 44px;
+	background-color: transparent;
+	color: inherit;
+	cursor: pointer;
+	border: none;
+	outline: none;
+	opacity: 0.5;
+	justify-content: center;
+	align-items: center;
+	app-region: no-drag;
+}
+.control:hover {
+	opacity: 1;
+}
+.control:disabled {
+	opacity: 0.1;
+}
+
+.tabgroup {
+	width: 100%;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: row;
+	gap: 1px;
+	overflow-x: scroll;
+	scrollbar-width: none;
+}
+.tabgroup-container {
+	flex: 1 1 auto;
+	width: 100%;
+	position: relative;
+	overflow: hidden;
+}
+.tabgroup-shadow-right {
+	width: 20px;
+	height: 44px;
+	background: linear-gradient(to right, rgba(25, 25, 25, 0), var(--bg));
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+.tabgroup-shadow-left {
+	width: 20px;
+	height: 44px;
+	background: linear-gradient(to left, rgba(25, 25, 25, 0), var(--bg));
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+.tab {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	overflow: hidden;
+	gap: 8px;
+	align-items: center;
+	flex: 0 0 auto;
+	height: 44px;
+	max-width: 300px;
+	min-width: 100px;
+	text-overflow: ellipsis;
+	box-sizing: border-box;
+	padding: 4px 8px;
+	background-color: transparent;
+	color: inherit;
+	cursor: pointer;
+	border: none;
+	outline: none;
+	app-region: no-drag;
+}
+.tab:hover {
+	background-color: var(--bg-selected);
+	color: var(--color-hover);
+}
+.tab:hover .tab-close {
+	visibility: visible;
+}
+.tab.right {
+	margin-left: auto;
+}
+.tab.selected {
+	background-color: var(--bg-selected);
+	color: var(--color-hover);
+}
+.tab-title {
+	line-height: 22px;
+	vertical-align: bottom;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.tab-close {
+	display: inline-block;
+	width: 22px;
+	height: 22px;
+	box-sizing: border-box;
+	font-size: 22px;
+	line-height: 22px;
+	text-align: center;
+	cursor: pointer;
+	visibility: hidden;
+	color: var(--color);
+	app-region: no-drag;
+}
+.tab-close:hover {
+	color: var(--color-hover);
+}
+.tab-icon {
+	width: 16px;
+	height: 16px;
+	margin-left: 4px;
+}
+
+.calendar-tab {
+	gap: 0;
+}
+
+.icon {
+	width: 24px;
+	height: 24px;
+}
+
+.calendar-icon {
+	width: 25px;
+	height: 25px;
+	vertical-align: middle;
+	margin: -1px 0 1px;
+}
+
+
+.sidebar {
+	display: flex;
+	flex: 0 0 240px;
+	height: 44px;
+	background-color: var(--bg-sidebar);
+	border-right: 1px solid var(--border-sidebar);
+	box-sizing: border-box;
+	flex-direction: row;
+	align-items: center;
+	justify-content: end;
+	padding: 0 10px;
+}
+.sidebar.collapsed {
+	flex: 0 0 30px;
+	border: none;
+	padding: 0;
+	justify-content: center;
+}
+.sidebar-collapsed {
+	display: none;
+}
+.sidebar.collapsed .sidebar-collapsed {
+	display: flex;
+}
+.sidebar.collapsed .sidebar-unfold {
+	display: none;
+}
+.sidebar-collapsed .sidebar-icon-unfold {
+	display: none;
+}
+.sidebar-collapsed:hover .sidebar-icon-menu {
+	display: none;
+}
+.sidebar-collapsed:hover .sidebar-icon-unfold {
+	display: inline-block;
+}
+
+
+.hidden {
+	display: none;
+}
+	</style>
+</head>
+<body>
+	<template id="tab-template">
+		<button class="tab" role="button">
+			<img class="tab-icon" src="../icons/dark/document.svg" />
+			<span class="tab-title">Tab</span>
+			<span class="tab-close">×</span>
+		</button>
+	</template>
+	<div class="titlebar inverted">
+		<div class="sidebar">
+			<button class="control sidebar-collapsed" role="button" title="Open Sidebar">
+				<img class="icon sidebar-icon-menu" src="../icons/dark/menu.svg" />
+				<img class="icon sidebar-icon-unfold" src="../icons/dark/double_arrow_right.svg" />
+			</button>
+			<button class="control sidebar-unfold" role="button" title="Collapse Sidebar">
+				<img class="icon" src="../icons/dark/double_arrow_left.svg" />
+			</button>
+		</div>
+		<div class="controls">
+			<button
+				class="control"
+				role="button"
+				title="Back"
+				data-action="history-back"
+				disabled
+			>
+				<img class="icon" src="../icons/dark/arrow_left.svg" />
+			</button>
+			<button
+				class="control"
+				role="button"
+				title="Forward"
+				data-action="history-forward"
+				disabled
+			>
+				<img class="icon" src="../icons/dark/arrow_right.svg" />
+			</button>
+			<button
+				class="control"
+				role="button"
+				title="Open New Tab"
+				data-action="add"
+			>
+				<img class="icon" src="../icons/dark/add.svg" />
+			</button>
+		</div>
+
+		<div class="tabgroup-container">
+			<div class="tabgroup-shadow-left hidden"></div>
+			<div class="tabgroup"></div>
+			<div class="tabgroup-shadow-right hidden"></div>
+		</div>
+
+		<button id="calendar" class="tab calendar-tab" role="button">
+			<img class="calendar-icon" src="../icons/calendar-s.svg" />
+			<span class="calendar-title">Calendar</span>
+		</button>
+	</div>
+	
+
+	<script>
+document.addEventListener('DOMContentLoaded', () => {
+	const tabMap = {};
+	const tabMapDisconnect = {};
+	const tabMapSelect = {};
+	const tabStack = [];
+
+	const addTabButton = document.querySelector('.control[data-action="add"]');
+	const historyBackButton = document.querySelector('.control[data-action="history-back"]');
+	const historyForwardButton = document.querySelector('.control[data-action="history-forward"]');
+	const calendarButton = document.getElementById('calendar');
+	const titlebarSidebar = document.querySelector('.sidebar');
+	const titlebar = document.querySelector('.titlebar');
+	const sidebarCollapsed = document.querySelector('.sidebar-collapsed');
+	const sidebarUnfold = document.querySelector('.sidebar-unfold');
+	const tabgroup = document.querySelector('.tabgroup');
+	const tabgroupShadowLeft = document.querySelector('.tabgroup-shadow-left');
+	const tabgroupShadowRight = document.querySelector('.tabgroup-shadow-right');
+
+	function createTabElement(title, iconUrl) {
+		const template = document.getElementById('tab-template');
+		const tab = template.content.cloneNode(true).querySelector('.tab');
+		tab.querySelector('.tab-title').textContent = title;
+		tab.querySelector('.tab-icon').src = iconUrl ?? '../icons/dark/document.svg';
+		tab.dataset.tabId = crypto.randomUUID();
+		
+		return tab;
+	}
+
+	function onSelectTab(tabId) {
+		Object.values(tabMap).forEach((tab) => {
+			const selected = tab.dataset.tabId === tabId;
+			tab.classList.toggle('selected', selected);
+			if (selected) {
+				notionElectronAPI.changeTab(tab.dataset.tabId);
+				titlebarSidebar.classList.remove('hidden');
+				titlebar.classList.add('inverted');
+			}
+		});
+		calendarButton.classList.remove('selected');
+	}
+
+	function onSidebarStateChange(collapsed, hidden) {
+		titlebarSidebar.classList.toggle('collapsed', collapsed);
+	}
+
+	function onAddTab(url) {
+		const tab = createTabElement('New tab', undefined);
+		const tabId = tab.dataset.tabId;
+		tabMap[tabId] = tab;
+
+		tabMapSelect[tabId] = () => onSelectTab(tabId);
+		tabStack.push(tabId);
+
+		tab.addEventListener('click', tabMapSelect[tabId]);
+
+		const closeButton = tab.querySelector('.tab-close');
+
+		if (closeButton) {
+			tabMapDisconnect[tabId] = (e) => {
+				e.stopPropagation();
+				onCloseTab(tabId);
+			};
+
+			closeButton.addEventListener('click', tabMapDisconnect[tabId]);
+		}
+
+		tabgroup.appendChild(tab);
+
+		setTimeout(() => {
+			const boundingBox = tab.getBoundingClientRect();
+			tabgroup.scrollLeft = boundingBox.left + boundingBox.width - tabgroup.clientWidth;
+		}, 0);
+
+		window.notionElectronAPI.addTab(tabId, url).then(() => {
+			onSelectTab(tabId);
+		});
+	}
+
+	function onHistoryBack() {
+		notionElectronAPI.historyBack();
+	}
+
+	function onHistoryForward() {
+		notionElectronAPI.historyForward();
+	}
+
+	function onHistoryChange(event) {
+		const { canGoBack, canGoForward, title, iconUrl, tabId } = event;
+		historyBackButton.disabled = !canGoBack;
+		historyForwardButton.disabled = !canGoForward;
+		tabMap[tabId].querySelector('.tab-title').textContent = title;
+		tabMap[tabId].querySelector('.icon').src = iconUrl;
+	}
+
+	function onCloseTab(tabId) {
+		if (Object.values(tabMap).length === 1) {
+			window.notionElectronAPI.setUrl(tabId, '/login');
+			return;
+		}
+
+		notionElectronAPI.closeTab(tabId).then(() => {
+			let tab = tabMap[tabId];
+
+			if (!tab) return;
+
+			let closeButton = tab.querySelector('.tab-close');
+
+			if (closeButton) {
+				closeButton.removeEventListener('click', tabMapDisconnect[tabId]);
+			}
+
+			tab.removeEventListener('click', tabMapSelect[tabId]);
+
+			const currentIndex = tabStack.indexOf(tabId);
+			const nextIndex = currentIndex - 1 < 0 ? 0 : currentIndex - 1;
+
+			tabStack.splice(currentIndex, 1);
+
+			onSelectTab(tabStack[nextIndex]);
+
+			tab.remove();
+			tab = undefined;
+			closeButton = undefined;
+			delete tabMap[tabId];
+			delete tabMapDisconnect[tabId];
+			delete tabMapSelect[tabId];
+		});
+	}
+
+	function onTabInfo(tabId, { title, icon, canGoBack, canGoForward }) {
+		const tab = tabMap[tabId];
+		if (tab && title && icon) {
+			tab.querySelector('.tab-title').textContent = title;
+			tab.querySelector('.tab-icon').src = icon;
+		}
+
+		historyBackButton.disabled = !tab || !canGoBack;
+		historyForwardButton.disabled = !tab || !canGoForward;
+	}
+
+	if (window.notionElectronAPI) {
+		if (addTabButton) {
+			addTabButton.addEventListener('click', () => onAddTab());
+		}
+
+		if (historyBackButton) {
+			historyBackButton.addEventListener('click', onHistoryBack);
+		}
+
+		if (historyForwardButton) {
+			historyForwardButton.addEventListener('click', onHistoryForward);
+		}
+
+		if (calendarButton) {
+			calendarButton.addEventListener('click', () => {
+				onSelectTab();
+				calendarButton.classList.add('selected');
+				titlebarSidebar.classList.add('hidden');
+				titlebar.classList.remove('inverted');
+				notionElectronAPI.changeTab();
+			});
+		}
+
+		if (sidebarCollapsed && sidebarUnfold) {
+			sidebarCollapsed.addEventListener('click', () => {
+				notionElectronAPI.toggleSidebar();
+			});
+
+			sidebarUnfold.addEventListener('click', () => {
+				notionElectronAPI.toggleSidebar();
+			});
+
+			sidebarCollapsed.addEventListener('mouseenter', () => {
+				notionElectronAPI.foldSidebar(false);
+			});
+
+			sidebarCollapsed.addEventListener('mouseleave', () => {
+				notionElectronAPI.foldSidebar(true);
+			});
+		}
+
+		if (tabgroup) {
+			tabgroup.addEventListener('scroll', () => {
+				tabgroupShadowLeft.classList.toggle('hidden', tabgroup.scrollLeft <= 1);
+				tabgroupShadowRight.classList.toggle('hidden', tabgroup.scrollLeft >= tabgroup.scrollWidth - tabgroup.clientWidth - 1);
+			});
+
+			const tabgroupObserver = new MutationObserver(() => {
+				tabgroupShadowLeft.classList.toggle('hidden', tabgroup.scrollLeft <= 1);
+				tabgroupShadowRight.classList.toggle('hidden', tabgroup.scrollLeft >= tabgroup.scrollWidth - tabgroup.clientWidth - 1);
+			});
+			tabgroupObserver.observe(tabgroup, { childList: true });
+		}
+		onAddTab();
+
+		window.notionElectronAPI.subscribeOnTabInfo(onTabInfo);
+		window.notionElectronAPI.subscribeOnSidebarChange(onSidebarStateChange);
+		window.notionElectronAPI.subscribeOnTabRequest(onAddTab);
+	}
+});
+	</script>
+</body>
+</html>
