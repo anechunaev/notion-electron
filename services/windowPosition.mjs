@@ -31,7 +31,7 @@ class WindowPositionService {
 				});
 			}
 			else {
-				this.#window.setBounds(store.get('bounds'));
+				this.#window.setBounds(this.#store.get('bounds'));
 			}
 		}
 	}

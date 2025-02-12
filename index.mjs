@@ -43,6 +43,7 @@ if (!app.requestSingleInstanceLock()) {
 				height: TITLEBAR_HEIGHT,
 			},
 			contextIsolation: false,
+			backgroundColor: nativeTheme.shouldUseDarkColors ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND,
 		});
 
 		const tabService = new TabService(mainWindow);
