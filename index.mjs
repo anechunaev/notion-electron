@@ -1,4 +1,4 @@
-import { app, screen, nativeTheme } from 'electron';
+import { app, screen, nativeTheme, BaseWindow } from 'electron';
 import Store from 'electron-store';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';

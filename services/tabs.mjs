@@ -44,7 +44,7 @@ class TabsService {
 		});
 
 		ipcMain.on('history-changed', (event, title, icon) => {
-			this.#onHistoryChanged(title, icon);
+			this.#onHistoryChanged(event.sender, title, icon);
 		});
 
 		ipcMain.on('history-back', (event) => {
@@ -169,9 +169,9 @@ class TabsService {
 		}
 	}
 
-	#onHistoryChanged(title, icon) {
+	#onHistoryChanged(sender, title, icon) {
 		const tabId = Object.keys(this.#tabViews).find(tabId => {
-			return this.#tabViews[tabId].webContents === event.sender;
+			return this.#tabViews[tabId].webContents === sender;
 		});
 
 		if (tabId) {
@@ -179,8 +179,8 @@ class TabsService {
 			this.#titleBarView.webContents.send('tab-info', tabId, {
 				title,
 				icon,
-				canGoBack: view.webContents.canGoBack(),
-				canGoForward: view.webContents.canGoForward(),
+				canGoBack: view.webContents.navigationHistory.canGoBack(),
+				canGoForward: view.webContents.navigationHistory.canGoForward(),
 			});
 		}
 	}
