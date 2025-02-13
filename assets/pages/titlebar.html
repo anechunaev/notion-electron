@@ -201,6 +201,7 @@ body {
 	border: none;
 	padding: 0;
 	justify-content: center;
+	min-width: 30px;
 }
 .sidebar-collapsed {
 	display: none;
@@ -236,7 +237,7 @@ body {
 		</button>
 	</template>
 	<div class="titlebar inverted">
-		<div class="sidebar">
+		<div class="sidebar collapsed">
 			<button class="control sidebar-collapsed" role="button" title="Open Sidebar">
 				<img class="icon sidebar-icon-menu" src="../icons/dark/menu.svg" />
 				<img class="icon sidebar-icon-unfold" src="../icons/dark/double_arrow_right.svg" />
@@ -329,8 +330,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		calendarButton.classList.remove('selected');
 	}
 
-	function onSidebarStateChange(collapsed, hidden) {
+	function onSidebarStateChange(collapsed, width) {
 		titlebarSidebar.classList.toggle('collapsed', collapsed);
+		titlebarSidebar.style.width = width;
+		titlebarSidebar.style.flex = `0 0 ${width ?? '240px'}`;
 	}
 
 	function onAddTab(url) {

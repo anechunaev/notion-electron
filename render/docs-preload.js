@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			});
 		}
 
-		ipcRenderer.send('sidebar-changed', collapsed);
+		ipcRenderer.send('sidebar-changed', collapsed, sidebar.style.width);
 	});
 
 	waitForElement('.notion-sidebar-container').then(sidebar => {

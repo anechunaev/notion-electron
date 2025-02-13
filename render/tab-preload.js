@@ -37,8 +37,8 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 		});
 	},
 	subscribeOnSidebarChange: (callback) => {
-		ipcRenderer.on('sidebar-changed', (event, collapsed, hidden) => {
-			callback(collapsed, hidden);
+		ipcRenderer.on('sidebar-changed', (event, collapsed, width) => {
+			callback(collapsed, width);
 		});
 	},
 	subscribeOnTabRequest: (callback) => {

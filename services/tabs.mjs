@@ -55,8 +55,8 @@ class TabsService {
 			this.#tabViews[this.#currentTabId].webContents.goForward();
 		});
 
-		ipcMain.on('sidebar-changed', (event, collapsed, hidden) => {
-			this.#titleBarView.webContents.send('sidebar-changed', collapsed, hidden);
+		ipcMain.on('sidebar-changed', (event, collapsed, width) => {
+			this.#titleBarView.webContents.send('sidebar-changed', collapsed, width);
 		});
 
 		ipcMain.on('sidebar-fold', (event, collapsed) => {
@@ -76,7 +76,7 @@ class TabsService {
 		this.#setViewSize();
 		this.#setVisibleTabs();
 
-		// this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
+		this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
 	}
 
 	#setViewSize() {
