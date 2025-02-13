@@ -76,7 +76,7 @@ class TabsService {
 		this.#setViewSize();
 		this.#setVisibleTabs();
 
-		this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
+		// this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
 	}
 
 	#setViewSize() {
