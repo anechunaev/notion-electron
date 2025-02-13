@@ -211,6 +211,10 @@ class TabsService {
 	duplicateTab(tabId) {
 		this.#titleBarView.webContents.send('tab-request', this.#tabViews[tabId].webContents.getURL());
 	}
+
+	requestTab(url) {
+		this.#titleBarView.webContents.send('tab-request', url);
+	}
 }
 
 export default TabsService;

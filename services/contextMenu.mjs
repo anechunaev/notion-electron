@@ -14,6 +14,14 @@ class ContextMenuService {
 			);
 			menu.popup({ window: this.#window });
 		});
+
+		ipcMain.on('show-page-context-menu', (event, payload) => {
+			const wc = event.sender;
+			const menu = Menu.buildFromTemplate(
+				this.#templatePageContextMenu(wc, payload)
+			);
+			menu.popup({ window: this.#window });
+		});
 	}
 
 	#templateTabContextMenu(tabId) {
@@ -52,7 +60,6 @@ class ContextMenuService {
 			{
 				label: 'Reload',
 				accelerator: 'CmdOrCtrl+R',
-				role: 'forceReload',
 				click: () => {
 					view.webContents.reloadIgnoringCache();
 				},
@@ -84,6 +91,64 @@ class ContextMenuService {
 				label: 'Open in Browser',
 				click: () => {
 					shell.openExternal(view.webContents.getURL());
+				},
+			},
+		];
+	}
+
+	#templatePageContextMenu(wc, { isLink, isImage, isSelection, linkUrl, imageUrl }) {
+		return [
+			{
+				label: 'Cut',
+				role: 'cut',
+				accelerator: 'CmdOrCtrl+X',
+				enabled: isSelection,
+			},
+			{
+				label: 'Copy',
+				role: 'copy',
+				accelerator: 'CmdOrCtrl+C',
+				enabled: isSelection,
+			},
+			{
+				label: 'Paste',
+				role: 'paste',
+				accelerator: 'CmdOrCtrl+V',
+			},
+			{ type: 'separator' },
+			{
+				label: 'Copy Link URL',
+				click: () => {
+					clipboard.writeText(linkUrl);
+				},
+				visible: isLink,
+			},
+			{
+				label: 'Open Link in New Tab',
+				click: () => {
+					this.#tabService.requestTab(linkUrl);
+				},
+				visible: isLink,
+				enabled: linkUrl?.startsWith('https://notion') || linkUrl?.startsWith('https://www.notion'),
+			},
+			{
+				label: 'Open Link in Browser',
+				click: () => {
+					shell.openExternal(linkUrl);
+				},
+				visible: isLink,
+			},
+			{
+				label: 'Save Image As...',
+				click: () => {
+					wc.downloadURL(imageUrl);
+				},
+				visible: isImage,
+			},
+			{
+				label: 'Open Page in Browser',
+				click: () => {
+					shell.openExternal(wc.getURL());
 				},
 			},
 		];

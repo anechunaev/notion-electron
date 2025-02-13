@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		const collapsed = sidebar.style.width === '0px';
 		isSidebarUnfolded = !collapsed;
 
-		ipcRenderer.send('sidebar-changed', collapsed);
+		ipcRenderer.send('sidebar-changed', collapsed, sidebar.style.width);
 	});
 
 	addStyleTag(`.notion-topbar>div>div>div:first-child,.notion-open-sidebar,.notion-close-sidebar{display:none !important}`);
@@ -112,5 +112,17 @@ document.addEventListener('DOMContentLoaded', function() {
 				sidebar.style[key] = value;
 			});
 		}
+	});
+
+	window.addEventListener('contextmenu', (e) => {
+		const link = e.target.closest('a');
+		const image = e.target.closest('img');
+		ipcRenderer.send('show-page-context-menu', {
+			isLink: !!link,
+			isImage: !!image,
+			linkUrl: link?.href,
+			imageUrl: image?.src,
+			isSelection: !!window.getSelection().toString(),
+		});
 	});
 });
