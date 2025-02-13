@@ -5,6 +5,7 @@ import path from 'node:path';
 import TabService from './services/tabs.mjs';
 import WindowPositionService from './services/windowPosition.mjs';
 import TrayService from './services/tray.mjs';
+import ContextMenuService from './services/contextMenu.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,6 +50,7 @@ if (!app.requestSingleInstanceLock()) {
 		const tabService = new TabService(mainWindow);
 		const windowPositionService = new WindowPositionService(mainWindow, store);
 		const trayService = new TrayService(mainWindow);
+		const contextMenuService = new ContextMenuService(mainWindow, tabService);
 
 		mainWindow.on('minimize', function (event) {
 			event.preventDefault();

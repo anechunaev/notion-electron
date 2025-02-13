@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 	toggleSidebar: () => {
 		ipcRenderer.send('toggle-sidebar');
 	},
+	showContextMenu: (tabId) => {
+		ipcRenderer.send('show-tab-context-menu', tabId);
+	},
 
 	subscribeOnTabInfo: (callback) => {
 		ipcRenderer.on('tab-info', (event, tabId, info) => {
@@ -41,6 +44,11 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 	subscribeOnTabRequest: (callback) => {
 		ipcRenderer.on('tab-request', (event, url) => {
 			callback(url);
+		});
+	},
+	subscribeOnContextMenu: (callback) => {
+		ipcRenderer.on('context-menu-command', (event, command) => {
+			callback(command);
 		});
 	},
 });

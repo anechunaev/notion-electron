@@ -118,7 +118,7 @@ class TabsService {
 		view.webContents.loadURL(loadUrl ?? 'https://www.notion.com/login');
 		view.webContents.setWindowOpenHandler((event) => {
 			const { url, disposition } = event;
-			this.#tabOpenWindowHandler(url, disposition);
+			return this.#tabOpenWindowHandler(url, disposition);
 		});
 		this.#tabViews[tabId] = view;
 	}
@@ -148,8 +148,8 @@ class TabsService {
 		this.#titleBarView.webContents.send('tab-info', tabId, {
 			title: null,
 			icon: null,
-			canGoBack: view ? view.webContents.canGoBack() : false,
-			canGoForward: view ? view.webContents.canGoForward() : false,
+			canGoBack: view ? view.webContents.navigationHistory.canGoBack() : false,
+			canGoForward: view ? view.webContents.navigationHistory.canGoForward() : false,
 		});
 	}
 
@@ -186,6 +186,7 @@ class TabsService {
 	}
 
 	sendKey(entry, delay, view) {
+		if (!view) return;
 		["keyDown", "char", "keyUp"].forEach(async(type) =>
 		{
 			entry.type = type;
@@ -193,6 +194,22 @@ class TabsService {
 
 			await new Promise(resolve => setTimeout(resolve, delay));
 		});
+	}
+
+	getTabView(tabId) {
+		return this.#tabViews[tabId];
+	}
+
+	getTitleBarView() {
+		return this.#titleBarView;
+	}
+
+	getTabIds() {
+		return Object.keys(this.#tabViews);
+	}
+
+	duplicateTab(tabId) {
+		this.#titleBarView.webContents.send('tab-request', this.#tabViews[tabId].webContents.getURL());
 	}
 }
 

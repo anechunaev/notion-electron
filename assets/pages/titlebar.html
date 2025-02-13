@@ -486,6 +486,34 @@ document.addEventListener('DOMContentLoaded', () => {
 		window.notionElectronAPI.subscribeOnTabInfo(onTabInfo);
 		window.notionElectronAPI.subscribeOnSidebarChange(onSidebarStateChange);
 		window.notionElectronAPI.subscribeOnTabRequest(onAddTab);
+		window.notionElectronAPI.subscribeOnContextMenu((command) => {
+			switch (command.id) {
+			case 'close':
+				onCloseTab(command.tabId);
+				break;
+			case 'closeAll':
+				const tabIds = Object.keys(tabMap);
+				if (tabIds.length === 1) {
+					onCloseTab(tabIds[0]);
+				} else {
+					tabIds.forEach(onCloseTab);
+					onAddTab();
+				}
+				break;
+			case 'closeOther':
+				command.tabIds.forEach(onCloseTab);
+				break;
+			}
+		});
+
+		window.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+			const tab = e.target.closest('.tab');
+			if (tab) {
+				const tabId = tab.dataset.tabId;
+				window.notionElectronAPI.showContextMenu(tabId);
+			}
+		});
 	}
 });
 	</script>
