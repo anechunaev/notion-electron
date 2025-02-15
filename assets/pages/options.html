@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Notion Electron Options</title>
+	<style>
+:root {
+	--bg: #191919;
+	--bg-sidebar: #202020;
+	--bg-selected: #262626;
+	--border-sidebar: rgba(255, 255, 255, 0.05);
+	--border-sidebar-hover: rgba(255, 255, 255, 0.1);
+
+	--color: #9b9b9b;
+	--color-hover: #fff;
+
+	--checked: #0D47A1;
+
+	--font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+	--font: 500 14px/22px var(--font-family);
+}
+html,body {
+	background-color: var(--bg);
+	color: var(--color);
+	font: var(--font);
+	margin: 0;
+	padding: 0;
+	min-width: 100%;
+	min-height: 100%;
+	width: 100%;
+	height: 100%;
+}
+a{
+	color: var(--color);
+}
+a:hover {
+	color: var(--color-hover);
+}
+input[type="checkbox"] {
+	appearance: none;
+	width: 16px;
+	height: 16px;
+	border: 1px solid var(--color);
+	border-radius: 2px;
+	background-color: transparent;
+	outline: none;
+	cursor: pointer;
+	margin: 0;
+}
+input[type="checkbox"]:checked {
+	background-color: var(--checked);
+	border-color: var(--checked);
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='24px' viewBox='0 -960 960 960' width='24px' fill='%23fff'%3E%3Cpath d='m400-456 217-216q20-20 47-20t47 20q21 20 21 47.5T711-577L448-313q-20 21-48 21t-48-21L248-417q-20-20-20-47.5t21-47.5q20-20 47.5-20t47.5 20l56 56Z'/%3E%3C/svg%3E");
+	background-size: 16px;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+input[type="checkbox"]:focus {
+	box-shadow: 0 0 0 2px var(--color);
+}
+select {
+	appearance: none;
+	border: 1px solid var(--color);
+	border-radius: 2px;
+	background-color: transparent;
+	color: var(--color);
+	padding: 5px 30px 5px 10px;
+	outline: none;
+	cursor: pointer;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='24px' viewBox='0 -960 960 960' width='24px' fill='%239b9b9b'%3E%3Cpath d='M480-394q-6 0-10.75-2t-9.25-7L288.5-574.5q-4-3.5-4.25-8.5t4.25-9.5q4.5-4.5 9-4.5t9 4.5L480-419l173.5-173.5q3.5-3.5 8.5-4t9.5 4q4.5 4.5 4.75 9t-4.25 9L500.5-403q-5 5-9.75 7T480-394Z'/%3E%3C/svg%3E");
+	background-size: 24px;
+	background-repeat: no-repeat;
+	background-position: right 1px center;
+	width: 100%;
+}
+select:focus {
+	box-shadow: 0 0 0 2px var(--color);
+}
+option {
+	background-color: var(--bg-sidebar);
+	color: var(--color);
+}
+option:hover,
+option:focus {
+	color: var(--color-hover);
+}
+option:checked {
+	font-weight: 700;
+}
+button {
+	appearance: none;
+	border: none;
+	border-radius: 2px;
+	background-color: var(--bg-sidebar);
+	color: var(--color);
+	padding: 10px 20px;
+	cursor: pointer;
+	outline: none;
+}
+button:hover {
+	background-color: var(--border-sidebar);
+	color: var(--color-hover);
+}
+button.primary {
+	background-color: var(--checked);
+	color: #fff;
+}
+button.primary:hover {
+	background-color: #0D47A1;
+}
+button:active {
+	background-color: var(--border-sidebar);
+}
+button:focus {
+	box-shadow: 0 0 0 2px var(--color);
+}
+
+
+
+
+.container {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+}
+.tabgroup {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: row;
+	user-select: none;
+}
+.tab {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 10px 20px;
+	cursor: pointer;
+	min-width: 100px;
+	box-sizing: border-box;
+	justify-content: center;
+	gap: 10px;
+	color: var(--color);
+	outline: none;
+	text-decoration: none;
+}
+.tab:focus {
+	color: var(--color-hover);
+}
+.tab:hover {
+	background-color: var(--bg-sidebar);
+}
+.tab.selected {
+	background-color: var(--bg-selected);
+}
+.indicator {
+	color: #c00;
+}
+
+.content {
+	flex: 1 1 auto;
+	background-color: var(--bg-selected);
+	border-bottom: 1px solid var(--border-sidebar);
+	box-sizing: border-box;
+	min-height: 0;
+	overflow: hidden;
+	overflow-y: scroll;
+	scrollbar-color: var(--bg) var(--bg-selected);
+}
+
+.footer {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: row;
+	justify-content: end;
+	padding: 20px;
+	gap: 20px;
+}
+
+.tab-panel {}
+
+.about {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: 20px;
+	width: 100%;
+	min-height: 100%;
+}
+.logo {
+	width: 96px;
+	height: 96px;
+	margin-bottom: 20px;
+}
+.about-name {
+	margin: 0;
+}
+.about-text {
+	margin: 0;
+	width: 400px;
+}
+.about-version {
+	width: auto;
+	margin-bottom: 20px;
+}
+
+.options {
+	display: flex;
+	flex-direction: column;
+	align-items: start;
+	justify-content: start;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 100%;
+	gap: 20px;
+}
+.grid {
+	display: flex;
+	flex-direction: column;
+	align-items: start;
+	justify-content: start;
+	width: 100%;
+}
+.grid-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: start;
+	gap: 20px;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 10px 20px;
+}
+.grid-row:hover {
+	background-color: var(--border-sidebar);
+	color: var(--color-hover);
+}
+.option-group {
+	margin: 20px 0 10px;
+	padding: 0 20px;
+}
+.option {
+	flex: 2 2 auto;
+	font-weight: 500;
+	min-width: 0;
+	width: 66%;
+}
+.option-control {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: start;
+	min-width: 0;
+	width: 33%;
+}
+
+.hidden {
+	display: none;
+}
+	</style>
+</head>
+<body>
+	<template id="option-checkbox">
+		<div class="grid-row">
+			<div class="option">
+				<label for="option-id">Option Name</label>
+			</div>
+			<div class="option-control">
+				<input type="checkbox" id="option-id" />
+			</div>
+		</div>
+	</template>
+	<template id="option-select">
+		<div class="grid-row">
+			<div class="option">
+				<label for="select-id">Select Name</label>
+			</div>
+			<div class="option-control">
+				<select id="select-id">
+				</select>
+			</div>
+		</div>
+	</template>
+	<template id="option-group">
+		<h1 class="option-group">Group Name</h1>
+		<div class="grid"></div>
+	</template>
+
+	<div class="container">
+		<div class="tabgroup">
+			<a class="tab" id="options" href="#options" target="_self">
+				<span class="indicator hidden">●</span>
+				<span class="tab-title">Options</span>
+			</a>
+			<a class="tab" id="updates" href="#updates" target="_self">
+				<span class="indicator hidden">●</span>
+				<span class="tab-title">Updates</span>
+			</a>
+			<a class="tab" id="about" href="#about" target="_self">
+				<span class="indicator hidden">●</span>
+				<span class="tab-title">About</span>
+			</a>
+		</div>
+		<div class="content">
+			<div class="tab-panel options" data-for="options"></div>
+			<div class="tab-panel" data-for="updates">
+				<!-- Updates -->
+			</div>
+			<div class="tab-panel about" data-for="about">
+				<img src="../icons/desktop.png" alt="Notion Electron" class="logo" />
+				<h1 class="about-name">Notion Electron</h1>
+				<p class="about-text about-version">Version: <span id="version">0.0.0</span></p>
+				<p class="about-text" id="description">Unofficial Notion client</p>
+				<p class="about-text">Developed by <span id="author">Artem Nechunaev</span></p>
+				<p class="about-text">License: <span id="license">MIT</span></p>
+				<p class="about-text">Source code: <a href="https://github.com/anechunaev/notion-electron" target="_blank" id="source">github.com/anechunaev/notion-electron</a></p>
+			</div>
+		</div>
+		<div class="footer">
+			<button class="button" role="button" id="cancel">Cancel</button>
+			<button class="button primary" role="button" id="restart">Save and Restart</button>
+		</div>
+	</div>
+
+	<script>
+document.addEventListener('DOMContentLoaded', () => {
+	let currentTab = null;
+
+	const cancel = document.getElementById('cancel');
+	const restart = document.getElementById('restart');
+	const tabs = Array.from(document.querySelectorAll('.tab'));
+	const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
+	const templates = {
+		checkbox: document.getElementById('option-checkbox'),
+		select: document.getElementById('option-select'),
+		group: document.getElementById('option-group'),
+	};
+
+	function selectTab(tabId) {
+		if (tabId === currentTab) return;
+		currentTab = tabId;
+
+		tabs.forEach(t => {
+			t.classList.toggle('selected', t.id === currentTab);
+		});
+		tabPanels.forEach(panel => {
+			panel.classList.toggle('hidden', panel.dataset.for !== currentTab);
+		});
+	}
+
+	function toggleIndicator(tabId, value) {
+		const tab = tabs.find(t => t.id === tabId);
+		if (!tab) return;
+		const indicator = tab.querySelector('.indicator');
+		if (!indicator) return;
+		if (typeof value === 'undefined') {
+			value = !indicator.classList.contains('hidden');
+		}
+		indicator.classList.toggle('hidden', !value);
+	}
+
+	tabs.forEach(tab => {
+		tab.addEventListener('click', () => {
+			selectTab(tab.id);
+		});
+	});
+
+	const hash = window.location.hash.slice(1);
+	if (hash) {
+		selectTab(hash);
+	} else {
+		window.location.hash = tabs[0].id;
+		selectTab(tabs[0].id);
+	}
+
+	window.notionElectronAPI.getAppMetadata();
+	window.notionElectronAPI.getOptions();
+
+	window.notionElectronAPI.subscribeOnOptions((config) => {
+		const optionsPanel = document.querySelector('.tab-panel.options');
+		optionsPanel.innerHTML = '';
+		const options = Object.entries(config.options).map(([id, option]) => {
+			return {
+				id,
+				...option,
+			};
+		});
+		const groups = Object.entries(config.groups).reduce((acc, [id, groupName]) => {
+			acc[id] = {
+				id,
+				name: groupName,
+				el: document.importNode(templates.group.content, true),
+				options: [],
+			};
+			acc[id].el.querySelector('h1').textContent = groupName;
+			acc[id].grid = acc[id].el.querySelector('.grid');
+			return acc;
+		}, {
+			nogroup: {
+				id: 'nogroup',
+				el: document.importNode(templates.group.content, true),
+				options: [],
+			},
+		});
+		groups.nogroup.el.querySelector('h1').textContent = 'Other Options';
+		groups.nogroup.grid = groups.nogroup.el.querySelector('.grid');
+
+		options.forEach(option => {
+			const template = templates[option.value.type];
+			if (!template) return;
+			const clone = document.importNode(template.content, true);
+			const label = clone.querySelector('label');
+			const input = clone.querySelector('input, select');
+			label.textContent = option.name;
+			label.htmlFor = option.id;
+			input.id = option.id;
+			input.name = option.id;
+			if (option.value.type === 'select') {
+				const select = input;
+				Object.entries(option.value.options).forEach(([optionValue, optionName]) => {
+					const option = document.createElement('option');
+					option.value = optionValue;
+					option.textContent = optionName;
+					select.appendChild(option);
+				});
+				select.value = option.value.data ?? option.value.default;
+			}
+			if (option.value.type === 'checkbox') {
+				input.checked = option.value.data ? 'on' : '';
+			}
+			input.addEventListener('change', (e) => {
+				if (option.value.type === 'checkbox') {
+					window.notionElectronAPI.setOption(option.id, e.currentTarget.checked);
+				} else {
+					window.notionElectronAPI.setOption(option.id, e.target.value);
+				}
+			});
+			groups[option.group ?? 'nogroup'].grid.appendChild(clone);
+		});
+		optionsPanel.append(...Object.values(groups).map(group => group.el));
+	});
+	window.notionElectronAPI.subscribeOnTabChange((tabId) => {
+		window.location.hash = tabId;
+		selectTab(tabId);
+	});
+	window.notionElectronAPI.subscribeOnAppMetadata((metadata) => {
+		document.getElementById('version').textContent = metadata.version;
+		document.getElementById('description').textContent = metadata.description;
+		document.getElementById('author').textContent = metadata.author;
+		document.getElementById('license').textContent = metadata.license;
+	});
+	restart.addEventListener('click', () => {
+		window.notionElectronAPI.restartApp();
+	});
+	cancel.addEventListener('click', () => {
+		window.notionElectronAPI.closeWindow();
+	});
+});
+	</script>
+</body>
+</html>
