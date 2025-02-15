@@ -54,7 +54,7 @@
 		},
 		"tabs-continue-sidebar": {
 			"group": "g2",
-			"name": "Continue Sidebar to Title Bar",
+			"name": "Draw Sidebar Over Title Bar",
 			"value": {
 				"type": "checkbox",
 				"default": true

@@ -1,4 +1,4 @@
-import { app, Tray, Menu } from 'electron';
+import { app, Tray, Menu, nativeTheme } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -11,9 +11,10 @@ class TrayService {
 	#options = null;
 
 	constructor(mainWindow, optionsWindow) {
+		const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
 		this.#window = mainWindow;
 		this.#options = optionsWindow;
-		this.#tray = new Tray(path.join(__dirname, '../assets/icons/tray.png'));
+		this.#tray = new Tray(path.join(__dirname, `../assets/icons/${theme}/tray.png`));
 		
 		const contextMenu = Menu.buildFromTemplate([
 			{

@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TITLEBAR_HEIGHT = 44;
 const DARK_THEME_BACKGROUND = '#202020';
-const LIGHT_THEME_BACKGROUND = '#ffffff';
+const LIGHT_THEME_BACKGROUND = '#f8f8f7';
 
 let mainWindow = null;
 const store = new Store();
@@ -31,6 +31,10 @@ if (!app.requestSingleInstanceLock()) {
 
 	const showOnStartup = process.argv.includes("--hide-on-startup") ? false : store.get('general-show-window-on-start', true);
 	const enableSpellcheck = process.argv.includes("--disable-spellcheck") ? false : store.get('general-enable-spellcheck', false);
+	nativeTheme.themeSource = store.get('general-theme', 'system');
+	const bgColor = store.get('general-theme', 'system') === 'system'
+		? (nativeTheme.shouldUseDarkColors ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND)
+		: (store.get('general-theme', 'system') === 'dark' ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND);
 
 	app.whenReady().then(() => {
 		mainWindow = new BaseWindow({
@@ -46,11 +50,11 @@ if (!app.requestSingleInstanceLock()) {
 				spellcheck: enableSpellcheck,
 			},
 			titleBarOverlay: {
-				color: nativeTheme.shouldUseDarkColors ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND,
+				color: bgColor,
 				height: TITLEBAR_HEIGHT,
 			},
 			contextIsolation: false,
-			backgroundColor: nativeTheme.shouldUseDarkColors ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND,
+			backgroundColor: bgColor,
 		});
 		const optionsWindow = new BrowserWindow({
 			minWidth: 800,
@@ -65,7 +69,7 @@ if (!app.requestSingleInstanceLock()) {
 			},
 			title: 'Notion Electron Options',
 			icon: path.join(__dirname, './assets/icons/desktop.png'),
-			backgroundColor: nativeTheme.shouldUseDarkColors ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND,
+			backgroundColor: bgColor,
 		});
 		optionsWindow.loadFile(path.join(__dirname, './assets/pages/options.html'));
 

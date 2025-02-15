@@ -18,6 +18,18 @@
 	--font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
 	--font: 500 14px/22px var(--font-family);
 }
+@media (prefers-color-scheme: light) {
+	:root {
+		--bg: #fff;
+		--bg-sidebar: #f8f8f7;
+		--bg-selected: #f2f2f1;
+		--border-sidebar: #f2f2f1;
+		--border-sidebar-hover: rgba(0, 0, 0, 0.1);
+
+		--color: #37352f;
+		--color-hover: #1d1b16;
+	}
+}
 body {
 	app-region: drag;
 	user-select: none;
@@ -89,7 +101,7 @@ body {
 .tabgroup-shadow-right {
 	width: 20px;
 	height: 44px;
-	background: linear-gradient(to right, rgba(25, 25, 25, 0), var(--bg));
+	background: linear-gradient(to right, transparent, var(--bg));
 	position: absolute;
 	right: 0;
 	top: 0;
@@ -97,7 +109,7 @@ body {
 .tabgroup-shadow-left {
 	width: 20px;
 	height: 44px;
-	background: linear-gradient(to left, rgba(25, 25, 25, 0), var(--bg));
+	background: linear-gradient(to left, transparent, var(--bg));
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -124,6 +136,7 @@ body {
 	outline: none;
 	app-region: no-drag;
 }
+.tab.selected,
 .tab:hover {
 	background-color: var(--bg-selected);
 	color: var(--color-hover);
@@ -133,10 +146,6 @@ body {
 }
 .tab.right {
 	margin-left: auto;
-}
-.tab.selected {
-	background-color: var(--bg-selected);
-	color: var(--color-hover);
 }
 .tab-title {
 	line-height: 22px;
@@ -195,6 +204,9 @@ body {
 	align-items: center;
 	justify-content: end;
 	padding: 0 10px;
+	transition-duration: 200ms;
+	transition-timing-function: ease;
+	transition-property: width, flex, flex-basis;
 }
 .sidebar.collapsed {
 	flex: 0 0 30px;
@@ -222,6 +234,21 @@ body {
 	display: inline-block;
 }
 
+@media (prefers-color-scheme: light) {
+	.titlebar {
+		background-color: var(--bg-sidebar);
+	}
+	.tab:hover,
+	.tab.selected {
+		background-color: var(--bg);
+	}
+	.tabgroup-shadow-right {
+		background: linear-gradient(to right, transparent, var(--bg-sidebar));
+	}
+	.tabgroup-shadow-left {
+		background: linear-gradient(to left, transparent, var(--bg-sidebar));
+	}
+}
 
 .hidden {
 	display: none;
@@ -231,25 +258,40 @@ body {
 <body>
 	<template id="tab-template">
 		<button class="tab" role="button">
-			<img class="tab-icon" src="../icons/dark/document.svg" />
+			<picture>
+				<source class="tab-icon-source" srcset="../icons/light/document.svg" media="(prefers-color-scheme: light)" />
+				<img class="tab-icon" src="../icons/dark/document.svg" />
+			</picture>
 			<span class="tab-title">Tab</span>
 			<span class="tab-close">×</span>
 		</button>
 	</template>
 	<template id="tab-calendar-template">
 		<button id="calendar" class="tab calendar-tab" role="button">
-			<img class="calendar-icon" src="../icons/calendar-s.svg" />
+			<picture>
+				<source srcset="../icons/light/calendar-s.svg" media="(prefers-color-scheme: light)" />
+				<img class="calendar-icon" src="../icons/dark/calendar-s.svg" />
+			</picture>
 			<span class="calendar-title">Calendar</span>
 		</button>
 	</template>
 	<div class="titlebar inverted">
 		<div class="sidebar collapsed hidden">
 			<button class="control sidebar-collapsed" role="button" title="Open Sidebar">
-				<img class="icon sidebar-icon-menu" src="../icons/dark/menu.svg" />
-				<img class="icon sidebar-icon-unfold" src="../icons/dark/double_arrow_right.svg" />
+				<picture>
+					<source srcset="../icons/light/menu.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon sidebar-icon-menu" src="../icons/dark/menu.svg" />
+				</picture>
+				<picture>
+					<source srcset="../icons/light/double_arrow_right.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon sidebar-icon-unfold" src="../icons/dark/double_arrow_right.svg" />
+				</picture>
 			</button>
 			<button class="control sidebar-unfold" role="button" title="Collapse Sidebar">
-				<img class="icon" src="../icons/dark/double_arrow_left.svg" />
+				<picture>
+					<source srcset="../icons/light/double_arrow_left.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/double_arrow_left.svg" />
+				</picture>
 			</button>
 		</div>
 		<div class="controls">
@@ -260,7 +302,10 @@ body {
 				data-action="history-back"
 				disabled
 			>
-				<img class="icon" src="../icons/dark/arrow_left.svg" />
+				<picture>
+					<source srcset="../icons/light/arrow_left.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/arrow_left.svg" />
+				</picture>
 			</button>
 			<button
 				class="control"
@@ -269,7 +314,10 @@ body {
 				data-action="history-forward"
 				disabled
 			>
-				<img class="icon" src="../icons/dark/arrow_right.svg" />
+				<picture>
+					<source srcset="../icons/light/arrow_right.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/arrow_right.svg" />
+				</picture>
 			</button>
 			<button
 				class="control"
@@ -277,7 +325,10 @@ body {
 				title="Open New Tab"
 				data-action="add"
 			>
-				<img class="icon" src="../icons/dark/add.svg" />
+				<picture>
+					<source srcset="../icons/light/add.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/add.svg" />
+				</picture>
 			</button>
 		</div>
 
@@ -385,14 +436,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		notionElectronAPI.historyForward();
 	}
 
-	function onHistoryChange(event) {
-		const { canGoBack, canGoForward, title, iconUrl, tabId } = event;
-		historyBackButton.disabled = !canGoBack;
-		historyForwardButton.disabled = !canGoForward;
-		tabMap[tabId].querySelector('.tab-title').textContent = title;
-		tabMap[tabId].querySelector('.icon').src = iconUrl;
-	}
-
 	function onCloseTab(tabId) {
 		if (Object.values(tabMap).length === 1) {
 			window.notionElectronAPI.setUrl(tabId, '/login');
@@ -433,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (tab && title && icon) {
 			tab.querySelector('.tab-title').textContent = title;
 			tab.querySelector('.tab-icon').src = icon;
+			tab.querySelector('.tab-icon-source').srcset = icon;
 		}
 
 		historyBackButton.disabled = !tab || !canGoBack;

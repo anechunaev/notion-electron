@@ -20,6 +20,20 @@
 	--font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
 	--font: 500 14px/22px var(--font-family);
 }
+@media (prefers-color-scheme: light) {
+	:root {
+		--bg: #fff;
+		--bg-sidebar: #f8f8f7;
+		--bg-selected: rgba(0, 0, 0, 0.055);
+		--border-sidebar: #ccc;
+		--border-sidebar-hover: rgba(0, 0, 0, 0.1);
+
+		--color: #37352f;
+		--color-hover: #1d1b16;
+
+		--checked: #1976D2;
+	}
+}
 html,body {
 	background-color: var(--bg);
 	color: var(--color);
@@ -107,7 +121,7 @@ button.primary {
 	color: #fff;
 }
 button.primary:hover {
-	background-color: #0D47A1;
+	background-color: var(--checked);
 }
 button:active {
 	background-color: var(--border-sidebar);
@@ -257,6 +271,26 @@ button:focus {
 	justify-content: start;
 	min-width: 0;
 	width: 33%;
+}
+
+@media (prefers-color-scheme: light) {
+	html, body {
+		background-color: var(--bg-sidebar);
+	}
+	select {
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='24px' viewBox='0 -960 960 960' width='24px' fill='37352f'%3E%3Cpath d='M480-394q-6 0-10.75-2t-9.25-7L288.5-574.5q-4-3.5-4.25-8.5t4.25-9.5q4.5-4.5 9-4.5t9 4.5L480-419l173.5-173.5q3.5-3.5 8.5-4t9.5 4q4.5 4.5 4.75 9t-4.25 9L500.5-403q-5 5-9.75 7T480-394Z'/%3E%3C/svg%3E");
+	}
+	.grid-row:hover,
+	button:hover {
+		background-color: var(--bg-sidebar);
+	}
+	button,
+	.tab:hover,
+	.tab.selected,
+	.content {
+		background-color: var(--bg);
+		scrollbar-color: var(--border-sidebar) var(--bg);
+	}
 }
 
 .hidden {
