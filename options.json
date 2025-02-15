@@ -1,5 +1,12 @@
 {
 	"options": {
+		"debug-open-dev-tools": {
+			"name": "Open Dev Tools on Application Start",
+			"value": {
+				"type": "checkbox",
+				"default": false
+			}
+		},
 		"general-theme": {
 			"group": "g1",
 			"name": "Theme",

@@ -215,7 +215,6 @@ button:focus {
 	box-sizing: border-box;
 	width: 100%;
 	min-height: 100%;
-	gap: 20px;
 }
 .grid {
 	display: flex;
@@ -239,8 +238,10 @@ button:focus {
 	color: var(--color-hover);
 }
 .option-group {
-	margin: 20px 0 10px;
+	margin: 30px 0 10px;
 	padding: 0 20px;
+	line-height: 24px;
+	font-size: 24px;
 }
 .option {
 	flex: 2 2 auto;
@@ -399,13 +400,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			acc[id].el.querySelector('h1').textContent = groupName;
 			acc[id].grid = acc[id].el.querySelector('.grid');
 			return acc;
-		}, {
-			nogroup: {
-				id: 'nogroup',
-				el: document.importNode(templates.group.content, true),
-				options: [],
-			},
-		});
+		}, {});
+		groups.nogroup = {
+			id: 'nogroup',
+			el: document.importNode(templates.group.content, true),
+			options: [],
+		};
 		groups.nogroup.el.querySelector('h1').textContent = 'Other Options';
 		groups.nogroup.grid = groups.nogroup.el.querySelector('.grid');
 

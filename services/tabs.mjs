@@ -12,9 +12,11 @@ class TabsService {
 	#titleBarView = null;
 	#window = null;
 	#currentTabId = null;
+	#options = null;
 
-	constructor(window) {
+	constructor(window, optionsService) {
 		this.#window = window;
+		this.#options = optionsService;
 
 		this.#titleBarView = new WebContentsView({
 			webPreferences: {
@@ -24,8 +26,10 @@ class TabsService {
 		this.#titleBarView.webContents.loadFile('./assets/pages/titlebar.html');
 		this.#window.contentView.addChildView(this.#titleBarView);
 
-		this.#calendarView = new WebContentsView();
-		this.#calendarView.webContents.loadURL('https://calendar.notion.so/notion-auth');
+		if (this.#options.getOption('tabs-show-calendar').data) {
+			this.#calendarView = new WebContentsView();
+			this.#calendarView.webContents.loadURL('https://calendar.notion.so/notion-auth');
+		}
 
 		ipcMain.on('add-tab', (event, tabId, loadUrl) => {
 			this.#addTab(tabId, loadUrl);
@@ -55,16 +59,30 @@ class TabsService {
 			this.#tabViews[this.#currentTabId].webContents.goForward();
 		});
 
-		ipcMain.on('sidebar-changed', (event, collapsed, width) => {
-			this.#titleBarView.webContents.send('sidebar-changed', collapsed, width);
-		});
+		if (this.#options.getOption('tabs-continue-sidebar').data) {
+			ipcMain.on('sidebar-changed', (event, collapsed, width) => {
+				this.#titleBarView.webContents.send('sidebar-changed', collapsed, width);
+			});
 
-		ipcMain.on('sidebar-fold', (event, collapsed) => {
-			this.#tabViews[this.#currentTabId].webContents.send('sidebar-fold', collapsed);
-		});
+			ipcMain.on('sidebar-fold', (event, collapsed) => {
+				this.#tabViews[this.#currentTabId].webContents.send('sidebar-fold', collapsed);
+			});
 
-		ipcMain.on('toggle-sidebar', () => {
-			this.sendKey({ keyCode: '\\', modifiers: ['Ctrl']}, 50, this.#tabViews[this.#currentTabId]);
+			ipcMain.on('toggle-sidebar', () => {
+				this.sendKey({ keyCode: '\\', modifiers: ['Ctrl']}, 50, this.#tabViews[this.#currentTabId]);
+			});
+
+			ipcMain.on('request-sidebar-data', () => {
+				this.#tabViews[this.#currentTabId].webContents.send('request-sidebar-data');
+			});
+		}
+
+		ipcMain.on('request-options', (event) => {
+			const options = {
+				calendarEnabled: this.#options.getOption('tabs-show-calendar').data,
+				sidebarContinueToTitlebar: this.#options.getOption('tabs-continue-sidebar').data,
+			};
+			event.sender.send('global-options', options);
 		});
 
 		this.#window.on('closed', () => {
@@ -76,7 +94,9 @@ class TabsService {
 		this.#setViewSize();
 		this.#setVisibleTabs();
 
-		// this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
+		if (this.#options.getOption('debug-open-dev-tools').data) {
+			this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
+		}
 	}
 
 	#setViewSize() {
@@ -85,7 +105,9 @@ class TabsService {
 		Object.values(this.#tabViews).forEach((view) => {
 			view.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
 		});
-		this.#calendarView.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
+		if (this.#calendarView) {
+			this.#calendarView.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
+		}
 	}
 	
 	#setVisibleTabs(tabId) {
@@ -93,13 +115,15 @@ class TabsService {
 			const visible = viewId === tabId;
 			if (visible) {
 				this.#window.contentView.addChildView(view);
-				this.#window.contentView.removeChildView(this.#calendarView);
+				if (this.#calendarView) {
+					this.#window.contentView.removeChildView(this.#calendarView);
+				}
 			} else {
 				this.#window.contentView.removeChildView(view);
 			}
 		});
 		
-		if (!tabId) {
+		if (!tabId && this.#calendarView) {
 			this.#window.contentView.addChildView(this.#calendarView);
 		}
 
@@ -112,7 +136,11 @@ class TabsService {
 				preload: path.join(__dirname, '../render/docs-preload.js'),
 			},
 		});
-		// view.webContents.openDevTools({ mode: 'detach' });
+
+		if (this.#options.getOption('debug-open-dev-tools').data) {
+			view.webContents.openDevTools({ mode: 'detach' });
+		}
+
 		const bounds = this.#window.getBounds();
 		view.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
 		view.webContents.loadURL(loadUrl ?? 'https://www.notion.com/login');

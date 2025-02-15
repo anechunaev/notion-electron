@@ -42,42 +42,6 @@ document.addEventListener('DOMContentLoaded', function() {
 		childList: true,
 	});
 
-	const sidebarObserver = new MutationObserver(function(mutations) {
-		const sidebar = document.querySelector('.notion-sidebar-container');
-		const collapsed = sidebar.style.width === '0px';
-		isSidebarUnfolded = !collapsed;
-
-		if (!collapsed) {
-			const sidePanel = document.querySelector('.notion-sidebar');
-			const style = {
-				opacity: '1',
-				transform: 'translateX(0) translateY(0)',
-				visibility: 'visible',
-				pointerEvents: 'auto',
-				height: '100%',
-			};
-			Object.entries(style).forEach(([key, value]) => {
-				sidePanel.style[key] = value;
-			});
-		}
-
-		ipcRenderer.send('sidebar-changed', collapsed, sidebar.style.width);
-	});
-
-	waitForElement('.notion-sidebar-container').then(sidebar => {
-		sidebarObserver.observe(sidebar, {
-			attributes: true,
-			attributeFilter: ['style'],
-		});
-
-		const collapsed = sidebar.style.width === '0px';
-		isSidebarUnfolded = !collapsed;
-
-		ipcRenderer.send('sidebar-changed', collapsed, sidebar.style.width);
-	});
-
-	addStyleTag(`.notion-topbar>div>div>div:first-child,.notion-open-sidebar,.notion-close-sidebar{display:none !important}`);
-
 	ipcRenderer.on('sidebar-fold', (event, collapsed) => {
 		if (isSidebarUnfolded) return;
 
@@ -125,4 +89,52 @@ document.addEventListener('DOMContentLoaded', function() {
 			isSelection: !!window.getSelection().toString(),
 		});
 	});
+
+	ipcRenderer.send('request-options');
+});
+
+ipcRenderer.on('request-sidebar-data', () => {
+	waitForElement('.notion-sidebar-container').then(sidebar => {
+		const collapsed = sidebar.style.width === '0px';
+		ipcRenderer.send('sidebar-changed', collapsed, sidebar.style.width);
+	});
+});
+
+ipcRenderer.on('global-options', (event, options) => {
+	if (options.sidebarContinueToTitlebar) {
+		const sidebarObserver = new MutationObserver(function(mutations) {
+			const sidebar = document.querySelector('.notion-sidebar-container');
+			const collapsed = sidebar.style.width === '0px';
+			isSidebarUnfolded = !collapsed;
+	
+			if (!collapsed) {
+				const sidePanel = document.querySelector('.notion-sidebar');
+				const style = {
+					opacity: '1',
+					transform: 'translateX(0) translateY(0)',
+					visibility: 'visible',
+					pointerEvents: 'auto',
+					height: '100%',
+				};
+				Object.entries(style).forEach(([key, value]) => {
+					sidePanel.style[key] = value;
+				});
+			}
+	
+			ipcRenderer.send('sidebar-changed', collapsed, sidebar.style.width);
+		});
+	
+		waitForElement('.notion-sidebar-container').then(sidebar => {
+			sidebarObserver.observe(sidebar, {
+				attributes: true,
+				attributeFilter: ['style'],
+			});
+	
+			const collapsed = sidebar.style.width === '0px';
+
+			ipcRenderer.send('sidebar-changed', collapsed, sidebar.style.width);
+
+			addStyleTag(`.notion-topbar>div>div>div:first-child,.notion-open-sidebar,.notion-close-sidebar{display:none !important}`);
+		});
+	}
 });

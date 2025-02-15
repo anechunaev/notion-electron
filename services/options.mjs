@@ -60,13 +60,13 @@ class OptionsService {
 	}
 
 	getOption(optionId) {
-		return this.#config.options[optionId];
+		return this.#config.options[optionId].value;
 	}
 
 	setOption(optionId, value) {
-		const option = this.getOption(optionId);
+		const optionValue = this.getOption(optionId);
 		this.#store.set(optionId, value);
-		option.value.data = value;
+		optionValue.data = value;
 	}
 }
 

@@ -29,6 +29,9 @@ if (!app.requestSingleInstanceLock()) {
 		}
 	});
 
+	const showOnStartup = process.argv.includes("--hide-on-startup") ? false : store.get('general-show-window-on-start', true);
+	const enableSpellcheck = process.argv.includes("--disable-spellcheck") ? false : store.get('general-enable-spellcheck', false);
+
 	app.whenReady().then(() => {
 		mainWindow = new BaseWindow({
 			title: 'Notion Electorn',
@@ -38,9 +41,9 @@ if (!app.requestSingleInstanceLock()) {
 			height: screen.getPrimaryDisplay().workAreaSize.height * 0.8,
 			titleBarStyle: 'hidden',
 			icon: path.join(__dirname, './assets/icons/desktop.png'),
-			show: !process.argv.includes("--hide-on-startup"),
+			show: showOnStartup,
 			webPreferences: {
-				spellcheck: !process.argv.includes("--disable-spellcheck"),
+				spellcheck: enableSpellcheck,
 			},
 			titleBarOverlay: {
 				color: nativeTheme.shouldUseDarkColors ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND,
@@ -66,11 +69,11 @@ if (!app.requestSingleInstanceLock()) {
 		});
 		optionsWindow.loadFile(path.join(__dirname, './assets/pages/options.html'));
 
-		const tabService = new TabService(mainWindow);
+		const optionsService = new OptionsService(mainWindow, optionsWindow, store);
+		const tabService = new TabService(mainWindow, optionsService);
 		const windowPositionService = new WindowPositionService(mainWindow, store);
 		const trayService = new TrayService(mainWindow, optionsWindow);
 		const contextMenuService = new ContextMenuService(mainWindow, tabService);
-		const optionsService = new OptionsService(mainWindow, optionsWindow, store);
 
 		mainWindow.on('minimize', function (event) {
 			event.preventDefault();

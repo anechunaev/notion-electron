@@ -236,8 +236,14 @@ body {
 			<span class="tab-close">×</span>
 		</button>
 	</template>
+	<template id="tab-calendar-template">
+		<button id="calendar" class="tab calendar-tab" role="button">
+			<img class="calendar-icon" src="../icons/calendar-s.svg" />
+			<span class="calendar-title">Calendar</span>
+		</button>
+	</template>
 	<div class="titlebar inverted">
-		<div class="sidebar collapsed">
+		<div class="sidebar collapsed hidden">
 			<button class="control sidebar-collapsed" role="button" title="Open Sidebar">
 				<img class="icon sidebar-icon-menu" src="../icons/dark/menu.svg" />
 				<img class="icon sidebar-icon-unfold" src="../icons/dark/double_arrow_right.svg" />
@@ -280,11 +286,6 @@ body {
 			<div class="tabgroup"></div>
 			<div class="tabgroup-shadow-right hidden"></div>
 		</div>
-
-		<button id="calendar" class="tab calendar-tab" role="button">
-			<img class="calendar-icon" src="../icons/calendar-s.svg" />
-			<span class="calendar-title">Calendar</span>
-		</button>
 	</div>
 	
 
@@ -294,11 +295,11 @@ document.addEventListener('DOMContentLoaded', () => {
 	const tabMapDisconnect = {};
 	const tabMapSelect = {};
 	const tabStack = [];
+	let sidebarContinueToTitlebar = false;
 
 	const addTabButton = document.querySelector('.control[data-action="add"]');
 	const historyBackButton = document.querySelector('.control[data-action="history-back"]');
 	const historyForwardButton = document.querySelector('.control[data-action="history-forward"]');
-	const calendarButton = document.getElementById('calendar');
 	const titlebarSidebar = document.querySelector('.sidebar');
 	const titlebar = document.querySelector('.titlebar');
 	const sidebarCollapsed = document.querySelector('.sidebar-collapsed');
@@ -306,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const tabgroup = document.querySelector('.tabgroup');
 	const tabgroupShadowLeft = document.querySelector('.tabgroup-shadow-left');
 	const tabgroupShadowRight = document.querySelector('.tabgroup-shadow-right');
+	const calendarTemplate = document.getElementById('tab-calendar-template');
 
 	function createTabElement(title, iconUrl) {
 		const template = document.getElementById('tab-template');
@@ -323,11 +325,17 @@ document.addEventListener('DOMContentLoaded', () => {
 			tab.classList.toggle('selected', selected);
 			if (selected) {
 				notionElectronAPI.changeTab(tab.dataset.tabId);
-				titlebarSidebar.classList.remove('hidden');
 				titlebar.classList.add('inverted');
+
+				if (sidebarContinueToTitlebar) {
+					titlebarSidebar.classList.remove('hidden');
+				}
 			}
 		});
-		calendarButton.classList.remove('selected');
+		const calendarButton = document.getElementById('calendar');
+		if (calendarButton) {
+			calendarButton.classList.remove('selected');
+		}
 	}
 
 	function onSidebarStateChange(collapsed, width) {
@@ -444,34 +452,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			historyForwardButton.addEventListener('click', onHistoryForward);
 		}
 
-		if (calendarButton) {
-			calendarButton.addEventListener('click', () => {
-				onSelectTab();
-				calendarButton.classList.add('selected');
-				titlebarSidebar.classList.add('hidden');
-				titlebar.classList.remove('inverted');
-				notionElectronAPI.changeTab();
-			});
-		}
-
-		if (sidebarCollapsed && sidebarUnfold) {
-			sidebarCollapsed.addEventListener('click', () => {
-				notionElectronAPI.toggleSidebar();
-			});
-
-			sidebarUnfold.addEventListener('click', () => {
-				notionElectronAPI.toggleSidebar();
-			});
-
-			sidebarCollapsed.addEventListener('mouseenter', () => {
-				notionElectronAPI.foldSidebar(false);
-			});
-
-			sidebarCollapsed.addEventListener('mouseleave', () => {
-				notionElectronAPI.foldSidebar(true);
-			});
-		}
-
 		if (tabgroup) {
 			tabgroup.addEventListener('scroll', () => {
 				tabgroupShadowLeft.classList.toggle('hidden', tabgroup.scrollLeft <= 1);
@@ -484,10 +464,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 			tabgroupObserver.observe(tabgroup, { childList: true });
 		}
+
 		onAddTab();
 
+		window.notionElectronAPI.requestGlobalOptions();
+
 		window.notionElectronAPI.subscribeOnTabInfo(onTabInfo);
-		window.notionElectronAPI.subscribeOnSidebarChange(onSidebarStateChange);
 		window.notionElectronAPI.subscribeOnTabRequest(onAddTab);
 		window.notionElectronAPI.subscribeOnContextMenu((command) => {
 			switch (command.id) {
@@ -508,7 +490,49 @@ document.addEventListener('DOMContentLoaded', () => {
 				break;
 			}
 		});
+		window.notionElectronAPI.subscribeOnGlobalOptions(options => {
+			if (options.calendarEnabled) {
+				const calendarTab = calendarTemplate.content.cloneNode(true);
 
+				titlebar.appendChild(calendarTab);
+				const calendarButton = document.getElementById('calendar');
+
+				if (calendarButton) {
+					calendarButton.addEventListener('click', () => {
+						onSelectTab();
+						calendarButton.classList.add('selected');
+						titlebarSidebar.classList.add('hidden');
+						titlebar.classList.remove('inverted');
+						notionElectronAPI.changeTab();
+					});
+				}
+			}
+
+			if (options.sidebarContinueToTitlebar) {
+				sidebarContinueToTitlebar = true;
+				titlebarSidebar.classList.remove('hidden');
+				window.notionElectronAPI.subscribeOnSidebarChange(onSidebarStateChange);
+				window.notionElectronAPI.requestSidebarData();
+
+				if (sidebarCollapsed && sidebarUnfold) {
+					sidebarCollapsed.addEventListener('click', () => {
+						notionElectronAPI.toggleSidebar();
+					});
+
+					sidebarUnfold.addEventListener('click', () => {
+						notionElectronAPI.toggleSidebar();
+					});
+
+					sidebarCollapsed.addEventListener('mouseenter', () => {
+						notionElectronAPI.foldSidebar(false);
+					});
+
+					sidebarCollapsed.addEventListener('mouseleave', () => {
+						notionElectronAPI.foldSidebar(true);
+					});
+				}
+			}
+		});
 		window.addEventListener('contextmenu', (e) => {
 			e.preventDefault();
 			const tab = e.target.closest('.tab');
