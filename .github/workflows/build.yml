@@ -25,7 +25,7 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - name: Compile Electron App
-      uses: x6Pnda/action-electron-compiler@v1
+      uses: x6Pnda/action-electron-compiler@v1.0.1
       with:
         github_token: ${{ secrets.github_token }}
         release: true
