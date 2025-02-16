@@ -1,10 +1,10 @@
-# Notion Electron
+# Notion Electron – Unofficial Notion Client for Linux
 
 Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 41).
 
 ## Configuration
 
-Run program with this flags to enable feaures:
+Run program with this flags to enable features:
 
 - `--hide-on-startup` – This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
 - `--disable-spellcheck` - disables OS-defined spellcheck.
@@ -34,7 +34,7 @@ The package is not published to any public registry yet. You can install the app
 	```
 4. Install the application:
 	```sh
-	npm run install
+	npm run install-desktop-file
 	```
 
 ## Contributing
