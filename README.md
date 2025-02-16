@@ -15,9 +15,9 @@ Run program with this flags to enable features:
 
 You can download `.deb`, `.rpm` and `AppImage` packages by this links:
 
-- **[Download .deb package (x64)](https://github.com/anechunaev/notion-electron/releases/download/untagged-c07430fca37eab7e32c1/notion-electron-1.5.1.amd64.deb)**
-- **[Download .rpm package (x64)](https://github.com/anechunaev/notion-electron/releases/download/untagged-c07430fca37eab7e32c1/notion-electron-1.5.1.x86_64.rpm)**
-- **[Download AppImage (x64)](https://github.com/anechunaev/notion-electron/releases/download/untagged-c07430fca37eab7e32c1/notion-electron-1.5.1.x86_64.AppImage)**
+- **[Download .deb package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.5.1/notion-electron-1.5.1.amd64.deb)**
+- **[Download .rpm package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.5.1/notion-electron-1.5.1.x86_64.rpm)**
+- **[Download AppImage (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.5.1/notion-electron-1.5.1.x86_64.AppImage)**
 
 ### Manual Installation
 
