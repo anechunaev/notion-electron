@@ -4,9 +4,10 @@
   "main": "index.mjs",
   "type": "module",
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
     "start": "electron .",
     "make": "electron-packager . notion-electron --platform=linux --arch=x64 --out=dist/ --icon=./assets/icons/desktop.png --overwrite && chmod -R 777 ./dist/notion-electron-linux-x64/",
-    "pack": "electron-installer-redhat --src dist/notion-electron-linux-x64/ --dest dist/installers/ --arch x86_64 --icon=./assets/icons/desktop.png",
+    "pack": "electron-builder --linux",
     "build": "npm run make && npm run pack",
     "install-desktop-file": "desktop-file-install --dir=$HOME/.local/share/applications ./notion-electron.desktop",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -18,9 +19,31 @@
   "devDependencies": {
     "@electron/packager": "^18.3.6",
     "electron": "^33.2.1",
-    "electron-installer-redhat": "^3.4.0"
+    "electron-builder": "^25.1.8"
   },
   "dependencies": {
     "electron-store": "^10.0.0"
+  },
+  "build": {
+    "appId": "com.nechunaev.notion.electron",
+    "productName": "Notion Electron",
+    "executableName": "notion-electron",
+    "linux": {
+      "target": [
+        "rpm",
+        "deb",
+        "AppImage"
+      ],
+      "desktop": {
+        "Name": "Notion Electron",
+        "Icon": "./assets/icons/desktop.png",
+        "Terminal": "false",
+        "Type": "Application",
+        "Categories": "Utility;Office;"
+      },
+      "category": "Utility;Office;"
+    },
+    "artifactName": "notion-electron-${version}.${arch}.${ext}",
+    "icon": "./assets/icons/desktop.png"
   }
 }

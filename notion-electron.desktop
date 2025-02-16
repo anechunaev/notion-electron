@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Notion Electron
 Comment=Unofficial Notion desktop client made with Electron for Linux
-Exec=/usr/share/notion-electron/dist/notion-electron-linux-x64/notion-electron
+Exec=/usr/share/notion-electron/dist/linux-unpacked/notion-electron
 Terminal=false
 Type=Application
 StartupNotify=true
