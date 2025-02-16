@@ -8,7 +8,6 @@
     "start": "electron .",
     "make": "electron-packager . notion-electron --platform=linux --arch=x64 --out=dist/ --icon=./assets/icons/desktop.png --overwrite && chmod -R 777 ./dist/notion-electron-linux-x64/",
     "pack": "electron-builder --linux",
-    "build": "npm run make && npm run pack",
     "install-desktop-file": "desktop-file-install --dir=$HOME/.local/share/applications ./notion-electron.desktop",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
