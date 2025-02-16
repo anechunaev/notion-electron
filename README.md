@@ -2,6 +2,8 @@
 
 Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 41).
 
+![Screenshot](./docs/screenshot1.png)
+
 ## Configuration
 
 Run program with this flags to enable features:
@@ -11,14 +13,22 @@ Run program with this flags to enable features:
 
 ## Installation
 
-The package is not published to any public registry yet. You can install the application manually.
+You can download `.deb`, `.rpm` and `AppImage` packages by this links:
 
-### Prerequisites
+- **[Download .deb package (x64)](https://github.com/anechunaev/notion-electron/releases/download/untagged-c07430fca37eab7e32c1/notion-electron-1.5.1.amd64.deb)**
+- **[Download .rpm package (x64)](https://github.com/anechunaev/notion-electron/releases/download/untagged-c07430fca37eab7e32c1/notion-electron-1.5.1.x86_64.rpm)**
+- **[Download AppImage (x64)](https://github.com/anechunaev/notion-electron/releases/download/untagged-c07430fca37eab7e32c1/notion-electron-1.5.1.x86_64.AppImage)**
+
+### Manual Installation
+
+You could also build an application from source files manually.
+
+Dependencies:
 
 - Node.js (v22 or higher)
 - npm (v10 or higher)
 
-### Steps
+Steps:
 
 1. Clone the repository:
 	```sh
