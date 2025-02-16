@@ -1,29 +1,24 @@
 name: Node.js CI
 
-# on:
-#   push:
-#     tags:
-#       - 'v[0-9]+.[0-9]+.[0-9]+'
-
-on: push
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
 
-    # strategy:
-    #   matrix:
-    #     node-version: [22.x]
-
     steps:
     - uses: actions/checkout@v4
+
     - name: Use Node.js 22
       uses: actions/setup-node@v4
       with:
         node-version: 22
         cache: 'npm'
-    - run: npm ci
+
     - name: Electron Builder Action
       uses: samuelmeuli/action-electron-builder@v1.6.0
       with:
