@@ -1,0 +1,27 @@
+{
+	"tag": "v1.6.0",
+	"version": "1.6.0",
+	"files": [
+		{
+			"url": "notion-electron.x86_64.AppImage",
+			"sha512": "qakqWY0cFeip0uDrqNB84r2IqE4SRnu3zeZ7spCIuTHRY8UwrFA70yfrH3Z7aSvGFug8Thc7PPAEpBnTmbNQ4A==",
+			"size": 290,
+			"blockMapSize": 2
+		},
+		{
+			"url": "notion-electron.x86_64.rpm",
+			"sha512": "qakqWY0cFeip0uDrqNB84r2IqE4SRnu3zeZ7spCIuTHRY8UwrFA70yfrH3Z7aSvGFug8Thc7PPAEpBnTmbNQ4A==",
+			"size": 290
+		},
+		{
+			"url": "notion-electron.amd64.deb",
+			"sha512": "qakqWY0cFeip0uDrqNB84r2IqE4SRnu3zeZ7spCIuTHRY8UwrFA70yfrH3Z7aSvGFug8Thc7PPAEpBnTmbNQ4A==",
+			"size": 290
+		}
+	],
+	"path": "notion-electron.x86_64.AppImage",
+	"sha512": "qakqWY0cFeip0uDrqNB84r2IqE4SRnu3zeZ7spCIuTHRY8UwrFA70yfrH3Z7aSvGFug8Thc7PPAEpBnTmbNQ4A==",
+	"releaseDate": "2025-02-16T16:44:05.765Z",
+	"releaseName": "1.6.0",
+	"releaseNotes": "Hello world!"
+}

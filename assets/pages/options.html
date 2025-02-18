@@ -19,6 +19,13 @@
 
 	--font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
 	--font: 500 14px/22px var(--font-family);
+
+	--status-important: #f57f1703;
+	--status-important-border: #f9a8252b;
+	--status-error: #B71C1C03;
+	--status-error-border: #C628282b;
+	--statuc-success: #1B5E200a;
+	--status-success-border: #2E7D3252;
 }
 @media (prefers-color-scheme: light) {
 	:root {
@@ -32,6 +39,13 @@
 		--color-hover: #1d1b16;
 
 		--checked: #1976D2;
+
+		--status-important: #f57f1710;
+		--status-important-border: #f9a82563;
+		--status-error: #B71C1C0c;
+		--status-error-border: #C628283d;
+		--statuc-success: #1B5E200a;
+		--status-success-border: #2E7D3252;
 	}
 }
 html,body {
@@ -106,14 +120,13 @@ button {
 	appearance: none;
 	border: none;
 	border-radius: 2px;
-	background-color: var(--bg-sidebar);
+	background-color: var(--border-sidebar);
 	color: var(--color);
 	padding: 10px 20px;
 	cursor: pointer;
 	outline: none;
 }
 button:hover {
-	background-color: var(--border-sidebar);
 	color: var(--color-hover);
 }
 button.primary {
@@ -273,23 +286,195 @@ button:focus {
 	width: 33%;
 }
 
+.updates {
+	display: flex;
+	flex-direction: column;
+	align-items: start;
+	justify-content: start;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 100%;
+	padding: 20px;
+	gap: 20px;
+}
+
+.update-status {
+	display: flex;
+	flex-direction: column;
+	align-items: start;
+	justify-content: start;
+	gap: 10px;
+	width: 100%;
+}
+.status-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: start;
+	gap: 10px;
+	width: 100%;
+}
+.status-label {
+	opacity: 0.8;
+	flex: 0 0 130px;
+}
+.status-value {
+	font-family: monospace;
+	flex: 1 1 auto;
+}
+
+.update-stage {
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 20px 20px 20px 50px;
+	border-radius: 4px;
+	position: relative;
+	border: 1px solid var(--border-sidebar);
+	background-color: var(--bg-sidebar);
+}
+.update-stage::before {
+	content: '';
+	position: absolute;
+	top: 18px;
+	left: 18px;
+	width: 24px;
+	height: 24px;
+	background-image: url('../icons/dark/status_done.svg');
+	opacity: 0.8;
+}
+.align-end {
+	align-self: end;
+}
+
+.stage-label {
+	margin: 0;
+	font-weight: 700;
+}
+
+.stage-progress {
+	width: 100%;
+	margin: 20px 0 10px;
+}
+.stage-progress-info {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	font: 400 9pt/12pt monospace;
+	opacity: 0.8;
+}
+
+.stage-installing::before,
+.stage-checking::before {
+	background-image: url('../icons/dark/status_waiting.svg');
+}
+.stage-available::before {
+	background-image: url('../icons/dark/status_important.svg');
+}
+.stage-downloading::before {
+	background-image: url('../icons/dark/status_loading.svg');
+}
+.stage-error::before {
+	background-image: url('../icons/dark/status_error.svg');
+}
+
+.stage-available {
+	border-color: var(--status-important-border);
+	background-color: var(--status-important);
+}
+.stage-installed {
+	border-color: var(--status-success-border);
+	background-color: var(--statuc-success);
+}
+.stage-error {
+	border-color: var(--status-error-border);
+	background-color: var(--status-error);
+}
+
+.stage-progress {
+	appearance: none;
+	box-sizing: border-box;
+	border: solid 1px var(--border-sidebar);
+	width: 100%;
+	height: 20px;
+	border-radius: 20px;
+	background-clip: content-box;
+	background-image: linear-gradient(to bottom, var(--bg), var(--bg-sidebar));
+	overflow: hidden;
+
+	--animated-bg: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="20" preserveAspectRatio="xMidYMid"><defs><linearGradient id="b" gradientTransform="rotate(90)"><stop offset="0" stop-color="%232979FF" /><stop offset="1" stop-color="%232962FF" /></linearGradient><pattern id="z" patternUnits="userSpaceOnUse" width="100" height="100"><g transform="translate(0)"><rect fill="url(%23b)" width="20" height="20" x="-20" /><rect fill="url(%23b)" width="20" height="20" x="20" /><animateTransform attributeName="transform" type="translate" values="0 0;40 0" keyTimes="0;1" repeatCount="indefinite" dur="1s"/></g></pattern></defs><rect width="40" height="20" fill="url(%23z)" /></svg>');
+}
+.stage-progress::-webkit-progress-bar { background: transparent }
+.stage-progress::-webkit-progress-value {
+	background-color: var(--checked);
+	background-image:
+		radial-gradient(ellipse , #ffffff38, transparent 80%),
+		var(--animated-bg),
+		linear-gradient(to top, #2962FFd0, #2979FFd0);
+	;
+	background-size: auto 5px, contain, auto;
+	background-repeat: no-repeat, repeat-x, no-repeat;
+	background-position: 0 2px, 0 0, 0 0;
+	border-radius: 20px;
+	transition: width 0.2s ease-in-out;
+	box-shadow: 0 2px 5px var(--bg-sidebar);
+}
+
+
 @media (prefers-color-scheme: light) {
-	html, body {
-		background-color: var(--bg-sidebar);
-	}
 	select {
 		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='24px' viewBox='0 -960 960 960' width='24px' fill='37352f'%3E%3Cpath d='M480-394q-6 0-10.75-2t-9.25-7L288.5-574.5q-4-3.5-4.25-8.5t4.25-9.5q4.5-4.5 9-4.5t9 4.5L480-419l173.5-173.5q3.5-3.5 8.5-4t9.5 4q4.5 4.5 4.75 9t-4.25 9L500.5-403q-5 5-9.75 7T480-394Z'/%3E%3C/svg%3E");
 	}
-	.grid-row:hover,
-	button:hover {
+	html, body,
+	.grid-row:hover {
 		background-color: var(--bg-sidebar);
 	}
-	button,
 	.tab:hover,
 	.tab.selected,
 	.content {
 		background-color: var(--bg);
 		scrollbar-color: var(--border-sidebar) var(--bg);
+	}
+	button {
+		background-color: var(--bg);
+		border: 1px solid var(--border-sidebar-hover);
+	}
+	button:hover {
+		border-color: var(--border-sidebar);
+	}
+	button.primary { border: none }
+
+	.update-stage::before {
+		background-image: url('../icons/light/status_done.svg');
+	}
+	.stage-installing::before,
+	.stage-checking::before {
+		background-image: url('../icons/light/status_waiting.svg');
+	}
+	.stage-available::before {
+		background-image: url('../icons/light/status_important.svg');
+	}
+	.stage-downloading::before {
+		background-image: url('../icons/light/status_loading.svg');
+	}
+	.stage-error::before {
+		background-image: url('../icons/light/status_error.svg');
+	}
+
+	.stage-progress {
+		background-image: linear-gradient(to bottom, var(--bg-selected), var(--bg));
+		--animated-bg: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="20" preserveAspectRatio="xMidYMid"><defs><linearGradient id="b" gradientTransform="rotate(90)"><stop offset="0" stop-color="%2300B0FF" /><stop offset="1" stop-color="%230091EA" /></linearGradient><pattern id="z" patternUnits="userSpaceOnUse" width="100" height="100"><g transform="translate(0)"><rect fill="url(%23b)" width="20" height="20" x="-20" /><rect fill="url(%23b)" width="20" height="20" x="20" /><animateTransform attributeName="transform" type="translate" values="0 0;40 0" keyTimes="0;1" repeatCount="indefinite" dur="1s"/></g></pattern></defs><rect width="40" height="20" fill="url(%23z)" /></svg>');
+	}
+	.stage-progress::-webkit-progress-value {
+		background-image:
+			radial-gradient(ellipse , #ffffff38, transparent 80%),
+			var(--animated-bg),
+			linear-gradient(to top, #0091EAd0, #00B0FFd0);
+		;
+		box-shadow: 0 2px 5px var(--bg-selected);
 	}
 }
 
@@ -342,8 +527,68 @@ button:focus {
 		</div>
 		<div class="content">
 			<div class="tab-panel options" data-for="options"></div>
-			<div class="tab-panel" data-for="updates">
-				<!-- Updates -->
+			<div class="tab-panel updates" data-for="updates">
+				<div class="update-status">
+					<div class="status-row">
+						<div class="status-label">Last checked:</div>
+						<div class="status-value" id="status-date"></div>
+					</div>
+					<div class="status-row">
+						<div class="status-label">Available version:</div>
+						<div class="status-value" id="status-available"></div>
+					</div>
+					<div class="status-row">
+						<div class="status-label">Your version:</div>
+						<div class="status-value" id="status-local"></div>
+					</div>
+				</div>
+
+				<div class="update-stage stage-latest hidden">
+					<p class="stage-label">You are using latest version</p>
+					<button class="align-end" role="button" id="update-manually">Check For Updates Manually</button>
+				</div>
+
+				<div class="update-stage stage-checking hidden">
+					<p class="stage-label">Checking update...</p>
+				</div>
+
+				<div class="update-stage stage-available hidden">
+					<p class="stage-label">New version is available!</p>
+					<button class="align-end" role="button" id="update-download">Download and Install</button>
+				</div>
+
+				<div class="update-stage stage-downloading hidden">
+					<p class="stage-label">Downloading update...</p>
+					<progress class="stage-progress" id="update-progress" value="0" max="100"></progress>
+					<div class="stage-progress-info">
+						<div class="stage-progress-info-cell">
+							<span id="update-percent"></span>
+							(<span id="update-downloaded"></span> / <span id="update-total"></span>)
+						</div>
+						<div class="stage-progress-info-cell">
+							<span id="update-speed"></span>
+						</div>
+					</div>
+				</div>
+
+				<div class="update-stage stage-ready hidden">
+					<p class="stage-label">New version is ready to install</p>
+					<button class="align-end" role="button" id="update-install">Restart And Install</button>
+				</div>
+
+				<div class="update-stage stage-installing hidden">
+					<p class="stage-label">Installing update...</p>
+				</div>
+
+				<div class="update-stage stage-installed hidden">
+					<p class="stage-label">New version is installed. It will be applied on next restart.</p>
+				</div>
+
+				<div class="update-stage stage-error hidden">
+					<p class="stage-label">An error occurred while updating</p>
+					<pre class="error-message" id="update-error"></pre>
+					<div>Restart app and try to update later.</div>
+				</div>
 			</div>
 			<div class="tab-panel about" data-for="about">
 				<img src="../icons/desktop.png" alt="Notion Electron" class="logo" />
@@ -374,6 +619,36 @@ document.addEventListener('DOMContentLoaded', () => {
 		select: document.getElementById('option-select'),
 		group: document.getElementById('option-group'),
 	};
+	const stageLatest = document.querySelector('.stage-latest');
+	const stageChecking = document.querySelector('.stage-checking');
+	const stageAvailable = document.querySelector('.stage-available');
+	const stageDownloading = document.querySelector('.stage-downloading');
+	const stageReady = document.querySelector('.stage-ready');
+	const stageInstalling = document.querySelector('.stage-installing');
+	const stageInstalled = document.querySelector('.stage-installed');
+	const stageError = document.querySelector('.stage-error');
+	const statusDate = document.getElementById('status-date');
+	const statusAvailable = document.getElementById('status-available');
+	const statusLocal = document.getElementById('status-local');
+	const updateManually = document.getElementById('update-manually');
+	const updateDownload = document.getElementById('update-download');
+	const updateProgress = document.getElementById('update-progress');
+	const updatePercentage = document.getElementById('update-percent');
+	const updateDownloaded = document.getElementById('update-downloaded');
+	const updateTotal = document.getElementById('update-total');
+	const updateSpeed = document.getElementById('update-speed');
+	const updateInstall = document.getElementById('update-install');
+	const updateError = document.getElementById('update-error');
+	const updateStages = [
+		stageLatest,
+		stageChecking,
+		stageAvailable,
+		stageDownloading,
+		stageReady,
+		stageInstalling,
+		stageInstalled,
+		stageError,
+	];
 
 	function selectTab(tabId) {
 		if (tabId === currentTab) return;
@@ -414,6 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	window.notionElectronAPI.getAppMetadata();
 	window.notionElectronAPI.getOptions();
+	window.notionElectronAPI.requestUpdateStatus();
 
 	window.notionElectronAPI.subscribeOnOptions((config) => {
 		const optionsPanel = document.querySelector('.tab-panel.options');
@@ -487,11 +763,73 @@ document.addEventListener('DOMContentLoaded', () => {
 		document.getElementById('author').textContent = metadata.author;
 		document.getElementById('license').textContent = metadata.license;
 	});
+	window.notionElectronAPI.subscribeOnUpdateStatusChange(data => {
+		const {
+			stage,
+			percentage,
+			downloaded,
+			total,
+			speed,
+			error,
+			lastChecked,
+			lastCheckedFormatted,
+			availableVersion,
+			localVersion,
+		} = data;
+		updateStages.forEach(s => s.classList.add('hidden'));
+		toggleIndicator('updates', false);
+		switch(stage) {
+			case 'latest':
+				stageLatest.classList.remove('hidden');
+				break;
+			case 'checking':
+				stageChecking.classList.remove('hidden');
+				break;
+			case 'available':
+				toggleIndicator('updates', true);
+				stageAvailable.classList.remove('hidden');
+				break;
+			case 'downloading':
+				stageDownloading.classList.remove('hidden');
+				updatePercentage.textContent = `${percentage}%`;
+				updateProgress.value = percentage;
+				updateDownloaded.textContent = downloaded;
+				updateTotal.textContent = total;
+				updateSpeed.textContent = speed;
+				break;
+			case 'ready':
+				stageReady.classList.remove('hidden');
+				break;
+			case 'installing':
+				stageInstalling.classList.remove('hidden');
+				break;
+			case 'installed':
+				stageInstalled.classList.remove('hidden');
+				break;
+			case 'error':
+				stageError.classList.remove('hidden');
+				updateError.textContent = error;
+				break;
+		}
+		statusDate.textContent = lastCheckedFormatted;
+		statusAvailable.textContent = availableVersion;
+		statusLocal.textContent = localVersion;
+	});
+
 	restart.addEventListener('click', () => {
 		window.notionElectronAPI.restartApp();
 	});
 	cancel.addEventListener('click', () => {
 		window.notionElectronAPI.closeWindow();
+	});
+	updateManually.addEventListener('click', () => {
+		window.notionElectronAPI.checkUpdateForced();
+	});
+	updateDownload.addEventListener('click', () => {
+		window.notionElectronAPI.downloadUpdate();
+	});
+	updateInstall.addEventListener('click', () => {
+		window.notionElectronAPI.installUpdate();
 	});
 });
 	</script>

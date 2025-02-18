@@ -59,10 +59,41 @@
 				"type": "checkbox",
 				"default": true
 			}
+		},
+		"update-check-interval": {
+			"group": "g3",
+			"name": "Automatically Check For Updates",
+			"value": {
+				"type": "select",
+				"default": "daily",
+				"options": {
+					"never": "Never",
+					"daily": "Daily",
+					"weekly": "Weekly",
+					"monthly": "Monthly"
+				}
+			}
+		},
+		"update-auto-download": {
+			"group": "g3",
+			"name": "Automatically Download Updates (for AppImage only)",
+			"value": {
+				"type": "checkbox",
+				"default": true
+			}
+		},
+		"update-auto-install": {
+			"group": "g3",
+			"name": "Automatically Install Updates (for AppImage only)",
+			"value": {
+				"type": "checkbox",
+				"default": true
+			}
 		}
 	},
 	"groups": {
 		"g1": "General",
+		"g3": "Updates",
 		"g2": "Tabs and Window Title Bar"
 	}
 }

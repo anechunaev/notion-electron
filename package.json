@@ -5,23 +5,33 @@
   "type": "module",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
-    "start": "electron .",
+    "start": "APPIMAGE=/ electron .",
     "make": "electron-packager . notion-electron --platform=linux --arch=x64 --out=dist/ --icon=./assets/icons/desktop.png --overwrite && chmod -R 777 ./dist/notion-electron-linux-x64/",
     "pack": "electron-builder --linux",
     "install-desktop-file": "desktop-file-install --dir=$HOME/.local/share/applications ./notion-electron.desktop",
+    "dev": "node ./dev/release-server.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "Artem Nechunaev <artem@nechunaev.com>",
   "license": "MIT",
   "description": "Unofficial Notion desktop client made with Electron for Linux",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anechunaev/notion-electron"
+  },
+  "publish": {
+    "provider": "github",
+    "releaseType": "release"
+  },
   "devDependencies": {
     "@electron/packager": "^18.3.6",
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8"
   },
   "dependencies": {
-    "electron-store": "^10.0.0"
+    "electron-store": "^10.0.0",
+    "electron-updater": "^6.3.9"
   },
   "build": {
     "appId": "com.nechunaev.notion.electron",

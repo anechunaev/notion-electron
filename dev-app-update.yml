@@ -1,0 +1,6 @@
+provider: generic
+url: 'http://localhost:8123/release'
+
+# provider: github
+# owner: anechunaev
+# repo: notion-electron

@@ -7,6 +7,7 @@ import WindowPositionService from './services/windowPosition.mjs';
 import TrayService from './services/tray.mjs';
 import ContextMenuService from './services/contextMenu.mjs';
 import OptionsService from './services/options.mjs';
+import UpdateService from './services/update.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,6 +79,10 @@ if (!app.requestSingleInstanceLock()) {
 		const windowPositionService = new WindowPositionService(mainWindow, store);
 		const trayService = new TrayService(mainWindow, optionsWindow);
 		const contextMenuService = new ContextMenuService(mainWindow, tabService);
+		const updateService = new UpdateService(optionsWindow, store);
+
+		updateService.on('update-available', trayService.onUpdateAvailable);
+		updateService.on('update-not-available', trayService.onUpdateNotAvailable);
 
 		mainWindow.on('minimize', function (event) {
 			event.preventDefault();

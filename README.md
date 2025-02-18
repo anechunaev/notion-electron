@@ -4,13 +4,6 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 
 ![Screenshot](./docs/screenshot1.png)
 
-## Configuration
-
-Run program with this flags to enable features:
-
-- `--hide-on-startup` – This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
-- `--disable-spellcheck` - disables OS-defined spellcheck.
-
 ## Installation
 
 You can download `.deb`, `.rpm` and `AppImage` packages by this links:
@@ -46,6 +39,13 @@ Steps:
 	```sh
 	npm run install-desktop-file
 	```
+
+## Configuration
+
+Run program with this flags to enable features:
+
+- `--hide-on-startup` – This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
+- `--disable-spellcheck` - disables OS-defined spellcheck.
 
 ## Contributing
 
