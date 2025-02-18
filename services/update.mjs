@@ -82,6 +82,9 @@ class UpdateService extends EventEmitter {
 			}
 		});
 		this.#updater.on('update-not-available', (info) => {
+			this.#lastChecked = (new Date()).toISOString();
+			this.#store.set('update-last-checked', this.#lastChecked);
+
 			this.emit('update-not-available', { version: info.version });
 			this.#stage = 'latest';
 			this.#sendStatus();
