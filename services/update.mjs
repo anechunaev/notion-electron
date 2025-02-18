@@ -210,6 +210,7 @@ class UpdateService extends EventEmitter {
 				setImmediate(() => {
 					autoUpdater.emit("before-quit-for-update");
 					app.isQuiting = true;
+					app.relaunch();
 					app.quit();
 				});
 			}
