@@ -6,11 +6,11 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 
 ## Installation
 
-You can download `.deb`, `.rpm` and `AppImage` packages by this links:
+### [<img src="./docs/download-appimage-banner.svg" alt="Download" />](https://github.com/anechunaev/notion-electron/releases/download/v1.6.3/notion-electron-1.6.3.x86_64.AppImage)
 
-- **[Download .deb package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.6.2/notion-electron-1.6.2.amd64.deb)**
-- **[Download .rpm package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.6.2/notion-electron-1.6.2.x86_64.rpm)**
-- **[Download AppImage (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.6.2/notion-electron-1.6.2.x86_64.AppImage)**
+- **[Ubuntu / Debian `.deb` package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.6.3/notion-electron-1.6.3.amd64.deb)**
+- **[Fedora / CentOS / OpenSUSE `.rpm` package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.6.3/notion-electron-1.6.3.x86_64.rpm)**
+- **[Any Distribution `.AppImage` (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.6.3/notion-electron-1.6.3.x86_64.AppImage)**
 
 ### Manual Installation
 
