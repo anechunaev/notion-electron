@@ -48,8 +48,8 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 		});
 	},
 	subscribeOnTabRequest: (callback) => {
-		ipcRenderer.on('tab-request', (event, url) => {
-			callback(url);
+		ipcRenderer.on('tab-request', (event, url, tabId) => {
+			callback(url, tabId);
 		});
 	},
 	subscribeOnContextMenu: (callback) => {

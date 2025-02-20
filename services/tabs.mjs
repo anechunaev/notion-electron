@@ -1,10 +1,11 @@
-import { WebContentsView, ipcMain, shell } from 'electron';
+import { WebContentsView, ipcMain, shell, app } from 'electron';
 import { URL, fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TITLEBAR_HEIGHT = 44;
+const HOME_PAGE = 'https://www.notion.com/login';
 
 class TabsService {
 	#tabViews = {};
@@ -13,10 +14,12 @@ class TabsService {
 	#window = null;
 	#currentTabId = null;
 	#options = null;
+	#store = null;
 
-	constructor(window, optionsService) {
+	constructor(window, optionsService, store) {
 		this.#window = window;
 		this.#options = optionsService;
+		this.#store = store;
 
 		this.#titleBarView = new WebContentsView({
 			webPreferences: {
@@ -91,6 +94,16 @@ class TabsService {
 
 		this.#window.on('resize', this.#setViewSize.bind(this));
 
+		if (this.#store.get('tabs-reopen-on-start', false)) {
+			this.#reopenTabs(store.get('tabs', {}));
+		} else {
+			this.requestTab(HOME_PAGE);
+		}
+
+		app.on('before-quit', () => {
+			this.#saveTabs();
+		});
+
 		this.#setViewSize();
 		this.#setVisibleTabs();
 
@@ -143,7 +156,10 @@ class TabsService {
 
 		const bounds = this.#window.getBounds();
 		view.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
-		view.webContents.loadURL(loadUrl ?? 'https://www.notion.com/login');
+		view.webContents.loadURL(loadUrl ?? HOME_PAGE)
+			.then(() => {
+				this.#saveTabs();
+			});
 		view.webContents.setWindowOpenHandler((event) => {
 			const { url, disposition } = event;
 			return this.#tabOpenWindowHandler(url, disposition);
@@ -187,6 +203,8 @@ class TabsService {
 			view.webContents.close();
 			delete this.#tabViews[tabId];
 		}
+
+		this.#saveTabs();
 	}
 
 	#setTabUrl(tabId, url) {
@@ -240,8 +258,29 @@ class TabsService {
 		this.#titleBarView.webContents.send('tab-request', this.#tabViews[tabId].webContents.getURL());
 	}
 
-	requestTab(url) {
-		this.#titleBarView.webContents.send('tab-request', url);
+	requestTab(url, tabId) {
+		if (!url) return;
+		this.#titleBarView.webContents.send('tab-request', url, tabId);
+	}
+
+	getTabsJSON() {
+		return Object.keys(this.#tabViews).reduce((acc, tabId) => {
+			const view = this.#tabViews[tabId];
+			acc[tabId] = view.webContents.getURL();
+			return acc;
+		}, {});
+	}
+
+	#reopenTabs(tabs) {
+		Object.entries(tabs).forEach(([tabId, url]) => {
+			this.requestTab(url, tabId);
+		});
+	}
+
+	#saveTabs() {
+		if (this.#store.get('tabs-reopen-on-start', false)) {
+			this.#store.set('tabs', this.getTabsJSON());
+		}
 	}
 }
 

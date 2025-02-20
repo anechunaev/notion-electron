@@ -395,9 +395,15 @@ document.addEventListener('DOMContentLoaded', () => {
 		titlebarSidebar.style.flex = `0 0 ${width ?? '240px'}`;
 	}
 
-	function onAddTab(url) {
+	function onAddTab(url, tabIdRequested) {
+		if (tabIdRequested && tabMap[tabIdRequested]) {
+			onSelectTab(tabIdRequested);
+			return;
+		}
+
 		const tab = createTabElement('New tab', undefined);
-		const tabId = tab.dataset.tabId;
+		const tabId = tabIdRequested ?? tab.dataset.tabId;
+		if (tabIdRequested) tab.dataset.tabId = tabIdRequested;
 		tabMap[tabId] = tab;
 
 		tabMapSelect[tabId] = () => onSelectTab(tabId);
@@ -508,8 +514,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 			tabgroupObserver.observe(tabgroup, { childList: true });
 		}
-
-		onAddTab();
 
 		window.notionElectronAPI.requestGlobalOptions();
 

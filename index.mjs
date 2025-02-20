@@ -75,7 +75,7 @@ if (!app.requestSingleInstanceLock()) {
 		optionsWindow.loadFile(path.join(__dirname, './assets/pages/options.html'));
 
 		const optionsService = new OptionsService(mainWindow, optionsWindow, store);
-		const tabService = new TabService(mainWindow, optionsService);
+		const tabService = new TabService(mainWindow, optionsService, store);
 		const windowPositionService = new WindowPositionService(mainWindow, store);
 		const trayService = new TrayService(mainWindow, optionsWindow);
 		const contextMenuService = new ContextMenuService(mainWindow, tabService);
