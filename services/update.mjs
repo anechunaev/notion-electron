@@ -1,6 +1,6 @@
 import { ipcMain, app, autoUpdater, shell } from "electron";
 import electronUpdater from "electron-updater";
-import { execSync } from 'node:child_process';
+import { execSync, execFile } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 
 const ONE_HOUR_MS = 1000 * 60 * 60;
@@ -209,6 +209,12 @@ class UpdateService extends EventEmitter {
 
 				setImmediate(() => {
 					autoUpdater.emit("before-quit-for-update");
+					if (process.env.APPIMAGE) {
+						execFile(process.env.APPIMAGE, process.argv);
+						app.isQuiting = true;
+						app.quit();
+						return;
+					}
 					app.isQuiting = true;
 					app.relaunch();
 					app.quit();
