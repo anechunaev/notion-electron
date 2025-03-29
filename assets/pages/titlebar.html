@@ -185,11 +185,13 @@ body {
 	height: 24px;
 }
 
+.mail-icon {
+	vertical-align: middle;
+}
 .calendar-icon {
 	width: 25px;
 	height: 25px;
 	vertical-align: middle;
-	margin: -1px 0 1px;
 }
 
 
@@ -273,6 +275,15 @@ body {
 				<img class="calendar-icon" src="../icons/dark/calendar-s.svg" />
 			</picture>
 			<span class="calendar-title">Calendar</span>
+		</button>
+	</template>
+	<template id="tab-mail-template">
+		<button id="mail" class="tab mail-tab" role="button">
+			<picture>
+				<source srcset="../icons/light/mail-s.svg" media="(prefers-color-scheme: light)" />
+				<img class="mail-icon" src="../icons/dark/mail-s.svg" />
+			</picture>
+			<span class="mail-title">Mail</span>
 		</button>
 	</template>
 	<div class="titlebar inverted">
@@ -359,6 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const tabgroupShadowLeft = document.querySelector('.tabgroup-shadow-left');
 	const tabgroupShadowRight = document.querySelector('.tabgroup-shadow-right');
 	const calendarTemplate = document.getElementById('tab-calendar-template');
+	const mailTemplate = document.getElementById('tab-mail-template');
 
 	function createTabElement(title, iconUrl) {
 		const template = document.getElementById('tab-template');
@@ -386,6 +398,11 @@ document.addEventListener('DOMContentLoaded', () => {
 		const calendarButton = document.getElementById('calendar');
 		if (calendarButton) {
 			calendarButton.classList.remove('selected');
+		}
+
+		const mailButton = document.getElementById('mail');
+		if (mailButton) {
+			mailButton.classList.remove('selected');
 		}
 	}
 
@@ -550,8 +567,25 @@ document.addEventListener('DOMContentLoaded', () => {
 						onSelectTab();
 						calendarButton.classList.add('selected');
 						titlebarSidebar.classList.add('hidden');
-						titlebar.classList.remove('inverted');
-						notionElectronAPI.changeTab();
+						titlebar.classList.toggle('inverted', false);
+						notionElectronAPI.changeTab('calendar');
+					});
+				}
+			}
+
+			if (options.mailEnabled) {
+				const mailTab = mailTemplate.content.cloneNode(true);
+
+				titlebar.appendChild(mailTab);
+				const mailButton = document.getElementById('mail');
+
+				if (mailButton) {
+					mailButton.addEventListener('click', () => {
+						onSelectTab();
+						mailButton.classList.add('selected');
+						titlebarSidebar.classList.add('hidden');
+						titlebar.classList.toggle('inverted', true);
+						notionElectronAPI.changeTab('mail');
 					});
 				}
 			}

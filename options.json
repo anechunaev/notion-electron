@@ -44,6 +44,14 @@
 				"default": true
 			}
 		},
+		"tabs-show-mail": {
+			"group": "g2",
+			"name": "Show Mail App as Pinned Tab",
+			"value": {
+				"type": "checkbox",
+				"default": true
+			}
+		},
 		"tabs-reopen-on-start": {
 			"group": "g2",
 			"name": "Reopen Tabs on Application Start",

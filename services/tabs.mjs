@@ -10,6 +10,7 @@ const HOME_PAGE = 'https://www.notion.com/login';
 class TabsService {
 	#tabViews = {};
 	#calendarView = null;
+	#mailView = null;
 	#titleBarView = null;
 	#window = null;
 	#currentTabId = null;
@@ -32,6 +33,14 @@ class TabsService {
 		if (this.#options.getOption('tabs-show-calendar').data) {
 			this.#calendarView = new WebContentsView();
 			this.#calendarView.webContents.loadURL('https://calendar.notion.so/notion-auth');
+		}
+
+		if (this.#options.getOption('tabs-show-mail').data) {
+			this.#mailView = new WebContentsView();
+			this.#mailView.webContents.loadURL('https://mail.notion.so/notion-auth', {
+				// TODO: Remove after they fix device detection on their side
+				userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0',
+			});
 		}
 
 		ipcMain.on('add-tab', (event, tabId, loadUrl) => {
@@ -83,6 +92,7 @@ class TabsService {
 		ipcMain.on('request-options', (event) => {
 			const options = {
 				calendarEnabled: this.#options.getOption('tabs-show-calendar').data,
+				mailEnabled: this.#options.getOption('tabs-show-mail').data,
 				sidebarContinueToTitlebar: this.#options.getOption('tabs-continue-sidebar').data,
 			};
 			event.sender.send('global-options', options);
@@ -121,6 +131,9 @@ class TabsService {
 		if (this.#calendarView) {
 			this.#calendarView.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
 		}
+		if (this.#mailView) {
+			this.#mailView.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
+		}
 	}
 	
 	#setVisibleTabs(tabId) {
@@ -131,13 +144,19 @@ class TabsService {
 				if (this.#calendarView) {
 					this.#window.contentView.removeChildView(this.#calendarView);
 				}
+				if (this.#mailView) {
+					this.#window.contentView.removeChildView(this.#mailView);
+				}
 			} else {
 				this.#window.contentView.removeChildView(view);
 			}
 		});
 		
-		if (!tabId && this.#calendarView) {
+		if (tabId === 'calendar') {
 			this.#window.contentView.addChildView(this.#calendarView);
+		}
+		if (tabId === 'mail') {
+			this.#window.contentView.addChildView(this.#mailView);
 		}
 
 		this.#currentTabId = tabId;
@@ -203,7 +222,6 @@ class TabsService {
 			view.webContents.close();
 			delete this.#tabViews[tabId];
 		}
-
 		this.#saveTabs();
 	}
 
