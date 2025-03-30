@@ -33,6 +33,10 @@ class TabsService {
 		if (this.#options.getOption('tabs-show-calendar').data) {
 			this.#calendarView = new WebContentsView();
 			this.#calendarView.webContents.loadURL('https://calendar.notion.so/notion-auth');
+
+			if (this.#options.getOption('debug-open-dev-tools').data) {
+				this.#calendarView.webContents.openDevTools({ mode: 'detach' });
+			}
 		}
 
 		if (this.#options.getOption('tabs-show-mail').data) {
@@ -41,6 +45,10 @@ class TabsService {
 				// TODO: Remove after they fix device detection on their side
 				userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0',
 			});
+
+			if (this.#options.getOption('debug-open-dev-tools').data) {
+				this.#mailView.webContents.openDevTools({ mode: 'detach' });
+			}
 		}
 
 		ipcMain.on('add-tab', (event, tabId, loadUrl) => {
