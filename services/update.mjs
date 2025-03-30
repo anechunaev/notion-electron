@@ -238,7 +238,11 @@ class UpdateService extends EventEmitter {
 	#getSystemFormattedDate(dateString) {
 		const dateObject = dateString ? new Date(dateString) : new Date();
 		const isoString = dateObject.toISOString();
-		return execSync(`date -d ${isoString}`).toString().trim();
+		try {
+			return execSync(`date -d ${isoString}`).toString().trim();
+		} catch (error) {
+			return dateObject.toLocaleString();
+		}
 	}
 }
 

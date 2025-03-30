@@ -46,7 +46,6 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 	},
 	subscribeOnUpdateStatusChange: (callback) => {
 		ipcRenderer.on('update-status', (event, data) => {
-			console.log('>> update status', data);
 			callback(data);
 		});
 	},
