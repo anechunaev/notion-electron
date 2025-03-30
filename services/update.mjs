@@ -210,7 +210,11 @@ class UpdateService extends EventEmitter {
 				setImmediate(() => {
 					autoUpdater.emit("before-quit-for-update");
 					if (process.env.APPIMAGE) {
-						execFile(process.env.APPIMAGE, process.argv);
+						try {
+							execFile(process.env.APPIMAGE, process.argv);
+						} catch (relaunchError) {
+							console.error('>> Error in auto-updater. ', relaunchError);
+						}
 						app.isQuiting = true;
 						app.quit();
 						return;
@@ -238,11 +242,13 @@ class UpdateService extends EventEmitter {
 	#getSystemFormattedDate(dateString) {
 		const dateObject = dateString ? new Date(dateString) : new Date();
 		const isoString = dateObject.toISOString();
+		let dateStringFormatted;
 		try {
-			return execSync(`date -d ${isoString}`).toString().trim();
+			dateStringFormatted = execSync(`date -d ${isoString}`).toString().trim();
 		} catch (error) {
-			return dateObject.toLocaleString();
+			dateStringFormatted = dateObject.toLocaleString();
 		}
+		return dateStringFormatted;
 	}
 }
 
