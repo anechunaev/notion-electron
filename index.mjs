@@ -32,12 +32,13 @@ if (!app.requestSingleInstanceLock()) {
 
 	const showOnStartup = process.argv.includes("--hide-on-startup") ? false : store.get('general-show-window-on-start', true);
 	const enableSpellcheck = process.argv.includes("--disable-spellcheck") ? false : store.get('general-enable-spellcheck', false);
-	nativeTheme.themeSource = store.get('general-theme', 'system');
-	const bgColor = store.get('general-theme', 'system') === 'system'
-		? (nativeTheme.shouldUseDarkColors ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND)
-		: (store.get('general-theme', 'system') === 'dark' ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND);
 
 	app.whenReady().then(() => {
+		nativeTheme.themeSource = store.get('general-theme', 'system');
+		const bgColor = store.get('general-theme', 'system') === 'system'
+			? (nativeTheme.shouldUseDarkColors ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND)
+			: (store.get('general-theme', 'system') === 'dark' ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND);
+
 		mainWindow = new BaseWindow({
 			title: 'Notion Electorn',
 			minWidth: 800,

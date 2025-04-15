@@ -26,12 +26,12 @@
   },
   "devDependencies": {
     "@electron/packager": "^18.3.6",
-    "electron": "^33.2.1",
+    "electron": "^35.1.5",
     "electron-builder": "^25.1.8"
   },
   "dependencies": {
     "electron-store": "^10.0.0",
-    "electron-updater": "^6.3.9"
+    "electron-updater": "^6.6.2"
   },
   "build": {
     "appId": "com.nechunaev.notion.electron",
