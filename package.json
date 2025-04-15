@@ -30,7 +30,7 @@
     "electron-builder": "^25.1.8"
   },
   "dependencies": {
-    "electron-store": "^10.0.0",
+    "electron-store": "^10.0.1",
     "electron-updater": "^6.6.2"
   },
   "build": {
