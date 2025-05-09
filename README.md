@@ -2,6 +2,8 @@
 
 Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 41). This app includes dedicated tabs for Notion Calendar and Notion Mail.
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/anechunaev/notion-electron)
+
 ![Screenshot](./docs/screenshot1.png)
 
 ## Installation
