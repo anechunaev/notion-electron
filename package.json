@@ -46,11 +46,13 @@
         "AppImage"
       ],
       "desktop": {
-        "Name": "Notion Electron",
-        "Icon": "./assets/icons/desktop.png",
-        "Terminal": "false",
-        "Type": "Application",
-        "Categories": "Utility;Office;"
+        "entry": {
+          "Name": "Notion Electron",
+          "Icon": "./assets/icons/desktop.png",
+          "Terminal": "false",
+          "Type": "Application",
+          "Categories": "Utility;Office;"
+        }
       },
       "category": "Utility;Office;"
     },
