@@ -2,12 +2,15 @@ import { app, screen, nativeTheme, BaseWindow, BrowserWindow } from 'electron';
 import Store from 'electron-store';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import pkg from './package.json' with { type: "json" };
 import TabService from './services/tabs.mjs';
 import WindowPositionService from './services/windowPosition.mjs';
 import TrayService from './services/tray.mjs';
 import ContextMenuService from './services/contextMenu.mjs';
 import OptionsService from './services/options.mjs';
 import UpdateService from './services/update.mjs';
+import ChangelogService from './services/changelog.mjs';
+import NotificationService from './services/notifications.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -75,12 +78,14 @@ if (!app.requestSingleInstanceLock()) {
 		});
 		optionsWindow.loadFile(path.join(__dirname, './assets/pages/options.html'));
 
+		const notificationService = new NotificationService();
 		const optionsService = new OptionsService(mainWindow, optionsWindow, store);
 		const tabService = new TabService(mainWindow, optionsService, store);
 		const windowPositionService = new WindowPositionService(mainWindow, store);
 		const trayService = new TrayService(mainWindow, optionsWindow);
 		const contextMenuService = new ContextMenuService(mainWindow, tabService);
-		const updateService = new UpdateService(optionsWindow, store);
+		const changelogService = new ChangelogService(pkg.repository.owner, pkg.repository.name);
+		const updateService = new UpdateService(optionsWindow, notificationService, changelogService, store);
 
 		updateService.on('update-available', trayService.onUpdateAvailable);
 		updateService.on('update-not-available', trayService.onUpdateNotAvailable);

@@ -97,6 +97,14 @@
 				"type": "checkbox",
 				"default": true
 			}
+		},
+		"update-notification": {
+			"group": "g3",
+			"name": "Show Notification on Update",
+			"value": {
+				"type": "checkbox",
+				"default": false
+			}
 		}
 	},
 	"groups": {

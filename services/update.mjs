@@ -2,6 +2,7 @@ import { ipcMain, app, autoUpdater, shell } from "electron";
 import electronUpdater from "electron-updater";
 import { execSync, execFile } from 'node:child_process';
 import { EventEmitter } from 'node:events';
+import { getSystemFormattedDate } from '../lib/dateFormat.mjs';
 
 const ONE_HOUR_MS = 1000 * 60 * 60;
 const ONE_DAY_MS = ONE_HOUR_MS * 24;
@@ -21,11 +22,15 @@ class UpdateService extends EventEmitter {
 	#total = '';
 	#speed = '';
 	#error = null;
+	#notifications;
+	#changelog;
 
-	constructor(optionsWindow, store) {
+	constructor(optionsWindow, notificationService, changelogService, store) {
 		super();
 		this.#optionsWindow = optionsWindow;
 		this.#store = store;
+		this.#notifications = notificationService;
+		this.#changelog = changelogService;
 
 		this.#localVersion = app.getVersion();
 		this.#updater.autoDownload = false;
@@ -74,6 +79,13 @@ class UpdateService extends EventEmitter {
 			this.#store.set('update-last-checked', this.#lastChecked);
 			this.#store.set('update-available-version', this.#availableVersion);
 
+			if (this.#store.get('update-notification', false)) {
+				this.#notifications.notify({
+					title: 'Update available',
+					body: `Version ${this.#availableVersion} is available for download.`,
+				});
+			}
+
 			if (process.env.APPIMAGE && store.get('update-auto-download', false)) {
 				this.#downloadUpdate();
 			} else {
@@ -112,28 +124,18 @@ class UpdateService extends EventEmitter {
 			}
 		});
 
-		ipcMain.on("request-update-status", () => {
-			this.#sendStatus();
-		});
-
-		ipcMain.on("check-update-forced", () => {
-			this.#checkUpdateForced();
-		});
-
-		ipcMain.on("download-update", () => {
-			this.#downloadUpdate();
-		});
-
-		ipcMain.on("install-update", () => {
-			this.#installUpdate();
-		});
+		ipcMain.on('request-update-status', this.#sendStatus.bind(this));
+		ipcMain.on('check-update-forced', this.#checkUpdateForced.bind(this));
+		ipcMain.on('download-update', this.#downloadUpdate.bind(this));
+		ipcMain.on('install-update', this.#installUpdate.bind(this))
+		ipcMain.on('request-changelog', this.#fetchChangelog.bind(this));
 	}
 
 	#sendStatus() {
 		if (!this.#optionsWindow || !this.#optionsWindow.webContents) return;
 		this.#optionsWindow.webContents.send("update-status", {
 			lastChecked: this.#lastChecked,
-			lastCheckedFormatted: this.#getSystemFormattedDate(this.#lastChecked),
+			lastCheckedFormatted: getSystemFormattedDate(this.#lastChecked),
 			availableVersion: this.#availableVersion,
 			localVersion: this.#localVersion,
 			stage: this.#stage,
@@ -165,6 +167,8 @@ class UpdateService extends EventEmitter {
 			this.#stage = 'checking';
 			this.#sendStatus();
 		}
+
+		this.#fetchChangelog();
 
 		return this.#updater.doCheckForUpdates()
 			.catch((err) => {
@@ -239,22 +243,19 @@ class UpdateService extends EventEmitter {
 		return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
 	}
 
-	#getSystemFormattedDate(dateString) {
-		let dateObject = dateString ? new Date(dateString) : new Date();
-		if (isNaN(dateObject)) {
-			dateObject = new Date();
-		}
-		const isoString = dateObject.toISOString();
-		let dateStringFormatted;
-		try {
-			dateStringFormatted = execSync(
-				`date -d ${isoString}`,
-				{ stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true }
-			).toString().trim();
-		} catch (error) {
-			dateStringFormatted = dateObject.toLocaleString();
-		}
-		return dateStringFormatted;
+	#fetchChangelog() {
+		this.#changelog
+			.fetch()
+			.then((releases) => {
+				return this.#changelog.html(releases);
+			})
+			.then((html) => {
+				if (!this.#optionsWindow || !this.#optionsWindow.webContents) return;
+				this.#optionsWindow.webContents.send("update-changelog", html);
+			})
+			.catch((error) => {
+				console.error('Error fetching changelog:', error);
+			});
 	}
 }
 

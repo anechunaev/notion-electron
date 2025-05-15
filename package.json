@@ -18,7 +18,9 @@
   "description": "Unofficial Notion desktop client made with Electron for Linux",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anechunaev/notion-electron"
+    "url": "https://github.com/anechunaev/notion-electron",
+    "owner": "anechunaev",
+    "name": "notion-electron"
   },
   "publish": {
     "provider": "github",

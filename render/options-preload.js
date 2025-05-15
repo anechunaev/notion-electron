@@ -28,6 +28,9 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 	installUpdate: () => {
 		ipcRenderer.send('install-update');
 	},
+	requestChangelog: () => {
+		ipcRenderer.send('request-changelog');
+	},
 
 	subscribeOnTabChange: (callback) => {
 		ipcRenderer.on('show-tab', (event, tabName) => {
@@ -46,6 +49,11 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 	},
 	subscribeOnUpdateStatusChange: (callback) => {
 		ipcRenderer.on('update-status', (event, data) => {
+			callback(data);
+		});
+	},
+	subscribeOnUpdateChangelog: (callback) => {
+		ipcRenderer.on('update-changelog', (event, data) => {
 			callback(data);
 		});
 	},

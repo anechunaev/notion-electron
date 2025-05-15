@@ -26,6 +26,9 @@
 	--status-error-border: #C628282b;
 	--statuc-success: #1B5E200a;
 	--status-success-border: #2E7D3252;
+
+	--spinner-indicator: #FFF2;
+	--spinner-indicator-highlight: #FFF;
 }
 @media (prefers-color-scheme: light) {
 	:root {
@@ -46,6 +49,9 @@
 		--status-error-border: #C628283d;
 		--statuc-success: #1B5E200a;
 		--status-success-border: #2E7D3252;
+
+		--spinner-indicator: #1d1b1622;
+		--spinner-indicator-highlight: #1d1b16;
 	}
 }
 html,body {
@@ -423,6 +429,64 @@ button:focus {
 	box-shadow: 0 2px 5px var(--bg-sidebar);
 }
 
+.changelog {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 200px;
+	padding: 0 20px;
+}
+.changelog dl {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 20px;
+	margin: 0;
+}
+.changelog dt {
+	display: block;
+	margin: 0;
+	padding: 0;
+	flex: 0 0 180px;
+}
+.changelog dd {
+	display: block;
+	margin: 0 0 20px;
+	padding: 0;
+	flex: 1 1 calc(100% - 200px);
+}
+.changelog small,
+.subheader {
+	opacity: 0.8;
+}
+
+.spinner {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background-color: var(--spinner-indicator-highlight);
+	box-shadow: 20px 0 var(--spinner-indicator-highlight), -20px 0 var(--spinner-indicator-highlight);
+	position: relative;
+	animation: flash 0.5s ease-out infinite alternate;
+}
+
+@keyframes flash {
+	0% {
+		background-color: var(--spinner-indicator);
+		box-shadow: 20px 0 var(--spinner-indicator), -20px 0 var(--spinner-indicator-highlight);
+	}
+	50% {
+		background-color: var(--spinner-indicator-highlight);
+		box-shadow: 20px 0 var(--spinner-indicator), -20px 0 var(--spinner-indicator);
+	}
+	100% {
+		background-color: var(--spinner-indicator);
+		box-shadow: 20px 0 var(--spinner-indicator-highlight), -20px 0 var(--spinner-indicator);
+	}
+}
+
 
 @media (prefers-color-scheme: light) {
 	select {
@@ -589,6 +653,11 @@ button:focus {
 					<pre class="error-message" id="update-error"></pre>
 					<div>Restart app and try to update later.</div>
 				</div>
+
+				<span class="subheader">Changelog:</span>
+				<div class="changelog" id="changelog">
+					<span class="spinner"></span>
+				</div>
 			</div>
 			<div class="tab-panel about" data-for="about">
 				<img src="../icons/desktop.png" alt="Notion Electron" class="logo" />
@@ -609,6 +678,7 @@ button:focus {
 	<script>
 document.addEventListener('DOMContentLoaded', () => {
 	let currentTab = null;
+	let changelog = null;
 
 	const cancel = document.getElementById('cancel');
 	const restart = document.getElementById('restart');
@@ -649,6 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		stageInstalled,
 		stageError,
 	];
+	const changelogElement = document.getElementById('changelog');
 
 	function selectTab(tabId) {
 		if (tabId === currentTab) return;
@@ -660,6 +731,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		tabPanels.forEach(panel => {
 			panel.classList.toggle('hidden', panel.dataset.for !== currentTab);
 		});
+
+		if (tabId === 'updates' && !changelog) {
+			window.notionElectronAPI.requestChangelog();
+		}
 	}
 
 	function toggleIndicator(tabId, value) {
@@ -814,6 +889,13 @@ document.addEventListener('DOMContentLoaded', () => {
 		statusDate.textContent = lastCheckedFormatted;
 		statusAvailable.textContent = availableVersion;
 		statusLocal.textContent = localVersion;
+	});
+	window.notionElectronAPI.subscribeOnUpdateChangelog((html) => {
+		changelog = html;
+
+		if (changelogElement) {
+			changelogElement.innerHTML = changelog;
+		}
 	});
 
 	restart.addEventListener('click', () => {
