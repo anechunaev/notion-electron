@@ -1,4 +1,4 @@
-import { app, screen, nativeTheme, BaseWindow, BrowserWindow } from 'electron';
+import { app, screen, nativeTheme, BaseWindow, BrowserWindow, Menu } from 'electron';
 import Store from 'electron-store';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -37,6 +37,7 @@ if (!app.requestSingleInstanceLock()) {
 	const enableSpellcheck = process.argv.includes("--disable-spellcheck") ? false : store.get('general-enable-spellcheck', false);
 
 	app.whenReady().then(() => {
+		Menu.setApplicationMenu(null);
 		nativeTheme.themeSource = store.get('general-theme', 'system');
 		const bgColor = store.get('general-theme', 'system') === 'system'
 			? (nativeTheme.shouldUseDarkColors ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND)
