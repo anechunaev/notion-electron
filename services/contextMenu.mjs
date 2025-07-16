@@ -25,7 +25,12 @@ class ContextMenuService {
 	}
 
 	#templateTabContextMenu(tabId) {
-		const view = this.#tabService.getTabView(tabId);
+		let view = this.#tabService.getTabView(tabId);
+		let isPinned = false;
+		if (!view) {
+			view = this.#tabService.getPinnedTabView(tabId);
+			isPinned = Boolean(view);
+		}
 		const titlebar = this.#tabService.getTitleBarView();
 		return [
 			{
@@ -33,6 +38,7 @@ class ContextMenuService {
 				click: () => {
 					titlebar.webContents.send('context-menu-command', { id: 'close', tabId });
 				},
+				enabled: !isPinned,
 			},
 			{
 				label: 'Close Other Tabs',
@@ -48,6 +54,7 @@ class ContextMenuService {
 				click: () => {
 					titlebar.webContents.send('context-menu-command', { id: 'closeAll' });
 				},
+				enabled: !isPinned,
 			},
 			{ type: 'separator' },
 			{
@@ -55,6 +62,7 @@ class ContextMenuService {
 				click: () => {
 					this.#tabService.duplicateTab(tabId);
 				},
+				enabled: !isPinned && Boolean(view),
 			},
 			{ type: 'separator' },
 			{
@@ -68,17 +76,19 @@ class ContextMenuService {
 				label: 'Back',
 				accelerator: 'CmdOrCtrl+[',
 				click: () => {
+					if (!view) return;
 					view.webContents.navigationHistory.goBack();
 				},
-				enabled: view.webContents.navigationHistory.canGoBack(),
+				enabled: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 			},
 			{
 				label: 'Forward',
 				accelerator: 'CmdOrCtrl+]',
 				click: () => {
+					if (!view) return;
 					view.webContents.navigationHistory.goForward();
 				},
-				enabled: view.webContents.navigationHistory.canGoForward(),
+				enabled: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 			},
 			{ type: 'separator' },
 			{

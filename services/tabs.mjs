@@ -272,6 +272,17 @@ class TabsService {
 		return this.#tabViews[tabId];
 	}
 
+	getPinnedTabView(tabId) {
+		switch (tabId) {
+		case 'calendar':
+			return this.#calendarView;
+		case 'mail':
+			return this.#mailView;
+		default:
+			return this.#tabViews[tabId];
+		}
+	}
+
 	getTitleBarView() {
 		return this.#titleBarView;
 	}
