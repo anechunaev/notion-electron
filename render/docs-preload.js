@@ -29,6 +29,7 @@ function addStyleTag(style) {
 document.addEventListener('DOMContentLoaded', function() {
 	const titleTarget = document.querySelector('title');
 	const iconTarget = document.querySelector('link[rel="shortcut icon"]');
+	const notionApp = document.getElementById('notion-app');
 	let isSidebarUnfolded = true;
 
 	const titleObserver = new MutationObserver(function(mutations) {
@@ -78,17 +79,29 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 	});
 
-	window.addEventListener('contextmenu', (e) => {
-		const link = e.target.closest('a');
-		const image = e.target.closest('img');
-		ipcRenderer.send('show-page-context-menu', {
-			isLink: !!link,
-			isImage: !!image,
-			linkUrl: link?.href,
-			imageUrl: image?.src,
-			isSelection: !!window.getSelection().toString(),
-		});
-	});
+	if (notionApp) {
+		document.addEventListener('contextmenu', (e) => {
+			const link = e.target.closest('a');
+			const image = e.target.closest('img');
+			const input = e.target.closest('input, textarea, [contenteditable="true"]');
+			const isLink = !!link;
+			const isImage = !!image;
+			const isInput = !!input;
+			const isSelection = !!window.getSelection().toString();
+
+			if (isLink && e.defaultPrevented) return;
+
+			if (isLink || isImage || isInput || isSelection) {
+				ipcRenderer.send('show-page-context-menu', {
+					isLink,
+					isImage,
+					linkUrl: link?.href,
+					imageUrl: image?.src,
+					isSelection,
+				});
+			}
+		}, { capture: false } );
+	}
 
 	ipcRenderer.send('request-options');
 });
