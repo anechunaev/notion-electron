@@ -8,11 +8,11 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 
 ## Installation
 
-### [<img src="./docs/download-appimage-banner.svg" alt="Download" />](https://github.com/anechunaev/notion-electron/releases/download/v1.7.11/notion-electron-1.7.11.x86_64.AppImage)
+### [<img src="./docs/download-appimage-banner.svg" alt="Download" />](https://github.com/anechunaev/notion-electron/releases/download/v1.7.12/notion-electron-1.7.12.x86_64.AppImage)
 
-- **[Ubuntu / Debian `.deb` package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.7.11/notion-electron-1.7.11.amd64.deb)**
-- **[Fedora / CentOS / OpenSUSE `.rpm` package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.7.11/notion-electron-1.7.11.x86_64.rpm)**
-- **[Any Distribution `.AppImage` (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.7.11/notion-electron-1.7.11.x86_64.AppImage)**
+- **[Ubuntu / Debian `.deb` package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.7.12/notion-electron-1.7.12.amd64.deb)**
+- **[Fedora / CentOS / OpenSUSE `.rpm` package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.7.12/notion-electron-1.7.12.x86_64.rpm)**
+- **[Any Distribution `.AppImage` (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.7.12/notion-electron-1.7.12.x86_64.AppImage)**
 
 ### Manual Installation
 
