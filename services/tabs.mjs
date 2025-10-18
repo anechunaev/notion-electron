@@ -219,8 +219,8 @@ class TabsService {
 		this.#titleBarView.webContents.send('tab-info', tabId, {
 			title: null,
 			icon: null,
-			canGoBack: view ? view.webContents.navigationHistory.canGoBack() : false,
-			canGoForward: view ? view.webContents.navigationHistory.canGoForward() : false,
+			canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
+			canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 		});
 	}
 
@@ -251,8 +251,8 @@ class TabsService {
 			this.#titleBarView.webContents.send('tab-info', tabId, {
 				title,
 				icon,
-				canGoBack: view.webContents.navigationHistory.canGoBack(),
-				canGoForward: view.webContents.navigationHistory.canGoForward(),
+				canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
+				canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 			});
 		}
 	}
