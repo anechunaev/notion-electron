@@ -27,7 +27,7 @@
     "releaseType": "release"
   },
   "devDependencies": {
-    "@electron/packager": "^18.4.4",
+    "@electron/packager": "^19.0.0",
     "electron": "^38.2.2",
     "electron-builder": "^26.0.12"
   },
