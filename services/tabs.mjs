@@ -251,6 +251,7 @@ class TabsService {
 			this.#titleBarView.webContents.send('tab-info', tabId, {
 				title,
 				icon,
+				documentUrl: view.webContents?.getURL(),
 				canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 				canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 			});

@@ -32,15 +32,23 @@ document.addEventListener('DOMContentLoaded', function() {
 	const notionApp = document.getElementById('notion-app');
 	let isSidebarUnfolded = true;
 
-	const titleObserver = new MutationObserver(function(mutations) {
-		mutations.forEach(function(mutation) {
+	function observeDocumentMetaInfo(mutations) {
+		mutations.forEach(() => {
 			setTimeout(() => {
 				ipcRenderer.send('history-changed', document.title, iconTarget?.href);
-			}, 200);
+			}, 100);
 		});
-	});
+	}
+
+	const titleObserver = new MutationObserver(observeDocumentMetaInfo);
 	titleObserver.observe(titleTarget, {
 		childList: true,
+	});
+
+	const iconObserver = new MutationObserver(observeDocumentMetaInfo);
+	iconObserver.observe(iconTarget, {
+		attributes: true,
+		attributeFilter: ['href'],
 	});
 
 	ipcRenderer.on('sidebar-fold', (event, collapsed) => {
@@ -104,6 +112,10 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	ipcRenderer.send('request-options');
+
+	window.addEventListener('popstate', () => {
+		ipcRenderer.send('history-changed', document.title, iconTarget?.href);
+	});
 });
 
 ipcRenderer.on('request-sidebar-data', () => {

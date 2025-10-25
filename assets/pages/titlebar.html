@@ -175,6 +175,12 @@ body {
 	height: 16px;
 	margin-left: 4px;
 }
+.tab.sortable-ghost {
+	visibility: hidden;
+}
+.tab.sortable-ghost:hover .tab-close {
+	visibility: hidden;
+}
 
 .calendar-tab {
 	gap: 0;
@@ -256,6 +262,7 @@ body {
 	display: none;
 }
 	</style>
+	<script type="module" src="../../node_modules/sortablejs/modular/sortable.core.esm.js"></script>
 </head>
 <body>
 	<template id="tab-template">
@@ -351,7 +358,9 @@ body {
 	</div>
 	
 
-	<script>
+	<script type="module">
+import Sortable from '../../node_modules/sortablejs/modular/sortable.core.esm.js';
+
 document.addEventListener('DOMContentLoaded', () => {
 	const tabMap = {};
 	const tabMapDisconnect = {};
@@ -372,13 +381,14 @@ document.addEventListener('DOMContentLoaded', () => {
 	const calendarTemplate = document.getElementById('tab-calendar-template');
 	const mailTemplate = document.getElementById('tab-mail-template');
 
-	function createTabElement(title, iconUrl) {
+	function createTabElement(title, iconUrl, documentUrl) {
 		const template = document.getElementById('tab-template');
 		const tab = template.content.cloneNode(true).querySelector('.tab');
 		tab.querySelector('.tab-title').textContent = title;
 		tab.querySelector('.tab-icon').src = iconUrl ?? '../icons/dark/document.svg';
 		tab.dataset.tabId = crypto.randomUUID();
-		
+		tab.dataset.documentUrl = documentUrl ?? 'https://www.notion.so';
+
 		return tab;
 	}
 
@@ -418,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			return;
 		}
 
-		const tab = createTabElement('New tab', undefined);
+		const tab = createTabElement('New tab', undefined, url);
 		const tabId = tabIdRequested ?? tab.dataset.tabId;
 		if (tabIdRequested) tab.dataset.tabId = tabIdRequested;
 		tabMap[tabId] = tab;
@@ -494,13 +504,19 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 
-	function onTabInfo(tabId, { title, icon, canGoBack, canGoForward }) {
+	function onTabInfo(tabId, { title, icon, documentUrl, canGoBack, canGoForward }) {
 		const tab = tabMap[tabId];
 		if (tab && title && icon) {
 			tab.querySelector('.tab-title').textContent = title;
 			tab.querySelector('.tab-icon').src = icon;
 			tab.querySelector('.tab-icon-source').srcset = icon;
 		}
+
+		if (tab && documentUrl) {
+			tab.dataset.documentUrl = documentUrl;
+		}
+
+		console.log('>> onTabInfo()', tabId, documentUrl);
 
 		historyBackButton.disabled = !tab || !canGoBack;
 		historyForwardButton.disabled = !tab || !canGoForward;
@@ -624,6 +640,15 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		});
 	}
+
+	const sortableTabs = Sortable.create(tabgroup, {
+		group: 'tabs',
+		animation: 100,
+		direction: 'horizontal',
+		setData: (dataTransfer, dragEl) => {
+			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? 'https://www.notion.so');
+		},
+	});
 });
 	</script>
 </body>

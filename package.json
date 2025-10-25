@@ -33,7 +33,8 @@
   },
   "dependencies": {
     "electron-store": "^11.0.2",
-    "electron-updater": "^6.6.2"
+    "electron-updater": "^6.6.2",
+    "sortablejs": "^1.15.6"
   },
   "build": {
     "appId": "com.nechunaev.notion.electron",
