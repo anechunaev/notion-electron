@@ -9,6 +9,8 @@ const HOME_PAGE = 'https://www.notion.com/login';
 
 class TabsService {
 	#tabViews = {};
+	#iconMap = {};
+	#titlesMap = {};
 	#calendarView = null;
 	#mailView = null;
 	#titleBarView = null;
@@ -219,6 +221,7 @@ class TabsService {
 		this.#titleBarView.webContents.send('tab-info', tabId, {
 			title: null,
 			icon: null,
+			documentUrl: view.webContents?.getURL(),
 			canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 			canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 		});
@@ -229,6 +232,8 @@ class TabsService {
 		if (view) {
 			view.webContents.close();
 			delete this.#tabViews[tabId];
+			delete this.#iconMap[tabId];
+			delete this.#titlesMap[tabId];
 		}
 		this.#saveTabs();
 	}
@@ -255,6 +260,8 @@ class TabsService {
 				canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 				canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 			});
+			this.#iconMap[tabId] = icon;
+			this.#titlesMap[tabId] = title;
 		}
 	}
 
@@ -297,7 +304,6 @@ class TabsService {
 	}
 
 	requestTab(url, tabId) {
-		if (!url) return;
 		this.#titleBarView.webContents.send('tab-request', url, tabId);
 	}
 
@@ -319,6 +325,18 @@ class TabsService {
 		if (this.#store.get('tabs-reopen-on-start', false)) {
 			this.#store.set('tabs', this.getTabsJSON());
 		}
+	}
+
+	getTabIcon(tabId) {
+		return this.#iconMap[tabId];
+	}
+
+	getTabTitle(tabId) {
+		return this.#titlesMap[tabId];
+	}
+
+	getCurrentTabId() {
+		return this.#currentTabId;
 	}
 }
 

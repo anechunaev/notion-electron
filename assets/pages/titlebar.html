@@ -355,6 +355,15 @@ body {
 			<div class="tabgroup"></div>
 			<div class="tabgroup-shadow-right hidden"></div>
 		</div>
+
+		<div class="tab-all">
+			<button class="control" role="button" title="All Tabs">
+				<picture>
+					<source srcset="../icons/light/arrow_down.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/arrow_down.svg" />
+				</picture>
+			</button>
+		</div>
 	</div>
 	
 
@@ -380,6 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const tabgroupShadowRight = document.querySelector('.tabgroup-shadow-right');
 	const calendarTemplate = document.getElementById('tab-calendar-template');
 	const mailTemplate = document.getElementById('tab-mail-template');
+	const allTabsButton = document.querySelector('.tab-all .control');
 
 	function createTabElement(title, iconUrl, documentUrl) {
 		const template = document.getElementById('tab-template');
@@ -507,6 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	function onTabInfo(tabId, { title, icon, documentUrl, canGoBack, canGoForward }) {
 		const tab = tabMap[tabId];
 		if (tab && title && icon) {
+			tab.title = title;
 			tab.querySelector('.tab-title').textContent = title;
 			tab.querySelector('.tab-icon').src = icon;
 			tab.querySelector('.tab-icon-source').srcset = icon;
@@ -515,8 +526,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (tab && documentUrl) {
 			tab.dataset.documentUrl = documentUrl;
 		}
-
-		console.log('>> onTabInfo()', tabId, documentUrl);
 
 		historyBackButton.disabled = !tab || !canGoBack;
 		historyForwardButton.disabled = !tab || !canGoForward;
@@ -546,6 +555,12 @@ document.addEventListener('DOMContentLoaded', () => {
 				tabgroupShadowRight.classList.toggle('hidden', tabgroup.scrollLeft >= tabgroup.scrollWidth - tabgroup.clientWidth - 1);
 			});
 			tabgroupObserver.observe(tabgroup, { childList: true });
+		}
+
+		if (allTabsButton) {
+			allTabsButton.addEventListener('click', () => {
+				window.notionElectronAPI.showAllTabsMenu();
+			});
 		}
 
 		window.notionElectronAPI.requestGlobalOptions();

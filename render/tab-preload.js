@@ -36,6 +36,9 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 	requestSidebarData: () => {
 		ipcRenderer.send('request-sidebar-data');
 	},
+	showAllTabsMenu: () => {
+		ipcRenderer.send('show-all-tabs-menu');
+	},
 
 	subscribeOnTabInfo: (callback) => {
 		ipcRenderer.on('tab-info', (event, tabId, info) => {
