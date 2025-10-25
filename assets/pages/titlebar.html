@@ -42,19 +42,12 @@ body {
 	display: flex;
 	width: calc(100% - 96px);
 	height: 44px;
-	background-color: var(--bg);
+	background-color: var(--bg-sidebar);
 	align-items: center;
 	gap: 1px;
 	color: var(--color);
 	font: var(--font);
 	box-sizing: border-box;
-}
-.titlebar.inverted {
-	background-color: var(--bg-sidebar);
-}
-.titlebar.inverted .tab:hover,
-.titlebar.inverted .tab.selected {
-	background-color: var(--bg);
 }
 
 .controls {
@@ -138,7 +131,7 @@ body {
 }
 .tab.selected,
 .tab:hover {
-	background-color: var(--bg-selected);
+	background-color: var(--bg);
 	color: var(--color-hover);
 }
 .tab:hover .tab-close {
@@ -293,7 +286,7 @@ body {
 			<span class="mail-title">Mail</span>
 		</button>
 	</template>
-	<div class="titlebar inverted">
+	<div class="titlebar">
 		<div class="sidebar collapsed hidden">
 			<button class="control sidebar-collapsed" role="button" title="Open Sidebar">
 				<picture>
@@ -408,7 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			tab.classList.toggle('selected', selected);
 			if (selected) {
 				notionElectronAPI.changeTab(tab.dataset.tabId);
-				titlebar.classList.add('inverted');
 
 				if (sidebarContinueToTitlebar) {
 					titlebarSidebar.classList.remove('hidden');
@@ -598,7 +590,6 @@ document.addEventListener('DOMContentLoaded', () => {
 						onSelectTab();
 						calendarButton.classList.add('selected');
 						titlebarSidebar.classList.add('hidden');
-						titlebar.classList.toggle('inverted', false);
 						notionElectronAPI.changeTab('calendar');
 					});
 				}
@@ -615,7 +606,6 @@ document.addEventListener('DOMContentLoaded', () => {
 						onSelectTab();
 						mailButton.classList.add('selected');
 						titlebarSidebar.classList.add('hidden');
-						titlebar.classList.toggle('inverted', true);
 						notionElectronAPI.changeTab('mail');
 					});
 				}
