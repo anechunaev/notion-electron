@@ -379,7 +379,13 @@ document.addEventListener('DOMContentLoaded', () => {
 	const tabMapDisconnect = {};
 	const tabMapSelect = {};
 	const tabStack = [];
+	const tabAppMap = {
+		notes: new Set(),
+		calendar: new Set(),
+		mail: new Set(),
+	};
 	let sidebarContinueToTitlebar = false;
+	let initialTabId = null;
 
 	const addTabButton = document.querySelector('.control[data-action="add"]');
 	const historyBackButton = document.querySelector('.control[data-action="history-back"]');
@@ -405,15 +411,16 @@ document.addEventListener('DOMContentLoaded', () => {
 		return tab;
 	}
 
-	function onSelectTab(tabId) {
+	function onSelectTab(tabId, skipChange = false) {
 		Object.values(tabMap).forEach((tab) => {
-			const selected = tab.dataset.tabId === tabId;
-			tab.classList.toggle('selected', selected);
-			if (selected) {
-				notionElectronAPI.changeTab(tab.dataset.tabId);
+			if (skipChange) {
+				tab.classList.toggle('selected', tab.dataset.tabId === initialTabId);
+			} else {
+				const selected = tab.dataset.tabId === tabId;
+				tab.classList.toggle('selected', selected);
 
-				if (sidebarContinueToTitlebar) {
-					titlebarSidebar.classList.remove('hidden');
+				if (selected) {
+					window.notionElectronAPI.changeTab(tab.dataset.tabId);
 				}
 			}
 		});
@@ -426,10 +433,18 @@ document.addEventListener('DOMContentLoaded', () => {
 		titlebarSidebar.style.flex = `0 0 ${w}`;
 	}
 
-	function onAddTab({ url, tabId: tabIdRequested, isPinned = false }) {
+	function onAddTab({ url, tabId: tabIdRequested, isPinned = false, app, skipChange = false }) {
 		if (tabIdRequested && tabMap[tabIdRequested]) {
 			onSelectTab(tabIdRequested);
 			return;
+		}
+
+		if (app && tabAppMap[app]) {
+			const existingTabId = Array.from(tabAppMap[app]).find(tabId => tabMap[tabId]);
+			if (existingTabId) {
+				onSelectTab(existingTabId, skipChange);
+				return;
+			}
 		}
 
 		const tab = createTabElement('New tab', undefined, url);
@@ -439,6 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		tabMapSelect[tabId] = () => onSelectTab(tabId);
 		tabStack.push(tabId);
+		tabAppMap[app ?? 'notes'].add(tabId);
 
 		tab.addEventListener('click', tabMapSelect[tabId]);
 
@@ -463,8 +479,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			}, 0);
 		}
 
-		window.notionElectronAPI.addTab({ tabId, url, isPinned }).then(() => {
-			onSelectTab(tabId);
+		window.notionElectronAPI.addTab({ tabId, url, isPinned, app }).then(() => {
+			onSelectTab(tabId, skipChange);
 		});
 	}
 
@@ -530,7 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	if (window.notionElectronAPI) {
 		if (addTabButton) {
-			addTabButton.addEventListener('click', () => onAddTab());
+			addTabButton.addEventListener('click', () => onAddTab({ url: 'https://www.notion.so' }));
 		}
 
 		if (historyBackButton) {
@@ -591,7 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
 						}
 					});
 					if (Object.keys(tabMap).length === 0) {
-						onAddTab();
+						onAddTab({ url: 'https://www.notion.so' });
 					}
 				}
 				break;
@@ -601,6 +617,10 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		});
 		window.notionElectronAPI.subscribeOnGlobalOptions(options => {
+			if (options.initialTabId) {
+				initialTabId = options.initialTabId;
+			}
+
 			if (options.sidebarContinueToTitlebar) {
 				sidebarContinueToTitlebar = true;
 				titlebarSidebar.classList.remove('hidden');
@@ -634,6 +654,8 @@ document.addEventListener('DOMContentLoaded', () => {
 				window.notionElectronAPI.showContextMenu(tabId);
 			}
 		});
+	
+		window.notionElectronAPI.notifyReady();
 	}
 
 	const sortableTabs = Sortable.create(tabgroup, {

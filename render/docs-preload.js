@@ -28,7 +28,7 @@ function addStyleTag(style) {
 
 document.addEventListener('DOMContentLoaded', function() {
 	const titleTarget = document.querySelector('title');
-	const iconTarget = document.querySelector('link[rel="shortcut icon"]');
+	const iconTarget = document.querySelector('link[rel*="icon"]');
 	const notionApp = document.getElementById('notion-app');
 	let isSidebarUnfolded = true;
 
@@ -40,16 +40,20 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 	}
 
-	const titleObserver = new MutationObserver(observeDocumentMetaInfo);
-	titleObserver.observe(titleTarget, {
-		childList: true,
-	});
+	if (titleTarget) {
+		const titleObserver = new MutationObserver(observeDocumentMetaInfo);
+		titleObserver.observe(titleTarget, {
+			childList: true,
+		});
+	}
 
-	const iconObserver = new MutationObserver(observeDocumentMetaInfo);
-	iconObserver.observe(iconTarget, {
-		attributes: true,
-		attributeFilter: ['href'],
-	});
+	if (iconTarget) {
+		const iconObserver = new MutationObserver(observeDocumentMetaInfo);
+		iconObserver.observe(iconTarget, {
+			attributes: true,
+			attributeFilter: ['href'],
+		});
+	}
 
 	ipcRenderer.on('sidebar-fold', (event, collapsed) => {
 		if (isSidebarUnfolded) return;

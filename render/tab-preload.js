@@ -42,6 +42,9 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 	togglePinTab: (tabId, isPinned) => {
 		ipcRenderer.send('tab-pin-toggle', tabId, isPinned);
 	},
+	notifyReady: () => {
+		ipcRenderer.send('titlebar-ready');
+	},
 
 	subscribeOnTabInfo: (callback) => {
 		ipcRenderer.on('tab-info', (event, tabId, info) => {

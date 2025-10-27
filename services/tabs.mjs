@@ -11,6 +11,11 @@ const MAIL_PAGE = 'https://mail.notion.so/notion-auth';
 
 class TabsService {
 	#tabViews = {};
+	#tabAppMap = {
+		notes: [],
+		calendar: [],
+		mail: [],
+	};
 	#iconMap = {};
 	#titlesMap = {};
 	#pinnedMap = {};
@@ -32,6 +37,7 @@ class TabsService {
 		});
 		this.#titleBarView.webContents.loadFile('./assets/pages/titlebar.html');
 		this.#window.contentView.addChildView(this.#titleBarView);
+		this.#currentTabId = this.#store.get('tab-current', null);
 
 		ipcMain.on('add-tab', (event, options) => {
 			this.#addTab(options);
@@ -89,25 +95,29 @@ class TabsService {
 		}
 
 		ipcMain.on('request-options', (event) => {
-			if (this.#store.get('tabs-reopen-on-start', false)) {
-				this.#reopenTabs(this.#store.get('tabs', {}));
-			} else {
-				this.requestTab({ url: HOME_PAGE });
-			}
-
-			// TODO: create app-based tabs
-			// if (this.#options.getOption('tabs-show-calendar').data) {
-			// 	this.requestTab({ url: CALENDAR_PAGE, isPinned: true });
-			// }
-
-			// if (this.#options.getOption('tabs-show-mail').data) {
-			// 	this.requestTab({ url: MAIL_PAGE, isPinned: true });
-			// }
-
 			const options = {
+				initialTabId: this.#currentTabId,
 				sidebarContinueToTitlebar: this.#options.getOption('tabs-continue-sidebar').data,
 			};
 			event.sender.send('global-options', options);
+		});
+
+		ipcMain.on('titlebar-ready', () => {
+			if (this.#store.get('tabs-reopen-on-start', false)) {
+				this.#reopenTabs(this.#store.get('tabs', {}));
+			} else {
+				this.requestTab({ url: HOME_PAGE, app: 'notes' });
+			}
+
+			if (this.#options.getOption('tabs-show-calendar').data) {
+				this.requestTab({ url: CALENDAR_PAGE, isPinned: true, app: 'calendar', skipChange: true });
+			}
+
+			if (this.#options.getOption('tabs-show-mail').data) {
+				this.requestTab({ url: MAIL_PAGE, isPinned: true, app: 'mail', skipChange: true });
+			}
+
+			this.#setViewSize();
 		});
 
 		this.#window.on('closed', () => {
@@ -119,9 +129,6 @@ class TabsService {
 		app.on('before-quit', () => {
 			this.#saveTabs();
 		});
-
-		this.#setViewSize();
-		this.#setVisibleTabs();
 
 		if (this.#options.getOption('debug-open-dev-tools').data) {
 			this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
@@ -149,7 +156,7 @@ class TabsService {
 		this.#currentTabId = tabId;
 	}
 
-	#addTab({ tabId, url, isPinned = false }) {
+	#addTab({ tabId, url, isPinned = false, app }) {
 		const view = new WebContentsView({
 			webPreferences: {
 				preload: path.join(__dirname, '../render/docs-preload.js'),
@@ -165,13 +172,18 @@ class TabsService {
 		view.webContents.loadURL(url ?? HOME_PAGE)
 			.then(() => {
 				this.#saveTabs();
-				this.#tabViews[tabId] = view;
-				this.#pinnedMap[tabId] = isPinned;
+				if (this.#currentTabId === tabId) {
+					this.#setVisibleTabs(tabId);
+				}
 			});
 		view.webContents.setWindowOpenHandler((event) => {
 			const { url, disposition } = event;
 			return this.#tabOpenWindowHandler(url, disposition);
 		});
+
+		this.#tabViews[tabId] = view;
+		this.#pinnedMap[tabId] = isPinned;
+		this.#tabAppMap[app ?? 'notes'].push(tabId);
 	}
 
 	#tabOpenWindowHandler(url, disposition) {
@@ -194,7 +206,6 @@ class TabsService {
 	}
 
 	#onChangeTab(tabId) {
-		this.#setVisibleTabs(tabId);
 		const view = this.#tabViews[this.#currentTabId];
 		this.#titleBarView.webContents.send('tab-info', tabId, {
 			title: null,
@@ -203,6 +214,7 @@ class TabsService {
 			canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 			canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 		});
+		this.#setVisibleTabs(tabId);
 	}
 
 	#onCloseTab(tabId) {
@@ -212,6 +224,11 @@ class TabsService {
 			delete this.#tabViews[tabId];
 			delete this.#iconMap[tabId];
 			delete this.#titlesMap[tabId];
+			delete this.#pinnedMap[tabId];
+
+			Object.entries(this.#tabAppMap).forEach(([app, tabIds]) => {
+				this.#tabAppMap[app] = tabIds.filter(id => id !== tabId);
+			});
 		}
 		this.#saveTabs();
 	}
@@ -285,14 +302,23 @@ class TabsService {
 	#reopenTabs(tabs) {
 		Object.entries(tabs).forEach(([tabId, url]) => {
 			const isPinned = this.#store.get('tabs-pinned', {})[tabId] ?? false;
-			this.requestTab({ url, tabId, isPinned });
+			const apps = this.#store.get('tab-apps', { notes: [], calendar: [], mail: [] });
+			let app = 'notes';
+			Object.entries(apps).forEach(([appName, tabIds]) => {
+				if (tabIds.includes(tabId)) {
+					app = appName;
+				}
+			});
+			this.requestTab({ url, tabId, isPinned, app, skipChange: true });
 		});
 	}
 
 	#saveTabs() {
 		if (this.#store.get('tabs-reopen-on-start', false)) {
 			this.#store.set('tabs', this.getTabsJSON());
+			this.#store.set('tab-current', this.#currentTabId);
 			this.#store.set('tabs-pinned', this.#pinnedMap);
+			this.#store.set('tab-apps', this.#tabAppMap);
 		}
 	}
 
