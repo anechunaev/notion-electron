@@ -14,7 +14,7 @@ import NotificationService from './services/notifications.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const TITLEBAR_HEIGHT = 44;
+const TITLEBAR_HEIGHT = 40;
 const DARK_THEME_BACKGROUND = '#202020';
 const LIGHT_THEME_BACKGROUND = '#f8f8f7';
 

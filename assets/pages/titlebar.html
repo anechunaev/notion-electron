@@ -41,7 +41,7 @@ body {
 .titlebar {
 	display: flex;
 	width: calc(100% - 96px);
-	height: 44px;
+	height: 40px;
 	background-color: var(--bg-sidebar);
 	align-items: center;
 	gap: 1px;
@@ -58,7 +58,7 @@ body {
 .control {
 	display: flex;
 	flex: 0 0 36px;
-	height: 44px;
+	height: 40px;
 	background-color: transparent;
 	color: inherit;
 	cursor: pointer;
@@ -68,12 +68,18 @@ body {
 	justify-content: center;
 	align-items: center;
 	app-region: no-drag;
+	padding: 0;
+	box-sizing: border-box;
 }
 .control:hover {
 	opacity: 1;
 }
 .control:disabled {
 	opacity: 0.1;
+}
+.control picture {
+	width: 24px;
+	height: 24px;
 }
 
 .tabgroup {
@@ -93,7 +99,7 @@ body {
 }
 .tabgroup-shadow-right {
 	width: 20px;
-	height: 44px;
+	height: 40px;
 	background: linear-gradient(to right, transparent, var(--bg));
 	position: absolute;
 	right: 0;
@@ -101,11 +107,19 @@ body {
 }
 .tabgroup-shadow-left {
 	width: 20px;
-	height: 44px;
+	height: 40px;
 	background: linear-gradient(to left, transparent, var(--bg));
 	position: absolute;
 	left: 0;
 	top: 0;
+}
+
+.tabgroup-pinned {
+	min-width: 40px;
+	display: flex;
+	flex: 0 0 auto;
+	gap: 1px;
+	flex-direction: row;
 }
 
 .tab {
@@ -116,7 +130,7 @@ body {
 	gap: 8px;
 	align-items: center;
 	flex: 0 0 auto;
-	height: 44px;
+	height: 40px;
 	max-width: 300px;
 	min-width: 100px;
 	text-overflow: ellipsis;
@@ -127,6 +141,7 @@ body {
 	cursor: pointer;
 	border: none;
 	outline: none;
+	position: relative;
 	app-region: no-drag;
 }
 .tab.selected,
@@ -141,8 +156,6 @@ body {
 	margin-left: auto;
 }
 .tab-title {
-	line-height: 22px;
-	vertical-align: bottom;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -163,10 +176,34 @@ body {
 .tab-close:hover {
 	color: var(--color-hover);
 }
+.tabgroup-pinned .tab {
+	min-width: 40px;
+}
+.tabgroup-pinned .tab::before {
+	content: '';
+	position: absolute;
+	top: 0px;
+	left: 5px;
+	width: calc(100% - 10px);
+	height: 2px;
+	border-radius: 4px;
+	background-color: var(--border-sidebar);
+}
+.tabgroup-pinned .tab.selected::before,
+.tabgroup-pinned .tab:hover::before {
+	background-color: var(--color);
+}
+.tabgroup-pinned .tab .tab-close,
+.tabgroup-pinned .tab .tab-title {
+	display: none;
+}
+.tab picture,
 .tab-icon {
 	width: 16px;
 	height: 16px;
-	margin-left: 4px;
+}
+.tab picture {
+	padding-left: 4px;
 }
 .tab.sortable-ghost {
 	visibility: hidden;
@@ -184,27 +221,17 @@ body {
 	height: 24px;
 }
 
-.mail-icon {
-	vertical-align: middle;
-}
-.calendar-icon {
-	width: 25px;
-	height: 25px;
-	vertical-align: middle;
-}
-
-
 .sidebar {
 	display: flex;
 	flex: 0 0 240px;
-	height: 44px;
+	height: 40px;
 	background-color: var(--bg-sidebar);
 	border-right: 1px solid var(--border-sidebar);
 	box-sizing: border-box;
 	flex-direction: row;
 	align-items: center;
 	justify-content: end;
-	padding: 0 10px;
+	padding: 0 5px;
 	transition-duration: 200ms;
 	transition-timing-function: ease;
 	transition-property: width, flex, flex-basis;
@@ -268,34 +295,16 @@ body {
 			<span class="tab-close">×</span>
 		</button>
 	</template>
-	<template id="tab-calendar-template">
-		<button id="calendar" class="tab calendar-tab" role="button" data-tab-id="calendar">
-			<picture>
-				<source srcset="../icons/light/calendar-s.svg" media="(prefers-color-scheme: light)" />
-				<img class="calendar-icon" src="../icons/dark/calendar-s.svg" />
-			</picture>
-			<span class="calendar-title">Calendar</span>
-		</button>
-	</template>
-	<template id="tab-mail-template">
-		<button id="mail" class="tab mail-tab" role="button" data-tab-id="mail">
-			<picture>
-				<source srcset="../icons/light/mail-s.svg" media="(prefers-color-scheme: light)" />
-				<img class="mail-icon" src="../icons/dark/mail-s.svg" />
-			</picture>
-			<span class="mail-title">Mail</span>
-		</button>
-	</template>
 	<div class="titlebar">
 		<div class="sidebar collapsed hidden">
 			<button class="control sidebar-collapsed" role="button" title="Open Sidebar">
-				<picture>
+				<picture class="sidebar-icon-menu">
 					<source srcset="../icons/light/menu.svg" media="(prefers-color-scheme: light)" />
-					<img class="icon sidebar-icon-menu" src="../icons/dark/menu.svg" />
+					<img class="icon" src="../icons/dark/menu.svg" />
 				</picture>
-				<picture>
+				<picture class="sidebar-icon-unfold">
 					<source srcset="../icons/light/double_arrow_right.svg" media="(prefers-color-scheme: light)" />
-					<img class="icon sidebar-icon-unfold" src="../icons/dark/double_arrow_right.svg" />
+					<img class="icon" src="../icons/dark/double_arrow_right.svg" />
 				</picture>
 			</button>
 			<button class="control sidebar-unfold" role="button" title="Collapse Sidebar">
@@ -349,6 +358,8 @@ body {
 			<div class="tabgroup-shadow-right hidden"></div>
 		</div>
 
+		<div class="tabgroup-pinned"></div>
+
 		<div class="tab-all">
 			<button class="control" role="button" title="All Tabs">
 				<picture>
@@ -380,8 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const tabgroup = document.querySelector('.tabgroup');
 	const tabgroupShadowLeft = document.querySelector('.tabgroup-shadow-left');
 	const tabgroupShadowRight = document.querySelector('.tabgroup-shadow-right');
-	const calendarTemplate = document.getElementById('tab-calendar-template');
-	const mailTemplate = document.getElementById('tab-mail-template');
+	const tabgroupPinned = document.querySelector('.tabgroup-pinned');
 	const allTabsButton = document.querySelector('.tab-all .control');
 
 	function createTabElement(title, iconUrl, documentUrl) {
@@ -407,24 +417,16 @@ document.addEventListener('DOMContentLoaded', () => {
 				}
 			}
 		});
-		const calendarButton = document.getElementById('calendar');
-		if (calendarButton) {
-			calendarButton.classList.remove('selected');
-		}
-
-		const mailButton = document.getElementById('mail');
-		if (mailButton) {
-			mailButton.classList.remove('selected');
-		}
 	}
 
 	function onSidebarStateChange(collapsed, width) {
+		const w = width === '0px' ? '36px' : width ?? '240px';
 		titlebarSidebar.classList.toggle('collapsed', collapsed);
-		titlebarSidebar.style.width = width;
-		titlebarSidebar.style.flex = `0 0 ${width ?? '240px'}`;
+		titlebarSidebar.style.width = w;
+		titlebarSidebar.style.flex = `0 0 ${w}`;
 	}
 
-	function onAddTab(url, tabIdRequested) {
+	function onAddTab({ url, tabId: tabIdRequested, isPinned = false }) {
 		if (tabIdRequested && tabMap[tabIdRequested]) {
 			onSelectTab(tabIdRequested);
 			return;
@@ -450,15 +452,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			closeButton.addEventListener('click', tabMapDisconnect[tabId]);
 		}
+		if (isPinned) {
+			tabgroupPinned.appendChild(tab);
+		} else {
+			tabgroup.appendChild(tab);
 
-		tabgroup.appendChild(tab);
+			setTimeout(() => {
+				const boundingBox = tab.getBoundingClientRect();
+				tabgroup.scrollLeft = boundingBox.left + boundingBox.width - tabgroup.clientWidth;
+			}, 0);
+		}
 
-		setTimeout(() => {
-			const boundingBox = tab.getBoundingClientRect();
-			tabgroup.scrollLeft = boundingBox.left + boundingBox.width - tabgroup.clientWidth;
-		}, 0);
-
-		window.notionElectronAPI.addTab(tabId, url).then(() => {
+		window.notionElectronAPI.addTab({ tabId, url, isPinned }).then(() => {
 			onSelectTab(tabId);
 		});
 	}
@@ -561,6 +566,17 @@ document.addEventListener('DOMContentLoaded', () => {
 		window.notionElectronAPI.subscribeOnTabRequest(onAddTab);
 		window.notionElectronAPI.subscribeOnContextMenu((command) => {
 			switch (command.id) {
+			case 'pin':
+				const tab = tabMap[command.tabId];
+				if (tab) {
+					const isPinned = tab.parentElement === tabgroupPinned;
+					if (isPinned) {
+						tabgroup.appendChild(tab);
+					} else {
+						tabgroupPinned.appendChild(tab);
+					}
+				}
+				break;
 			case 'close':
 				onCloseTab(command.tabId);
 				break;
@@ -569,8 +585,14 @@ document.addEventListener('DOMContentLoaded', () => {
 				if (tabIds.length === 1) {
 					onCloseTab(tabIds[0]);
 				} else {
-					tabIds.forEach(onCloseTab);
-					onAddTab();
+					Object.entries(tabMap).forEach(([id, tab]) => {
+						if (tab.parentElement !== tabgroupPinned) {
+							onCloseTab(id);
+						}
+					});
+					if (Object.keys(tabMap).length === 0) {
+						onAddTab();
+					}
 				}
 				break;
 			case 'closeOther':
@@ -579,38 +601,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		});
 		window.notionElectronAPI.subscribeOnGlobalOptions(options => {
-			if (options.calendarEnabled) {
-				const calendarTab = calendarTemplate.content.cloneNode(true);
-
-				titlebar.appendChild(calendarTab);
-				const calendarButton = document.getElementById('calendar');
-
-				if (calendarButton) {
-					calendarButton.addEventListener('click', () => {
-						onSelectTab();
-						calendarButton.classList.add('selected');
-						titlebarSidebar.classList.add('hidden');
-						notionElectronAPI.changeTab('calendar');
-					});
-				}
-			}
-
-			if (options.mailEnabled) {
-				const mailTab = mailTemplate.content.cloneNode(true);
-
-				titlebar.appendChild(mailTab);
-				const mailButton = document.getElementById('mail');
-
-				if (mailButton) {
-					mailButton.addEventListener('click', () => {
-						onSelectTab();
-						mailButton.classList.add('selected');
-						titlebarSidebar.classList.add('hidden');
-						notionElectronAPI.changeTab('mail');
-					});
-				}
-			}
-
 			if (options.sidebarContinueToTitlebar) {
 				sidebarContinueToTitlebar = true;
 				titlebarSidebar.classList.remove('hidden');
@@ -652,6 +642,22 @@ document.addEventListener('DOMContentLoaded', () => {
 		direction: 'horizontal',
 		setData: (dataTransfer, dragEl) => {
 			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? 'https://www.notion.so');
+		},
+		onEnd: ({ to, item }) => {
+			const isPinned = to === tabgroupPinned;
+			window.notionElectronAPI.togglePinTab(item.dataset.tabId, isPinned);
+		},
+	});
+	const pinnedTabs = Sortable.create(tabgroupPinned, {
+		group: 'tabs',
+		animation: 100,
+		direction: 'horizontal',
+		setData: (dataTransfer, dragEl) => {
+			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? 'https://www.notion.so');
+		},
+		onEnd: ({ to, item }) => {
+			const isPinned = to === tabgroupPinned;
+			window.notionElectronAPI.togglePinTab(item.dataset.tabId, isPinned);
 		},
 	});
 });
