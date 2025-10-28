@@ -1,6 +1,7 @@
 import { WebContentsView, ipcMain, shell, app } from 'electron';
 import { URL, fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { convertIcon } from '../lib/image.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -248,15 +249,29 @@ class TabsService {
 
 		if (tabId) {
 			const view = this.#tabViews[tabId];
-			this.#titleBarView.webContents.send('tab-info', tabId, {
-				title,
-				icon,
-				documentUrl: view.webContents?.getURL(),
-				canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
-				canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
-			});
-			this.#iconMap[tabId] = icon;
-			this.#titlesMap[tabId] = title;
+			
+			if (icon) {
+				convertIcon(icon).then((convertedIcon) => {
+					this.#titleBarView.webContents.send('tab-info', tabId, {
+						title: null,
+						icon: convertedIcon,
+						documentUrl: view.webContents?.getURL(),
+						canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
+						canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
+					});
+					this.#iconMap[tabId] = convertedIcon;
+				});
+			}
+			if (title) {
+				this.#titleBarView.webContents.send('tab-info', tabId, {
+					title,
+					icon: null,
+					documentUrl: view.webContents?.getURL(),
+					canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
+					canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
+				});
+				this.#titlesMap[tabId] = title;
+			}
 		}
 	}
 

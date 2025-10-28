@@ -27,32 +27,67 @@ function addStyleTag(style) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+	const isCalendarApp = document.location.hostname.startsWith('calendar');
+	const isMailApp = document.location.hostname.startsWith('mail');
+
 	const titleTarget = document.querySelector('title');
-	const iconTarget = document.querySelector('link[rel*="icon"]');
 	const notionApp = document.getElementById('notion-app');
 	let isSidebarUnfolded = true;
 
-	function observeDocumentMetaInfo(mutations) {
-		mutations.forEach(() => {
-			setTimeout(() => {
-				ipcRenderer.send('history-changed', document.title, iconTarget?.href);
-			}, 100);
-		});
-	}
-
+	// Watch for title changes
 	if (titleTarget) {
-		const titleObserver = new MutationObserver(observeDocumentMetaInfo);
+		const titleObserver = new MutationObserver(() => {
+			ipcRenderer.send('history-changed', document.title, null);
+		});
 		titleObserver.observe(titleTarget, {
 			childList: true,
 		});
 	}
 
-	if (iconTarget) {
-		const iconObserver = new MutationObserver(observeDocumentMetaInfo);
-		iconObserver.observe(iconTarget, {
-			attributes: true,
-			attributeFilter: ['href'],
+	// Watch for icon changes
+	if (isCalendarApp) {
+		const headObserver = new MutationObserver((mutations) => {
+			let isSvgIcon = false;
+			mutations.forEach((mutation) => {
+				mutation.addedNodes.forEach((node) => {
+					if (node.tagName === 'LINK' && node.rel === 'icon' && node.href.endsWith('.svg')) {
+						isSvgIcon = true;
+						ipcRenderer.send('history-changed', null, node.href);
+					}
+				});
+			});
+
+			if (!isSvgIcon) {
+				const node = document.querySelector('link[rel="icon"][href$=".svg"]');
+				if (node) {
+					ipcRenderer.send('history-changed', null, node.href);
+				}
+			}
 		});
+		headObserver.observe(document.head, {
+			childList: true,
+		});
+	} else if (isMailApp) {
+		const headObserver = new MutationObserver((mutations) => {
+			const node = document.querySelector('link[rel="icon"][sizes="32x32"]');
+			if (node) {
+				ipcRenderer.send('history-changed', null, node.href);
+			}
+		});
+		headObserver.observe(document.head, {
+			childList: true,
+		});
+	} else {
+		const icon = document.querySelector('link[rel="shortcut icon"]');
+		if (icon) {
+			const iconObserver = new MutationObserver(() => {
+				ipcRenderer.send('history-changed', null, icon.href);
+			});
+			iconObserver.observe(icon, {
+				attributes: true,
+				attributeFilter: ['href'],
+			});
+		}
 	}
 
 	ipcRenderer.on('sidebar-fold', (event, collapsed) => {
@@ -92,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	});
 
 	if (notionApp) {
+		// Context menu handling
 		document.addEventListener('contextmenu', (e) => {
 			const link = e.target.closest('a');
 			const image = e.target.closest('img');
@@ -118,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	ipcRenderer.send('request-options');
 
 	window.addEventListener('popstate', () => {
-		ipcRenderer.send('history-changed', document.title, iconTarget?.href);
+		ipcRenderer.send('history-changed', document.title, null);
 	});
 });
 

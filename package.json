@@ -32,8 +32,13 @@
     "electron-builder": "^26.0.12"
   },
   "dependencies": {
+    "@jimp/core": "^1.6.0",
+    "@jimp/js-png": "^1.6.0",
+    "@jimp/plugin-resize": "^1.6.0",
+    "decode-ico": "^0.4.1",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.6.2",
+    "sharp": "^0.34.4",
     "sortablejs": "^1.15.6"
   },
   "build": {

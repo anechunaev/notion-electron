@@ -529,15 +529,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	function onTabInfo(tabId, { title, icon, documentUrl, canGoBack, canGoForward }) {
 		const tab = tabMap[tabId];
-		if (tab && title && icon) {
-			tab.title = title;
-			tab.querySelector('.tab-title').textContent = title;
-			tab.querySelector('.tab-icon').src = icon;
-			tab.querySelector('.tab-icon-source').srcset = icon;
-		}
-
-		if (tab && documentUrl) {
-			tab.dataset.documentUrl = documentUrl;
+		if (tab) {
+			if (title) {
+				tab.title = title;
+				tab.querySelector('.tab-title').textContent = title;
+			}
+			if (icon) {
+				tab.querySelector('.tab-icon').src = icon;
+				tab.querySelector('.tab-icon-source').srcset = icon;
+			}
+			if (documentUrl) {
+				tab.dataset.documentUrl = documentUrl;
+			}
 		}
 
 		historyBackButton.disabled = !tab || !canGoBack;
