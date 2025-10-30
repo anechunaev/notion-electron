@@ -1,18 +1,22 @@
 # Notion Electron – Unofficial Notion Client for Linux
 
-Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 41). This app includes dedicated tabs for Notion Calendar and Notion Mail.
+Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 43). This app includes dedicated tabs for Notion Calendar and Notion Mail.
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/anechunaev/notion-electron)
 
-![Screenshot](./docs/screenshot1.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshot_light.png">
+  <img alt="Fallback image description" src="docs/screenshot_both.png">
+</picture>
 
 ## Installation
 
 ### [<img src="./docs/download-appimage-banner.svg" alt="Download" />](https://github.com/anechunaev/notion-electron/releases/download/v1.7.12/notion-electron-1.7.12.x86_64.AppImage)
 
+- **[Any Distribution `.AppImage` (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.7.12/notion-electron-1.7.12.x86_64.AppImage)**
 - **[Ubuntu / Debian `.deb` package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.7.12/notion-electron-1.7.12.amd64.deb)**
 - **[Fedora / CentOS / OpenSUSE `.rpm` package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.7.12/notion-electron-1.7.12.x86_64.rpm)**
-- **[Any Distribution `.AppImage` (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.7.12/notion-electron-1.7.12.x86_64.AppImage)**
 
 ### Manual Installation
 
