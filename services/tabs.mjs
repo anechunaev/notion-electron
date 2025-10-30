@@ -1,16 +1,25 @@
 import { WebContentsView, ipcMain, shell, app } from 'electron';
 import { URL, fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { convertIcon } from '../lib/image.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const TITLEBAR_HEIGHT = 44;
+const TITLEBAR_HEIGHT = 40;
 const HOME_PAGE = 'https://www.notion.com/login';
+const CALENDAR_PAGE = 'https://calendar.notion.so/notion-auth';
+const MAIL_PAGE = 'https://mail.notion.so/notion-auth';
 
 class TabsService {
 	#tabViews = {};
-	#calendarView = null;
-	#mailView = null;
+	#tabAppMap = {
+		notes: [],
+		calendar: [],
+		mail: [],
+	};
+	#iconMap = {};
+	#titlesMap = {};
+	#pinnedMap = {};
 	#titleBarView = null;
 	#window = null;
 	#currentTabId = null;
@@ -29,30 +38,10 @@ class TabsService {
 		});
 		this.#titleBarView.webContents.loadFile('./assets/pages/titlebar.html');
 		this.#window.contentView.addChildView(this.#titleBarView);
+		this.#currentTabId = this.#store.get('tab-current', null);
 
-		if (this.#options.getOption('tabs-show-calendar').data) {
-			this.#calendarView = new WebContentsView();
-			this.#calendarView.webContents.loadURL('https://calendar.notion.so/notion-auth');
-
-			if (this.#options.getOption('debug-open-dev-tools').data) {
-				this.#calendarView.webContents.openDevTools({ mode: 'detach' });
-			}
-		}
-
-		if (this.#options.getOption('tabs-show-mail').data) {
-			this.#mailView = new WebContentsView();
-			this.#mailView.webContents.loadURL('https://mail.notion.so/notion-auth', {
-				// TODO: Remove after they fix device detection on their side
-				userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0',
-			});
-
-			if (this.#options.getOption('debug-open-dev-tools').data) {
-				this.#mailView.webContents.openDevTools({ mode: 'detach' });
-			}
-		}
-
-		ipcMain.on('add-tab', (event, tabId, loadUrl) => {
-			this.#addTab(tabId, loadUrl);
+		ipcMain.on('add-tab', (event, options) => {
+			this.#addTab(options);
 		});
 
 		ipcMain.on('change-tab', (event, tabId) => {
@@ -79,13 +68,20 @@ class TabsService {
 			this.#tabViews[this.#currentTabId].webContents.goForward();
 		});
 
+		ipcMain.on('tab-pin-toggle', (event, tabId, isPinned) => {
+			this.togglePinTab(tabId, isPinned);
+		});
+
 		if (this.#options.getOption('tabs-continue-sidebar').data) {
+			const currentViewWebContents = this.#tabViews[this.#currentTabId]?.webContents;
 			ipcMain.on('sidebar-changed', (event, collapsed, width) => {
 				this.#titleBarView.webContents.send('sidebar-changed', collapsed, width);
 			});
 
 			ipcMain.on('sidebar-fold', (event, collapsed) => {
-				this.#tabViews[this.#currentTabId].webContents.send('sidebar-fold', collapsed);
+				if (currentViewWebContents) {
+					currentViewWebContents.send('sidebar-fold', collapsed);
+				}
 			});
 
 			ipcMain.on('toggle-sidebar', () => {
@@ -93,17 +89,36 @@ class TabsService {
 			});
 
 			ipcMain.on('request-sidebar-data', () => {
-				this.#tabViews[this.#currentTabId].webContents.send('request-sidebar-data');
+				if (currentViewWebContents) {
+					currentViewWebContents.send('request-sidebar-data');
+				}
 			});
 		}
 
 		ipcMain.on('request-options', (event) => {
 			const options = {
-				calendarEnabled: this.#options.getOption('tabs-show-calendar').data,
-				mailEnabled: this.#options.getOption('tabs-show-mail').data,
+				initialTabId: this.#currentTabId,
 				sidebarContinueToTitlebar: this.#options.getOption('tabs-continue-sidebar').data,
 			};
 			event.sender.send('global-options', options);
+		});
+
+		ipcMain.on('titlebar-ready', () => {
+			if (this.#store.get('tabs-reopen-on-start', false)) {
+				this.#reopenTabs(this.#store.get('tabs', {}));
+			} else {
+				this.requestTab({ url: HOME_PAGE, app: 'notes' });
+			}
+
+			if (this.#options.getOption('tabs-show-calendar').data) {
+				this.requestTab({ url: CALENDAR_PAGE, isPinned: true, app: 'calendar', skipChange: true });
+			}
+
+			if (this.#options.getOption('tabs-show-mail').data) {
+				this.requestTab({ url: MAIL_PAGE, isPinned: true, app: 'mail', skipChange: true });
+			}
+
+			this.#setViewSize();
 		});
 
 		this.#window.on('closed', () => {
@@ -112,18 +127,9 @@ class TabsService {
 
 		this.#window.on('resize', this.#setViewSize.bind(this));
 
-		if (this.#store.get('tabs-reopen-on-start', false)) {
-			this.#reopenTabs(store.get('tabs', {}));
-		} else {
-			this.requestTab(HOME_PAGE);
-		}
-
 		app.on('before-quit', () => {
 			this.#saveTabs();
 		});
-
-		this.#setViewSize();
-		this.#setVisibleTabs();
 
 		if (this.#options.getOption('debug-open-dev-tools').data) {
 			this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
@@ -136,12 +142,6 @@ class TabsService {
 		Object.values(this.#tabViews).forEach((view) => {
 			view.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
 		});
-		if (this.#calendarView) {
-			this.#calendarView.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
-		}
-		if (this.#mailView) {
-			this.#mailView.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
-		}
 	}
 	
 	#setVisibleTabs(tabId) {
@@ -149,28 +149,15 @@ class TabsService {
 			const visible = viewId === tabId;
 			if (visible) {
 				this.#window.contentView.addChildView(view);
-				if (this.#calendarView) {
-					this.#window.contentView.removeChildView(this.#calendarView);
-				}
-				if (this.#mailView) {
-					this.#window.contentView.removeChildView(this.#mailView);
-				}
 			} else {
 				this.#window.contentView.removeChildView(view);
 			}
 		});
-		
-		if (tabId === 'calendar') {
-			this.#window.contentView.addChildView(this.#calendarView);
-		}
-		if (tabId === 'mail') {
-			this.#window.contentView.addChildView(this.#mailView);
-		}
 
 		this.#currentTabId = tabId;
 	}
 
-	#addTab(tabId, loadUrl) {
+	#addTab({ tabId, url, isPinned = false, app }) {
 		const view = new WebContentsView({
 			webPreferences: {
 				preload: path.join(__dirname, '../render/docs-preload.js'),
@@ -183,23 +170,29 @@ class TabsService {
 
 		const bounds = this.#window.getBounds();
 		view.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
-		view.webContents.loadURL(loadUrl ?? HOME_PAGE)
+		view.webContents.loadURL(url ?? HOME_PAGE)
 			.then(() => {
 				this.#saveTabs();
+				if (this.#currentTabId === tabId) {
+					this.#setVisibleTabs(tabId);
+				}
 			});
 		view.webContents.setWindowOpenHandler((event) => {
 			const { url, disposition } = event;
 			return this.#tabOpenWindowHandler(url, disposition);
 		});
+
 		this.#tabViews[tabId] = view;
+		this.#pinnedMap[tabId] = isPinned;
+		this.#tabAppMap[app ?? 'notes'].push(tabId);
 	}
 
 	#tabOpenWindowHandler(url, disposition) {
 		const u = new URL(url);
-	
-		if (u.hostname === 'www.notion.com' || u.hostname === 'www.notion.so') {
+
+		if (u.hostname.includes('notion.com') || u.hostname.includes('notion.so')) {
 			if (disposition === 'new-window' || disposition === 'foreground-tab' || disposition === 'background-tab') {
-				this.#titleBarView.webContents.send('tab-request', u.toString());
+				this.#titleBarView.webContents.send('tab-request', { url: u.toString() });
 				return { action: 'deny' };
 			}
 			return {
@@ -214,14 +207,15 @@ class TabsService {
 	}
 
 	#onChangeTab(tabId) {
-		this.#setVisibleTabs(tabId);
 		const view = this.#tabViews[this.#currentTabId];
 		this.#titleBarView.webContents.send('tab-info', tabId, {
 			title: null,
 			icon: null,
+			documentUrl: view?.webContents?.getURL(),
 			canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 			canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 		});
+		this.#setVisibleTabs(tabId);
 	}
 
 	#onCloseTab(tabId) {
@@ -229,6 +223,13 @@ class TabsService {
 		if (view) {
 			view.webContents.close();
 			delete this.#tabViews[tabId];
+			delete this.#iconMap[tabId];
+			delete this.#titlesMap[tabId];
+			delete this.#pinnedMap[tabId];
+
+			Object.entries(this.#tabAppMap).forEach(([app, tabIds]) => {
+				this.#tabAppMap[app] = tabIds.filter(id => id !== tabId);
+			});
 		}
 		this.#saveTabs();
 	}
@@ -248,12 +249,29 @@ class TabsService {
 
 		if (tabId) {
 			const view = this.#tabViews[tabId];
-			this.#titleBarView.webContents.send('tab-info', tabId, {
-				title,
-				icon,
-				canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
-				canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
-			});
+			
+			if (icon) {
+				convertIcon(icon).then((convertedIcon) => {
+					this.#titleBarView.webContents.send('tab-info', tabId, {
+						title: null,
+						icon: convertedIcon,
+						documentUrl: view.webContents?.getURL(),
+						canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
+						canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
+					});
+					this.#iconMap[tabId] = convertedIcon;
+				});
+			}
+			if (title) {
+				this.#titleBarView.webContents.send('tab-info', tabId, {
+					title,
+					icon: null,
+					documentUrl: view.webContents?.getURL(),
+					canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
+					canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
+				});
+				this.#titlesMap[tabId] = title;
+			}
 		}
 	}
 
@@ -272,17 +290,6 @@ class TabsService {
 		return this.#tabViews[tabId];
 	}
 
-	getPinnedTabView(tabId) {
-		switch (tabId) {
-		case 'calendar':
-			return this.#calendarView;
-		case 'mail':
-			return this.#mailView;
-		default:
-			return this.#tabViews[tabId];
-		}
-	}
-
 	getTitleBarView() {
 		return this.#titleBarView;
 	}
@@ -292,12 +299,11 @@ class TabsService {
 	}
 
 	duplicateTab(tabId) {
-		this.#titleBarView.webContents.send('tab-request', this.#tabViews[tabId].webContents.getURL());
+		this.#titleBarView.webContents.send('tab-request', { url: this.#tabViews[tabId].webContents.getURL() });
 	}
 
-	requestTab(url, tabId) {
-		if (!url) return;
-		this.#titleBarView.webContents.send('tab-request', url, tabId);
+	requestTab(options) {
+		this.#titleBarView.webContents.send('tab-request', options);
 	}
 
 	getTabsJSON() {
@@ -310,14 +316,46 @@ class TabsService {
 
 	#reopenTabs(tabs) {
 		Object.entries(tabs).forEach(([tabId, url]) => {
-			this.requestTab(url, tabId);
+			const isPinned = this.#store.get('tabs-pinned', {})[tabId] ?? false;
+			const apps = this.#store.get('tab-apps', { notes: [], calendar: [], mail: [] });
+			let app = 'notes';
+			Object.entries(apps).forEach(([appName, tabIds]) => {
+				if (tabIds.includes(tabId)) {
+					app = appName;
+				}
+			});
+			this.requestTab({ url, tabId, isPinned, app, skipChange: true });
 		});
 	}
 
 	#saveTabs() {
 		if (this.#store.get('tabs-reopen-on-start', false)) {
 			this.#store.set('tabs', this.getTabsJSON());
+			this.#store.set('tab-current', this.#currentTabId);
+			this.#store.set('tabs-pinned', this.#pinnedMap);
+			this.#store.set('tab-apps', this.#tabAppMap);
 		}
+	}
+
+	getTabIcon(tabId) {
+		return this.#iconMap[tabId];
+	}
+
+	getTabTitle(tabId) {
+		return this.#titlesMap[tabId];
+	}
+
+	getCurrentTabId() {
+		return this.#currentTabId;
+	}
+
+	togglePinTab(tabId, isPinned) {
+		this.#pinnedMap[tabId] = isPinned;
+		this.#saveTabs();
+	}
+
+	isPinned(tabId) {
+		return Boolean(this.#pinnedMap[tabId]);
 	}
 }
 

@@ -4,8 +4,8 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 	changeTab: (tabId) => {
 		ipcRenderer.send('change-tab', tabId);
 	},
-	addTab: (tabId, url) => new Promise((resolve, reject) => {
-		ipcRenderer.send('add-tab', tabId, url);
+	addTab: (options) => new Promise((resolve, reject) => {
+		ipcRenderer.send('add-tab', options);
 		setTimeout(resolve, 0);
 	}),
 	closeTab: (tabId) => new Promise((resolve, reject) => {
@@ -36,6 +36,15 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 	requestSidebarData: () => {
 		ipcRenderer.send('request-sidebar-data');
 	},
+	showAllTabsMenu: () => {
+		ipcRenderer.send('show-all-tabs-menu');
+	},
+	togglePinTab: (tabId, isPinned) => {
+		ipcRenderer.send('tab-pin-toggle', tabId, isPinned);
+	},
+	notifyReady: () => {
+		ipcRenderer.send('titlebar-ready');
+	},
 
 	subscribeOnTabInfo: (callback) => {
 		ipcRenderer.on('tab-info', (event, tabId, info) => {
@@ -48,8 +57,8 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 		});
 	},
 	subscribeOnTabRequest: (callback) => {
-		ipcRenderer.on('tab-request', (event, url, tabId) => {
-			callback(url, tabId);
+		ipcRenderer.on('tab-request', (event, options) => {
+			callback(options);
 		});
 	},
 	subscribeOnContextMenu: (callback) => {

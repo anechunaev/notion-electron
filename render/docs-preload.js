@@ -1,5 +1,50 @@
 const { ipcRenderer } = require('electron/renderer');
 
+class SelectorObserver {
+	#callback = () => {};
+	#element = null;
+	#mutationObserver = null;
+
+	constructor(callback) {
+		this.#callback = callback;
+	}
+
+	observe(selector, mutationObserverOptions) {
+		const el = document.querySelector(selector);
+		if (this.#element !== el) {
+			this.#element = el;
+			if (this.#mutationObserver) {
+				this.#mutationObserver.disconnect();
+				this.#mutationObserver = null;
+			}
+
+			if (this.#element) {
+				this.#callback([{ type: 'init', target: this.#element }]);
+				this.#mutationObserver = new MutationObserver((mutations) => {
+					this.#callback(mutations);
+				});
+				this.#mutationObserver.observe(this.#element, mutationObserverOptions);
+			}
+		}
+		requestAnimationFrame(() => {
+			this.observe(selector, mutationObserverOptions);
+		});
+	}
+
+	disconnect() {
+		if (this.#mutationObserver) {
+			this.#mutationObserver.disconnect();
+			this.#mutationObserver = null;
+		}
+
+		if (this.#element) {
+			this.#element = null;
+		}
+
+		this.#callback = null;
+	}
+}
+
 function waitForElement(selector) {
 	return new Promise(resolve => {
 		if (document.querySelector(selector)) {
@@ -26,60 +71,147 @@ function addStyleTag(style) {
 	document.head.appendChild(tag);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-	const titleTarget = document.querySelector('title');
-	const iconTarget = document.querySelector('link[rel="shortcut icon"]');
-	const notionApp = document.getElementById('notion-app');
-	let isSidebarUnfolded = true;
+function getCurrentApp() {
+	const isCalendarApp = document.location.hostname.startsWith('calendar');
+	const isMailApp = document.location.hostname.startsWith('mail');
 
-	const titleObserver = new MutationObserver(function(mutations) {
-		mutations.forEach(function(mutation) {
-			setTimeout(() => {
-				ipcRenderer.send('history-changed', document.title, iconTarget?.href);
-			}, 200);
+	return {
+		isCalendarApp,
+		isMailApp,
+		isNotesApp: !isCalendarApp && !isMailApp,
+		app: isCalendarApp ? 'calendar' : isMailApp ? 'mail' : 'notes',
+	}
+}
+
+function reportSidebarWidth({
+	selector,
+	useMutationObserver = false,
+	useSelectorObserver = false,
+	getReportedWidth = () => '0px',
+	getCollapsedValue = () => true,
+	addStyle,
+}) {
+	let observer = null;
+
+	if (useMutationObserver) {
+		observer = new MutationObserver(() => {
+			const sidebar = document.querySelector(selector);
+			const computedStyle = window.getComputedStyle(sidebar);
+			const collapsed = getCollapsedValue(computedStyle, sidebar.style);
+			const reportedWidth = collapsed ? '0px' : getReportedWidth(computedStyle, sidebar.style);
+
+			if (!document.hidden) {
+				ipcRenderer.send('sidebar-changed', collapsed, reportedWidth);
+			}
 		});
-	});
-	titleObserver.observe(titleTarget, {
-		childList: true,
-	});
+	}
 
-	ipcRenderer.on('sidebar-fold', (event, collapsed) => {
-		if (isSidebarUnfolded) return;
+	if (useSelectorObserver) {
+		observer = new SelectorObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				const sidebar = mutation.target;
+				const computedStyle = window.getComputedStyle(sidebar);
+				const collapsed = getCollapsedValue(computedStyle, sidebar.style);
+				const reportedWidth = collapsed ? '0px' : getReportedWidth(computedStyle, sidebar.style);
 
-		const sidebar = document.querySelector('.notion-sidebar');
-		const style = collapsed ? {
-			opacity: '0',
-			transform: 'translateX(-220px) translateY(59px)',
-		} : {
-			opacity: '1',
-			transform: 'translateX(0) translateY(59px)',
-		};
-		const styleDescrete = collapsed ? {
-			visibility: 'hidden',
-			pointerEvents: 'none',
-		} : {
-			visibility: 'visible',
-			pointerEvents: 'auto',
-		};
-
-		Object.entries(style).forEach(([key, value]) => {
-			sidebar.style[key] = value;
-		});
-
-		if (collapsed) {
-			setTimeout(() => {
-				Object.entries(styleDescrete).forEach(([key, value]) => {
-					sidebar.style[key] = value;
-				});
-			}, 200);
-		} else {
-			Object.entries(styleDescrete).forEach(([key, value]) => {
-				sidebar.style[key] = value;
+				if (!document.hidden) {
+					ipcRenderer.send('sidebar-changed', collapsed, reportedWidth);
+				}
 			});
+		});
+	}
+
+	waitForElement(selector).then(sidebar => {
+		if (observer) {
+			observer.observe(
+				useSelectorObserver ? selector : sidebar,
+				{
+					attributes: true,
+					attributeFilter: ['style', 'class'],
+				}
+			);
+		}
+
+		const computedStyle = window.getComputedStyle(sidebar);
+		const collapsed = getCollapsedValue(computedStyle, sidebar.style);
+		const reportedWidth = collapsed ? '0px' : getReportedWidth(computedStyle, sidebar.style);
+
+		if (!document.hidden) {
+			ipcRenderer.send('sidebar-changed', collapsed, reportedWidth);
+		}
+
+		if (addStyle) {
+			addStyleTag(addStyle);
 		}
 	});
+}
+
+let sidebarContinueToTitlebar = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+	const { isCalendarApp, isMailApp } = getCurrentApp();
+
+	const titleTarget = document.querySelector('title');
+	const notionApp = document.getElementById('notion-app');
+
+	// Watch for title changes
+	if (titleTarget) {
+		const titleObserver = new MutationObserver(() => {
+			ipcRenderer.send('history-changed', document.title, null);
+		});
+		titleObserver.observe(titleTarget, {
+			childList: true,
+		});
+	}
+
+	// Watch for icon changes
+	if (isCalendarApp) {
+		const headObserver = new MutationObserver((mutations) => {
+			let isSvgIcon = false;
+			mutations.forEach((mutation) => {
+				mutation.addedNodes.forEach((node) => {
+					if (node.tagName === 'LINK' && node.rel === 'icon' && node.href.endsWith('.svg')) {
+						isSvgIcon = true;
+						ipcRenderer.send('history-changed', null, node.href);
+					}
+				});
+			});
+
+			if (!isSvgIcon) {
+				const node = document.querySelector('link[rel="icon"][href$=".svg"]');
+				if (node) {
+					ipcRenderer.send('history-changed', null, node.href);
+				}
+			}
+		});
+		headObserver.observe(document.head, {
+			childList: true,
+		});
+	} else if (isMailApp) {
+		const headObserver = new MutationObserver((mutations) => {
+			const node = document.querySelector('link[rel="icon"][sizes="32x32"]');
+			if (node) {
+				ipcRenderer.send('history-changed', null, node.href);
+			}
+		});
+		headObserver.observe(document.head, {
+			childList: true,
+		});
+	} else {
+		const icon = document.querySelector('link[rel="shortcut icon"]');
+		if (icon) {
+			const iconObserver = new MutationObserver(() => {
+				ipcRenderer.send('history-changed', null, icon.href);
+			});
+			iconObserver.observe(icon, {
+				attributes: true,
+				attributeFilter: ['href'],
+			});
+		}
+	}
 
 	if (notionApp) {
+		// Context menu handling
 		document.addEventListener('contextmenu', (e) => {
 			const link = e.target.closest('a');
 			const image = e.target.closest('img');
@@ -104,50 +236,85 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	ipcRenderer.send('request-options');
-});
 
-ipcRenderer.on('request-sidebar-data', () => {
-	waitForElement('.notion-sidebar-container').then(sidebar => {
-		const collapsed = sidebar.style.width === '0px';
-		ipcRenderer.send('sidebar-changed', collapsed, sidebar.style.width);
+	window.addEventListener('popstate', () => {
+		ipcRenderer.send('history-changed', document.title, null);
 	});
 });
 
-ipcRenderer.on('global-options', (event, options) => {
-	if (options.sidebarContinueToTitlebar) {
-		const sidebarObserver = new MutationObserver(function(mutations) {
-			const sidebar = document.querySelector('.notion-sidebar-container');
-			const collapsed = sidebar.style.width === '0px';
-			isSidebarUnfolded = !collapsed;
-	
-			if (!collapsed) {
-				const sidePanel = document.querySelector('.notion-sidebar');
-				const style = {
-					opacity: '1',
-					transform: 'translateX(0) translateY(0)',
-					visibility: 'visible',
-					pointerEvents: 'auto',
-					height: '100%',
-				};
-				Object.entries(style).forEach(([key, value]) => {
-					sidePanel.style[key] = value;
-				});
-			}
-	
-			ipcRenderer.send('sidebar-changed', collapsed, sidebar.style.width);
-		});
-	
-		waitForElement('.notion-sidebar-container').then(sidebar => {
-			sidebarObserver.observe(sidebar, {
-				attributes: true,
-				attributeFilter: ['style'],
+document.addEventListener('visibilitychange', () => {
+	if (document.visibilityState === 'visible' && sidebarContinueToTitlebar) {
+		const { isCalendarApp, isMailApp } = getCurrentApp();
+
+		if (isCalendarApp) {
+			reportSidebarWidth({
+				selector: '#main>div>div:nth-child(3)>div',
+				getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
+				getReportedWidth: (computedStyle) => `calc(${computedStyle.width} + 1px)`,
 			});
-	
-			const collapsed = sidebar.style.width === '0px';
+		} else if (isMailApp) {
+			reportSidebarWidth({
+				selector: '.app>div>div>div:first-child',
+				getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
+				getReportedWidth: (computedStyle) => computedStyle.width,
+			});
+		}
+	}
+});
 
-			ipcRenderer.send('sidebar-changed', collapsed, sidebar.style.width);
+ipcRenderer.on('request-sidebar-data', () => {
+	const { isCalendarApp, isMailApp } = getCurrentApp();
 
-			addStyleTag(`.notion-topbar>div>div>div:first-child,.notion-open-sidebar,.notion-close-sidebar{display:none !important}`);
+	if (isCalendarApp) {
+		reportSidebarWidth({
+			selector: '#main>div>div:nth-child(3)>div',
+			getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
+			getReportedWidth: (computedStyle) => `calc(${computedStyle.width} + 1px)`,
 		});
+	} else if (isMailApp) {
+		reportSidebarWidth({
+			selector: '.app>div>div>div:first-child',
+			getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
+			getReportedWidth: (computedStyle) => computedStyle.width,
+		});
+	} else {
+		reportSidebarWidth({
+			selector: '.notion-sidebar-container',
+			getCollapsedValue: (_, elementStyle) => elementStyle.width === '0px',
+			getReportedWidth: (_, elementStyle) => elementStyle.width,
+		});
+	}
+});
+
+ipcRenderer.on('global-options', (event, options) => {
+	sidebarContinueToTitlebar = options.sidebarContinueToTitlebar;
+
+	if (options.sidebarContinueToTitlebar) {
+		const { isCalendarApp, isMailApp } = getCurrentApp();
+
+		if (isCalendarApp) {
+			reportSidebarWidth({
+				selector: '#main>div>div:nth-child(3)>div',
+				getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
+				getReportedWidth: (computedStyle) => `calc(${computedStyle.width} + 1px)`,
+				useSelectorObserver: true,
+			});
+		} else if (isMailApp) {
+			reportSidebarWidth({
+				selector: '.app>div>div>div:first-child',
+				getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
+				getReportedWidth: (computedStyle) => computedStyle.width,
+				useSelectorObserver: true,
+				addStyle: `.app>div>div>div:first-child>div:first-child{display:none !important}.app>div>div>div:first-child>div:last-child{padding-top:0 !important;display:block !important}`,
+			});
+		} else {
+			reportSidebarWidth({
+				selector: '.notion-sidebar-container',
+				getCollapsedValue: (_, elementStyle) => elementStyle.width === '0px',
+				getReportedWidth: (_, elementStyle) => elementStyle.width,
+				useMutationObserver: true,
+				addStyle: `.notion-topbar>div>div>div:first-child,.notion-open-sidebar,.notion-close-sidebar{display:none !important}`,
+			});
+		}
 	}
 });

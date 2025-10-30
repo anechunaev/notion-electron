@@ -1,4 +1,9 @@
-import { ipcMain, shell, Menu, clipboard } from 'electron';
+import { ipcMain, shell, Menu, clipboard, nativeTheme, nativeImage } from 'electron';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class ContextMenuService {
 	#window = null;
@@ -22,30 +27,41 @@ class ContextMenuService {
 			);
 			menu.popup({ window: this.#window });
 		});
+
+		ipcMain.on('show-all-tabs-menu', () => {
+			const tabIds = this.#tabService.getTabIds();
+			const menu = Menu.buildFromTemplate(
+				this.#templateAllTabsContextMenu(tabIds)
+			);
+			menu.popup({ window: this.#window });
+		});
 	}
 
 	#templateTabContextMenu(tabId) {
-		let view = this.#tabService.getTabView(tabId);
-		let isPinned = false;
-		if (!view) {
-			view = this.#tabService.getPinnedTabView(tabId);
-			isPinned = Boolean(view);
-		}
+		const view = this.#tabService.getTabView(tabId);
+		const isPinned = this.#tabService.isPinned(tabId);
 		const titlebar = this.#tabService.getTitleBarView();
 		return [
+			{
+				label: isPinned ? 'Unpin Tab' : 'Pin Tab',
+				click: () => {
+					this.#tabService.togglePinTab(tabId, !isPinned);
+					titlebar.webContents.send('context-menu-command', { id: 'pin', tabId });
+				},
+			},
+			{ type: 'separator' },
 			{
 				label: 'Close Tab',
 				click: () => {
 					titlebar.webContents.send('context-menu-command', { id: 'close', tabId });
 				},
-				enabled: !isPinned,
 			},
 			{
 				label: 'Close Other Tabs',
 				click: () => {
 					titlebar.webContents.send('context-menu-command', {
 						id: 'closeOther',
-						tabIds: this.#tabService.getTabIds().filter((id) => id !== tabId),
+						tabIds: this.#tabService.getTabIds().filter((id) => id !== tabId && !this.#tabService.isPinned(id)),
 					});
 				},
 			},
@@ -54,7 +70,6 @@ class ContextMenuService {
 				click: () => {
 					titlebar.webContents.send('context-menu-command', { id: 'closeAll' });
 				},
-				enabled: !isPinned,
 			},
 			{ type: 'separator' },
 			{
@@ -62,7 +77,7 @@ class ContextMenuService {
 				click: () => {
 					this.#tabService.duplicateTab(tabId);
 				},
-				enabled: !isPinned && Boolean(view),
+				enabled: Boolean(view),
 			},
 			{ type: 'separator' },
 			{
@@ -94,13 +109,13 @@ class ContextMenuService {
 			{
 				label: 'Copy URL',
 				click: () => {
-					clipboard.writeText(view.webContents.getURL());
+					clipboard.writeText(view?.webContents?.getURL());
 				},
 			},
 			{
 				label: 'Open in Browser',
 				click: () => {
-					shell.openExternal(view.webContents.getURL());
+					shell.openExternal(view?.webContents?.getURL());
 				},
 			},
 		];
@@ -136,7 +151,7 @@ class ContextMenuService {
 			{
 				label: 'Open Link in New Tab',
 				click: () => {
-					this.#tabService.requestTab(linkUrl);
+					this.#tabService.requestTab({ url: linkUrl });
 				},
 				visible: isLink,
 				enabled: linkUrl?.startsWith('https://notion') || linkUrl?.startsWith('https://www.notion'),
@@ -162,6 +177,28 @@ class ContextMenuService {
 				},
 			},
 		];
+	}
+
+	#templateAllTabsContextMenu(tabs) {
+		const dir = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+		const defaultIcon = nativeImage
+			.createFromPath(path.join(__dirname, `../assets/icons/${dir}/document.png`))
+			.resize({ width: 16, height: 16 });
+		return tabs.map(id => {
+			const storedIcon = this.#tabService.getTabIcon(id);
+			const icon = storedIcon && !storedIcon.includes("favicon.ico")
+				? nativeImage.createFromDataURL(this.#tabService.getTabIcon(id)).resize({ width: 16, height: 16 })
+				: defaultIcon;
+			return {
+				label: (this.#tabService.getTabTitle(id) ?? 'New Tab') + (this.#tabService.isPinned(id) ? ' 📌' : ''),
+				click: () => {
+					this.#tabService.requestTab({ tabId: id });
+				},
+				type: 'radio',
+				checked: id === this.#tabService.getCurrentTabId(),
+				icon,
+			};
+		});
 	}
 }
 
