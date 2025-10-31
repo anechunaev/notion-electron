@@ -1,6 +1,8 @@
 # Notion Electron – Unofficial Notion Client for Linux
 
-Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 43). This app includes dedicated tabs for Notion Calendar and Notion Mail.
+Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 43). Fully functional clients for Notion Calendar and Notion Mail included as dedicated tabs.
+
+🎉 Thank you all for your amazing support — the app has already been downloaded **over 10,000 times**! If you enjoy using it, please consider leaving a ⭐ on the repository — it really motivates to continue and means a lot!
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/anechunaev/notion-electron)
 
@@ -52,6 +54,22 @@ Run program with this flags to enable features:
 
 - `--hide-on-startup` – This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
 - `--disable-spellcheck` - disables OS-defined spellcheck.
+
+## Highlights
+
+This is not a complete feature list, but here are some of the key highlights of the application:
+
+- **Integrated Notion Tools** — Fully functional dedicated tabs for Notion Calendar and Notion Mail within the same application. This approach saves system memory by reusing a single Electron process compared to running separate clients.
+- **Cross-Distribution Support** — Distributed as a universal AppImage, allowing the app to run seamlessly on any Linux distribution, with automatic updates built in.
+- **Simple Manual Builds** — Predefined scripts make it easy to build manually, even on uncommon architectures.
+- **Ready Out of the Box** — Works immediately after installation without the need for extra flags or configuration. At the same time, it remains flexible enough to integrate into custom workflows.
+- **Quality Assurance** — Each release is manually tested on the latest Fedora OS, ensuring higher quality and stability compared to automated repacks.
+- **Regular Maintenance** — Monthly security updates keep all dependent libraries and modules up to date.
+- **Theme Support** — Switch effortlessly between light and dark UI themes.
+- **Google Login Support** — Fully functional Google social login integration.
+- **Performance Tweaks** — Optimized to reduce startup time for faster access.
+- **Browser-Like Tabs** — Tabs behave just like in a web browser: each has its own history, can be reordered, pinned, or even dragged from Notion Electron to your browser.
+- **Native Notifications** — Uses the system’s native notification system for better desktop integration (Notifications for Calendar and Mail are coming).
 
 ## Contributing
 
