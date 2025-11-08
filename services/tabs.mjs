@@ -170,7 +170,10 @@ class TabsService {
 
 		const bounds = this.#window.getBounds();
 		view.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
-		view.webContents.loadURL(url ?? HOME_PAGE)
+		view.webContents.loadURL(url ?? HOME_PAGE, {
+			// TODO: Remove when Notion Mail fixes their device detection logic
+			userAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0",
+		})
 			.then(() => {
 				this.#saveTabs();
 				if (this.#currentTabId === tabId) {
