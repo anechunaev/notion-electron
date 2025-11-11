@@ -63,6 +63,9 @@
       "category": "Utility;Office;"
     },
     "artifactName": "notion-electron-${version}.${arch}.${ext}",
-    "icon": "./assets/icons/desktop.png"
+    "icon": "./assets/icons/desktop.png",
+    "asarUnpack": [
+      "**/node_modules/sharp/**"
+    ]
   }
 }
