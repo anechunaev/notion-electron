@@ -6,4 +6,18 @@ Terminal=false
 Type=Application
 StartupNotify=true
 Categories=GNOME;GTK;Utility;Office;
-Icon=notion
+Icon=notion-electron
+
+Actions=Options;Updates;About;
+
+[Desktop Action Options]
+Name=Options
+Exec=dbus-send --session --dest=com.nechunaev.notionelectron /com/nechunaev/notionelectron com.nechunaev.notionelectron.Options
+
+[Desktop Action Updates]
+Name=Preferences
+Exec=dbus-send --session --dest=com.nechunaev.notionelectron /com/nechunaev/notionelectron com.nechunaev.notionelectron.Updates
+
+[Desktop Action About]
+Name=Preferences
+Exec=dbus-send --session --dest=com.nechunaev.notionelectron /com/nechunaev/notionelectron com.nechunaev.notionelectron.About
