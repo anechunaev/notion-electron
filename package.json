@@ -44,12 +44,12 @@
     "sortablejs": "^1.15.6"
   },
   "dbus": {
-    "name": "com.nechunaev.notionelectron",
-    "path": "/com/nechunaev/notionelectron",
-    "interface": "com.nechunaev.notionelectron"
+    "name": "com.nechunaev.NotionElectron",
+    "path": "/com/nechunaev/NotionElectron",
+    "interface": "com.nechunaev.NotionElectron"
   },
   "build": {
-    "appId": "com.nechunaev.notion.electron",
+    "appId": "com.nechunaev.NotionElectron",
     "productName": "Notion Electron",
     "executableName": "notion-electron",
     "linux": {
@@ -71,15 +71,15 @@
         "desktopActions": {
           "Options": {
             "Name": "Options",
-            "Exec": "dbus-send --session --dest=com.nechunaev.notionelectron /com/nechunaev/notionelectron com.nechunaev.notionelectron.Options"
+            "Exec": "dbus-send --session --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Options"
           },
           "Updates": {
             "Name": "Updates",
-            "Exec": "dbus-send --session --dest=com.nechunaev.notionelectron /com/nechunaev/notionelectron com.nechunaev.notionelectron.Updates"
+            "Exec": "dbus-send --session --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Updates"
           },
           "About": {
             "Name": "About",
-            "Exec": "dbus-send --session --dest=com.nechunaev.notionelectron /com/nechunaev/notionelectron com.nechunaev.notionelectron.About"
+            "Exec": "dbus-send --session --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.About"
           }
         }
       },
@@ -90,7 +90,8 @@
     "asar": true,
     "asarUnpack": [
       "**/node_modules/sharp/**",
-      "**/node_modules/@img/**/*"
+      "**/node_modules/@img/**/*",
+      "**/node_modules/dbus-next/**/*"
     ]
   }
 }

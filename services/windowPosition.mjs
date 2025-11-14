@@ -29,8 +29,7 @@ class WindowPositionService {
 					width: screenArea.width * 0.8,
 					height: screenArea.height * 0.8,
 				});
-			}
-			else {
+			} else {
 				this.#window.setBounds(this.#store.get('bounds'));
 			}
 		}

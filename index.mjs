@@ -64,7 +64,7 @@ if (!app.requestSingleInstanceLock()) {
 			: (store.get('general-theme', 'system') === 'dark' ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND);
 
 		mainWindow = new BaseWindow({
-			title: 'Notion Electorn',
+			title: 'Notion Electron',
 			minWidth: 800,
 			minHeight: 600,
 			width: screen.getPrimaryDisplay().workAreaSize.width * 0.8,

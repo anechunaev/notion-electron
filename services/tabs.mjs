@@ -73,12 +73,12 @@ class TabsService {
 		});
 
 		if (this.#options.getOption('tabs-continue-sidebar').data) {
-			const currentViewWebContents = this.#tabViews[this.#currentTabId]?.webContents;
 			ipcMain.on('sidebar-changed', (event, collapsed, width) => {
 				this.#titleBarView.webContents.send('sidebar-changed', collapsed, width);
 			});
 
 			ipcMain.on('sidebar-fold', (event, collapsed) => {
+				const currentViewWebContents = this.#tabViews[this.#currentTabId]?.webContents;
 				if (currentViewWebContents) {
 					currentViewWebContents.send('sidebar-fold', collapsed);
 				}
@@ -89,6 +89,7 @@ class TabsService {
 			});
 
 			ipcMain.on('request-sidebar-data', () => {
+				const currentViewWebContents = this.#tabViews[this.#currentTabId]?.webContents;
 				if (currentViewWebContents) {
 					currentViewWebContents.send('request-sidebar-data');
 				}
@@ -104,6 +105,10 @@ class TabsService {
 		});
 
 		ipcMain.on('titlebar-ready', () => {
+			if (this.#options.getOption('debug-open-dev-tools').data) {
+				this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
+			}
+
 			if (this.#store.get('tabs-reopen-on-start', false)) {
 				this.#reopenTabs(this.#store.get('tabs', {}));
 			} else {
@@ -130,10 +135,6 @@ class TabsService {
 		app.on('before-quit', () => {
 			this.#saveTabs();
 		});
-
-		if (this.#options.getOption('debug-open-dev-tools').data) {
-			this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
-		}
 	}
 
 	#setViewSize() {

@@ -366,7 +366,6 @@ body {
 			</button>
 		</div>
 	</div>
-	
 
 	<script type="module">
 import Sortable from '../../node_modules/sortablejs/modular/sortable.core.esm.js';
@@ -436,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			return;
 		}
 
-		if (app && tabAppMap[app]) {
+		if (app && tabAppMap[app] && !tabIdRequested) {
 			const existingTabId = Array.from(tabAppMap[app]).find(tabId => tabMap[tabId]);
 			if (existingTabId) {
 				onSelectTab(existingTabId, skipChange);
