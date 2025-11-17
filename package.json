@@ -33,10 +33,12 @@
     "electron-builder": "^26.0.12"
   },
   "dependencies": {
+    "@clebert/node-d-bus": "^1.0.0",
     "@jimp/core": "^1.6.0",
     "@jimp/js-png": "^1.6.0",
     "@jimp/plugin-resize": "^1.6.0",
-    "dbus-next": "^0.10.2",
+    "d-bus-message-protocol": "^1.0.0",
+    "d-bus-type-system": "^1.0.0",
     "decode-ico": "^0.4.1",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.6.2",
@@ -71,15 +73,15 @@
         "desktopActions": {
           "Options": {
             "Name": "Options",
-            "Exec": "dbus-send --session --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Options"
+            "Exec": "dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Options"
           },
           "Updates": {
             "Name": "Updates",
-            "Exec": "dbus-send --session --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Updates"
+            "Exec": "dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Updates"
           },
           "About": {
             "Name": "About",
-            "Exec": "dbus-send --session --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.About"
+            "Exec": "dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.About"
           }
         }
       },
@@ -90,8 +92,7 @@
     "asar": true,
     "asarUnpack": [
       "**/node_modules/sharp/**",
-      "**/node_modules/@img/**/*",
-      "**/node_modules/dbus-next/**/*"
+      "**/node_modules/@img/**/*"
     ]
   }
 }
