@@ -1,4 +1,4 @@
-# <sub><picture><source media="(prefer-color-scheme:dark)" srcset="assets/logo-small-dark"><source media="(prefer-color-scheme:light)" srcset="assets/logo-small-light"><img src="assets/logo-small.svg" width="36" alt="⚡" /></picture></sub> Notion Electron – Unofficial Notion Client for Linux
+# <sub><picture><source media="(prefers-color-scheme: dark)" srcset="assets/logo-small-light.svg"><source media="(prefers-color-scheme: light)" srcset="assets/logo-small-dark.svg"><img src="assets/logo-small.svg" width="36" alt="⚡" /></picture></sub> Notion Electron – Unofficial Notion Client for Linux
 
 Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 43). Fully functional clients for Notion Calendar and Notion Mail included as dedicated tabs.
 
