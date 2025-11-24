@@ -8,14 +8,20 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/anechunaev/notion-electron)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/screenshot_light.png">
-  <img alt="Fallback image description" src="docs/screenshot_both.png">
+	<source media="(prefers-color-scheme: dark)" srcset="docs/screenshot_dark.png">
+	<source media="(prefers-color-scheme: light)" srcset="docs/screenshot_light.png">
+	<img alt="Screenshot" src="docs/screenshot_both.png" width="800">
 </picture>
 
 ## Installation
 
-### [<img src="./docs/download-appimage-banner.svg" alt="Download" />](https://github.com/anechunaev/notion-electron/releases/download/v1.9.2/notion-electron-1.9.2.x86_64.AppImage)
+<a href="https://github.com/anechunaev/notion-electron/releases/download/v1.9.2/notion-electron-1.9.2.x86_64.AppImage">
+	<picture>
+		<source media="(prefers-color-scheme: dark)" srcset="./docs/banner-appimage-dark.svg">
+		<source media="(prefers-color-scheme: light)" srcset="./docs/banner-appimage-light.svg">
+		<img alt="Download as AppImage" src="./docs/banner-appimage-dark.svg">
+	</picture>
+</a>
 
 - **[Any Distribution `.AppImage` (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.9.2/notion-electron-1.9.2.x86_64.AppImage)**
 - **[Ubuntu / Debian `.deb` package (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.9.2/notion-electron-1.9.2.amd64.deb)**
