@@ -104,6 +104,20 @@ class TabsService {
 			event.sender.send('global-options', options);
 		});
 
+		ipcMain.on('show-offline-screen', (event, { url, isLocal }) => {
+			if (isLocal) return;
+
+			const tabId = this.getTabIds().find(id => {
+				return this.#tabViews[id].webContents === event.sender;
+			});
+
+			event.sender.loadFile(path.join(__dirname, '../assets/pages/offline.html'), {
+				query: {
+					next: tabId ? this.#tabViews[tabId].webContents.getURL() : null,
+				},
+			});
+		});
+
 		ipcMain.on('titlebar-ready', () => {
 			if (this.#options.getOption('debug-open-dev-tools').data) {
 				this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
@@ -171,6 +185,7 @@ class TabsService {
 
 		const bounds = this.#window.getBounds();
 		view.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
+
 		view.webContents.loadURL(url ?? HOME_PAGE, {
 			// TODO: Remove when Notion Mail fixes their device detection logic
 			userAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0",
