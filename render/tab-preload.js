@@ -71,9 +71,14 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 			callback(info);
 		});
 	},
-	subscribeOZoomFactor: (callback) => {
+	subscribeOnZoomFactor: (callback) => {
 		ipcRenderer.on('zoom-factor', (event, zoomFactor) => {
 			callback(zoomFactor);
+		});
+	},
+	subscribeOnAction: (callback) => {
+		ipcRenderer.on('action', (event, action, data) => {
+			callback(action, data);
 		});
 	},
 });

@@ -682,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				}
 			}
 		});
-		window.notionElectronAPI.subscribeOZoomFactor((newZoomFactor) => {
+		window.notionElectronAPI.subscribeOnZoomFactor((newZoomFactor) => {
 			if (!titlebarSidebar.classList.contains('hidden')) {
 				zoomFactorMap[getCurrentApp()] = newZoomFactor;
 				onSidebarStateChange(
@@ -690,6 +690,27 @@ document.addEventListener('DOMContentLoaded', () => {
 					`${sidebarBaseWidth}px`,
 					true
 				);
+			}
+		});
+		window.notionElectronAPI.subscribeOnAction((action, data) => {
+			const currentIndex = tabStack.indexOf(currentTabId);
+			switch(action) {
+			case 'tab-add':
+				onAddTab({ url: 'https://www.notion.so' });
+				break;
+			case 'tab-close':
+				if (currentTabId) {
+					onCloseTab(currentTabId);
+				}
+				break;
+			case 'tab-next':
+				const nextIndex = currentIndex + 1 >= tabStack.length ? 0 : currentIndex + 1;
+				onSelectTab(tabStack[nextIndex]);
+				break;
+			case 'tab-previous':
+				const prevIndex = currentIndex - 1 < 0 ? tabStack.length - 1 : currentIndex - 1;
+				onSelectTab(tabStack[prevIndex]);
+				break;
 			}
 		});
 		window.addEventListener('contextmenu', (e) => {

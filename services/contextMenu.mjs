@@ -53,6 +53,7 @@ class ContextMenuService {
 			{ type: 'separator' },
 			{
 				label: 'Close Tab',
+				accelerator: shortcutMap.tabClose.accelerator,
 				click: () => {
 					titlebar.webContents.send('context-menu-command', { id: 'close', tabId });
 				},
