@@ -1,6 +1,7 @@
 import { ipcMain, shell, Menu, clipboard, nativeTheme, nativeImage } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { shortcutMap } from '../lib/shortcuts.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -81,28 +82,36 @@ class ContextMenuService {
 			},
 			{ type: 'separator' },
 			{
+				label: 'Zoom In',
+				accelerator: shortcutMap.zoomIn.accelerator,
+				click: () => this.#tabService.runAction('zoomIn'),
+			},
+			{
+				label: 'Zoom Out',
+				accelerator: shortcutMap.zoomOut.accelerator,
+				click: () => this.#tabService.runAction('zoomOut'),
+			},
+			{
+				label: 'Reset Zoom',
+				accelerator: shortcutMap.zoomReset.accelerator,
+				click: () => this.#tabService.runAction('zoomReset'),
+			},
+			{ type: 'separator' },
+			{
 				label: 'Reload',
-				accelerator: 'CmdOrCtrl+R',
-				click: () => {
-					view.webContents.reloadIgnoringCache();
-				},
+				accelerator: shortcutMap.pageReload.accelerator,
+				click: () => this.#tabService.runAction('pageReload'),
 			},
 			{
 				label: 'Back',
-				accelerator: 'CmdOrCtrl+[',
-				click: () => {
-					if (!view) return;
-					view.webContents.navigationHistory.goBack();
-				},
+				accelerator: shortcutMap.historyBack.accelerator,
+				click: () => this.#tabService.runAction('historyBack'),
 				enabled: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 			},
 			{
 				label: 'Forward',
-				accelerator: 'CmdOrCtrl+]',
-				click: () => {
-					if (!view) return;
-					view.webContents.navigationHistory.goForward();
-				},
+				accelerator: shortcutMap.historyForward.accelerator,
+				click: () => this.#tabService.runAction('historyForward'),
 				enabled: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 			},
 			{ type: 'separator' },
