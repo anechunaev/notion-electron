@@ -1,0 +1,23 @@
+[Desktop Entry]
+Name=Notion Electron
+Comment=Unofficial Notion desktop client made with Electron for Linux
+Exec=notion-electron
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Utility;Office;
+Icon=notion-electron
+
+Actions=Options;Updates;About;
+
+[Desktop Action Options]
+Name=Options
+Exec=dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Options
+
+[Desktop Action Updates]
+Name=Preferences
+Exec=dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Updates
+
+[Desktop Action About]
+Name=Preferences
+Exec=dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.About
