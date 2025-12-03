@@ -6,7 +6,7 @@ Terminal=false
 Type=Application
 StartupNotify=true
 Categories=Utility;Office;
-Icon=notion-electron
+Icon=io.github.anechunaev.notion-electron
 
 Actions=Options;Updates;About;
 

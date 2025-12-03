@@ -2,7 +2,7 @@
 <component type="desktop">
   <id>io.github.anechunaev.notion-electron</id>
   <name>Notion Electron</name>
-  <summary>Unofficial Notion client (incl. Calendar and Mail)</summary>
+  <summary>Unofficial Notion client (including Calendar and Mail)</summary>
   
   <launchable type="desktop-id">io.github.anechunaev.notion-electron.desktop</launchable>
   <metadata_license>FSFAP</metadata_license>
@@ -30,16 +30,24 @@
 
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/brunofin/cohesion/main/data/screenshots/screenshot-1.png</image>
-      <caption>Login screen</caption>
+      <image>https://raw.githubusercontent.com/anechunaev/notion-electron/refs/heads/main/docs/screenshot_notes.png</image>
+      <caption>Default view of Notion Electron</caption>
+    </screenshot>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/anechunaev/notion-electron/refs/heads/main/docs/screenshot_calendar.png</image>
+      <caption>Notion Calendar</caption>
     </screenshot>
   </screenshots>
 
   <releases>
-    <release version="1.9.2" date="2025-01-08">
+    <release version="1.9.2" date="2025-11-17">
       <description>
         <ul>
-          <li></li>
+          <li>Fixed visual bug when Chromium window do not respect system-wide color scheme (issue #1)</li>
+          <li>Fixed bug when multiple tabs would not re-open on application start (issue #44)</li>
+          <li>Fixed application icon not applying in some desktop environments</li>
+          <li>Added D-Bus integration to call actions (Options, Updates, About) for inter-process communications</li>
+          <li>Added actions (Options, Updates, About) in Activities screen for Gnome desktop environment</li>
         </ul>
       </description>
     </release>

@@ -31,7 +31,6 @@ modules:
         npm_config_cache: /run/build/notion-electron/flatpak-node/npm-cache
         npm_config_offline: "true"
     build-commands:
-      # - yarn install --offline --frozen-lockfile --prod --verbose
       - npm install --offline
       - ../flatpak-node/electron-builder-arch-args.sh
       - jq '.build.linux.target="dir"' <<<$(<package.json) > package.json
@@ -39,20 +38,32 @@ modules:
       - cp -a dist/linux*unpacked /app/main
 
       - install -Dm755 ../run.sh /app/bin/notion-electron
-      - install -Dm644 data/io.github.anechunaev.notion-electron.appdata.xml -t /app/share/metainfo/
-      - install -Dm644 data/io.github.anechunaev.notion-electron.desktop -t /app/share/applications/
+      - install -Dm644 io.github.anechunaev.notion-electron.appdata.xml -t /app/share/metainfo/
+      - install -Dm644 io.github.anechunaev.notion-electron.desktop -t /app/share/applications/
 
+      - install -Dm644 io.github.anechunaev.notion-electron.svg -t /app/share/icons/hicolor/scalable/apps/
+      - install -Dm644 io.github.anechunaev.notion-electron.png -t /app/share/icons/hicolor/128x128/apps/
+      - install -Dm644 io.github.anechunaev.notion-electron.png -t /app/share/icons/hicolor/512x512/apps/
     sources:
       - type: git
         url: https://github.com/anechunaev/notion-electron.git
         tag: v1.9.2
         dest: main
       - generated-sources.json
-      # - type: file
-      #   path: yarn.lock
-      #   dest: main
       - type: file
         path: package-lock.json
+        dest: main
+      - type: file
+        path: io.github.anechunaev.notion-electron.appdata.xml
+        dest: main
+      - type: file
+        path: io.github.anechunaev.notion-electron.desktop
+        dest: main
+      - type: file
+        path: io.github.anechunaev.notion-electron.svg
+        dest: main
+      - type: file
+        path: io.github.anechunaev.notion-electron.png
         dest: main
       - type: script
         dest-filename: run.sh
@@ -60,33 +71,3 @@ modules:
           # - export TMPDIR="${XDG_RUNTIME_DIR}/app/${FLATPAK_ID}" # the tray icon needs this in order to work
           - export TMPDIR="${XDG_RUNTIME_DIR}/app/main"
           - zypak-wrapper.sh /app/main/notion-electron "$@"
-
-
-# buildsystem: simple
-
-# build-options:
-#   append-path: /usr/lib/sdk/node22/bin
-#   env:
-#     XDG_CACHE_HOME: /run/build/notion-electron/flatpak-node/cache
-#     npm_config_cache: /run/build/notion-electron/flatpak-node/npm-cache
-#     npm_config_nodedir: /usr/lib/sdk/node22
-#     npm_config_offline: 'true'
-# subdir: main
-# sources:
-#   - type: archive
-#     url: https://github.com/anechunaev/notion-electron/archive/refs/tags/v1.9.2.tar.gz
-#     sha256: 875f76930d925fe2ca067374aabf9bb764c6cbcba48f2f2a260f7c205bc8c9f1
-#     dest: main
-#   - generated-sources.json
-#   - type: script
-#     dest-filename: run.sh
-#     commands:
-#       - zypak-wrapper /app/main/notion-electron "$@"
-# build-commands:
-#   - npm install --offline
-#   - jq '.build.linux.target="dir"' <<<$(<package.json) > package.json
-#   - |
-#     . ../flatpak-node/electron-builder-arch-args.sh
-#     npm run pack -- --dir
-#   - cp -a dist/linux*unpacked /app/main
-#   - install -Dm755 -t /app/bin/ ../run.sh
