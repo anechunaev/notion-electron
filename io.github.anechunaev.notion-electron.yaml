@@ -16,7 +16,6 @@ finish-args:
   - --socket=pulseaudio
   - --share=network
   - --env=ELECTRON_TRASH=gio
-name: notion-electron
 
 build-options:
   append-path: /usr/lib/sdk/node22/bin
