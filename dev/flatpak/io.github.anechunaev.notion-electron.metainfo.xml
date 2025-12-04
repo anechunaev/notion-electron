@@ -25,6 +25,7 @@
       <li><em>Performance Tweaks</em> — Optimized to reduce startup time for faster access.</li>
       <li><em>Browser-Like Tabs</em> — Tabs behave just like in a web browser: each has its own history, can be reordered, pinned, or even dragged from Notion Electron to your browser.</li>
     </ul>
+    <p>Disclaimer: Notion Electron is an independent, open-source project and is not affiliated with, endorsed by, or sponsored by Notion or any of its owners. “Notion” is a trademark of its respective owner. This software is an unofficial wrapper intended solely for personal convenience. All usage of the Notion service remains subject to Notion’s own terms and policies.</p>
   </description>
 
   <content_rating type="oars-1.1">

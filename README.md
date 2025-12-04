@@ -93,6 +93,20 @@ Contributions are welcome! Please follow these steps to contribute:
 
 This project is licensed under the MIT License.
 
+## Disclaimer
+
+**Trademark Notice:**
+“Notion” is a trademark owned by its respective rights holder. Notion Electron is an independent, community-driven, open-source application and is not affiliated with, endorsed by, sponsored by, or in any way officially connected to Notion or any related entities.
+
+**Project Independence:**
+Notion Electron is an unofficial desktop wrapper designed solely to provide an alternative interface for accessing the Notion web service. It does not modify or redistribute any portion of Notion’s proprietary code or content.
+
+**No Warranty, No Liability:**
+This project is provided “as is,” without any warranties, express or implied. Use of Notion Electron is at your own risk. Users remain fully responsible for complying with Notion’s terms of service and all applicable laws.
+
+**Non-commercial Use:**
+Notion Electron is free and open source, developed for educational and personal-use purposes. No commercial association or revenue is generated from the use of Notion’s service.
+
 ## Acknowledgements
 
 - [Electron](https://www.electronjs.org/)

@@ -48,13 +48,12 @@ modules:
     sources:
       - type: git
         url: https://github.com/anechunaev/notion-electron.git
-        commit: 2507dc8c3eb5c55d582b7fd5c08b03b1548707fd
+        commit: f705f2fbb30757315237786f78dc620b21b14945
         dest: main
       - generated-sources.json
       - type: script
         dest-filename: run.sh
         commands:
-          # - export TMPDIR="${XDG_RUNTIME_DIR}/app/main"
           - zypak-wrapper.sh /app/main/notion-electron "$@"
 
       # For local build
