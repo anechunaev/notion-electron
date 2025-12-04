@@ -52,6 +52,7 @@ parts:
     plugin: dump
     source: .
     stage-packages:
+      - desktop-gtk3
       - libasound2
       - libnotify4
       - libnspr4
