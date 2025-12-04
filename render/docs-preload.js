@@ -1,5 +1,11 @@
 const { ipcRenderer } = require('electron/renderer');
 
+if (!navigator.onLine) {
+	ipcRenderer.send('show-offline-screen', {
+		isLocal: window.location.protocol === 'file:',
+	});
+}
+
 class SelectorObserver {
 	#callback = () => {};
 	#element = null;

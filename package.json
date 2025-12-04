@@ -10,6 +10,10 @@
     "pack": "electron-builder --linux",
     "install-desktop-file": "desktop-file-install --dir=$HOME/.local/share/applications ./notion-electron.desktop",
     "dev": "node ./dev/release-server.mjs",
+    "flatpak-lint": "./dev/flatpak/lint.sh",
+    "flatpak-build": "./dev/flatpak/build.sh",
+    "flatpak-test": "./dev/flatpak/test.sh",
+    "flatpak-clean": "./dev/flatpak/clean.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -29,7 +33,7 @@
   },
   "devDependencies": {
     "@electron/packager": "^19.0.1",
-    "electron": "^39.2.1",
+    "electron": "^39.2.4",
     "electron-builder": "^26.3.0"
   },
   "dependencies": {
@@ -46,12 +50,12 @@
     "sortablejs": "^1.15.6"
   },
   "dbus": {
-    "name": "com.nechunaev.NotionElectron",
-    "path": "/com/nechunaev/NotionElectron",
-    "interface": "com.nechunaev.NotionElectron"
+    "name": "io.github.anechunaev.NotionElectron",
+    "path": "/io/github/anechunaev/NotionElectron",
+    "interface": "io.github.anechunaev.NotionElectron"
   },
   "build": {
-    "appId": "com.nechunaev.NotionElectron",
+    "appId": "io.github.anechunaev.NotionElectron",
     "productName": "Notion Electron",
     "executableName": "notion-electron",
     "linux": {
@@ -74,21 +78,31 @@
         "desktopActions": {
           "Options": {
             "Name": "Options",
-            "Exec": "dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Options"
+            "Exec": "dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.Options"
           },
           "Updates": {
             "Name": "Updates",
-            "Exec": "dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Updates"
+            "Exec": "dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.Updates"
           },
           "About": {
             "Name": "About",
-            "Exec": "dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.About"
+            "Exec": "dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.About"
           }
         }
       },
       "category": "Utility;Office;"
     },
-    "artifactName": "Notion_Electron-${version}-${arch}.${ext}",
+    "appImage": {
+      "artifactName": "Notion_Electron-${version}-${arch}.AppImage"
+    },
+    "snap": {
+      "artifactName": "Notion_Electron-${version}-${arch}.snap"
+    },
+    "flatpak": {
+      "artifactName": "Notion_Electron-${version}-${arch}.flatpak",
+      "branch": "main"
+    },
+    "artifactName": "notion-electron-${version}.${arch}.${ext}",
     "icon": "./assets/icons/desktop.png",
     "asar": true,
     "asarUnpack": [

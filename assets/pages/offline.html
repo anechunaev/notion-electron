@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Offline</title>
+	<style>
+:root {
+	--bg: #191919;
+	--bg-sidebar: #202020;
+	--bg-selected: rgba(255, 255, 255, 0.055);
+	--border-sidebar: rgba(255, 255, 255, 0.05);
+	--border-sidebar-hover: rgba(255, 255, 255, 0.1);
+
+	--color: #9b9b9b;
+	--color-hover: #fff;
+
+	--font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+	--font: 500 14px/22px var(--font-family);
+}
+@media (prefers-color-scheme: light) {
+	:root {
+		--bg: #fff;
+		--bg-sidebar: #f8f8f7;
+		--bg-selected: #f2f2f1;
+		--border-sidebar: #f2f2f1;
+		--border-sidebar-hover: rgba(0, 0, 0, 0.1);
+
+		--color: #37352f;
+		--color-hover: #1d1b16;
+	}
+}
+html, body {
+	background-color: var(--bg);
+}
+body {
+	display: flex;
+	flex-direction: column;
+	padding: 50px;
+	color: var(--color);
+	font: var(--font);
+	gap: 10px;
+}
+h1, p, button {
+	padding: 0;
+	margin: 0;
+}
+h1 {
+	color: var(--color-hover);
+}
+img {
+	aspect-ratio: 1;
+	height: 23px;
+}
+p {
+	margin-left: 40px;
+}
+#retry {
+	display: block;
+	width: fit-content;
+	border: 1px solid var(--border-sidebar);
+	background-color: var(--bg-sidebar);
+	padding: 10px;
+	cursor: pointer;
+	color: currentColor;
+	margin: 20px 40px;
+}
+#retry:hover {
+	border-color: var(--border-sidebar-hover);
+	background-color: var(--bg-selected);
+}
+#loading {
+	display: none;
+}
+	</style>
+</head>
+<body>
+	<h1><picture>
+		<source media="(prefers-color-scheme: dark)" srcset="../icons/dark/offline.svg">
+		<source media="(prefers-color-scheme: light)" srcset="../icons/light/offline.svg">
+		<img alt="" src="../icons/dark/offline.svg">
+	</picture>&emsp;You are offline</h1>
+	<p>Please check your Internet connection and try again.</p>
+	<button id="retry" type="button">Retry</button>
+	<p id="loading">Loading...</p>
+
+	<script>
+const url = new URL(window.location.href);
+const next = decodeURIComponent(url.searchParams.get('next'));
+
+document.addEventListener("DOMContentLoaded", () => {
+	const retry = document.getElementById('retry');
+	const loading = document.getElementById('loading');
+
+	if (retry) {
+		retry.addEventListener('click', () => {
+			retry.style.display = 'none';
+			
+			if (loading) {
+				loading.style.display = 'block';
+			}
+
+			setTimeout(() => {
+				window.location.replace(next);
+			}, 100);
+		});
+	}
+});
+
+window.addEventListener('online', () => {
+	window.location.replace(next);
+});
+	</script>
+</body>
+</html>

@@ -2,6 +2,7 @@ import { WebContentsView, ipcMain, shell, app } from 'electron';
 import { URL, fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { convertIcon } from '../lib/image.mjs';
+import { detectShortcut, shortcutMap } from '../lib/shortcuts.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,6 +38,9 @@ class TabsService {
 			},
 		});
 		this.#titleBarView.webContents.loadFile('./assets/pages/titlebar.html');
+		this.#titleBarView.webContents.on('before-input-event', (event, input) => {
+			detectShortcut(input, event, this.#tabViews[this.#currentTabId]?.webContents, this.#titleBarView.webContents);
+		});
 		this.#window.contentView.addChildView(this.#titleBarView);
 		this.#currentTabId = this.#store.get('tab-current', null);
 
@@ -104,6 +108,20 @@ class TabsService {
 			event.sender.send('global-options', options);
 		});
 
+		ipcMain.on('show-offline-screen', (event, { url, isLocal }) => {
+			if (isLocal) return;
+
+			const tabId = this.getTabIds().find(id => {
+				return this.#tabViews[id].webContents === event.sender;
+			});
+
+			event.sender.loadFile(path.join(__dirname, '../assets/pages/offline.html'), {
+				query: {
+					next: tabId ? this.#tabViews[tabId].webContents.getURL() : null,
+				},
+			});
+		});
+
 		ipcMain.on('titlebar-ready', () => {
 			if (this.#options.getOption('debug-open-dev-tools').data) {
 				this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
@@ -126,6 +144,10 @@ class TabsService {
 			this.#setViewSize();
 		});
 
+		ipcMain.on('run-action', (event, actionName) => {
+			this.runAction(actionName);
+		});
+
 		this.#window.on('closed', () => {
 			Object.values(this.#tabViews).forEach((view) => view.webContents.close());
 		});
@@ -135,6 +157,21 @@ class TabsService {
 		app.on('before-quit', () => {
 			this.#saveTabs();
 		});
+	}
+
+	#getAppFromUrl(url) {
+		const u = new URL(url);
+		if (u.pathname.startsWith('/calendarAuth')) {
+			return 'calendar';
+		}
+		switch(u.hostname) {
+		case 'calendar.notion.so':
+			return 'calendar';
+		case 'mail.notion.so':
+			return 'mail';
+		default:
+			return 'notes';
+		}
 	}
 
 	#setViewSize() {
@@ -171,6 +208,7 @@ class TabsService {
 
 		const bounds = this.#window.getBounds();
 		view.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
+
 		view.webContents.loadURL(url ?? HOME_PAGE, {
 			// TODO: Remove when Notion Mail fixes their device detection logic
 			userAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0",
@@ -186,9 +224,13 @@ class TabsService {
 			return this.#tabOpenWindowHandler(url, disposition);
 		});
 
+		view.webContents.on('before-input-event', (event, input) => {
+			detectShortcut(input, event, view.webContents, this.#titleBarView.webContents);
+		});
+
 		this.#tabViews[tabId] = view;
 		this.#pinnedMap[tabId] = isPinned;
-		this.#tabAppMap[app ?? 'notes'].push(tabId);
+		this.#tabAppMap[app ?? this.#getAppFromUrl(url)].push(tabId);
 	}
 
 	#tabOpenWindowHandler(url, disposition) {
@@ -360,6 +402,16 @@ class TabsService {
 
 	isPinned(tabId) {
 		return Boolean(this.#pinnedMap[tabId]);
+	}
+
+	runAction(actionName) {
+		const shortcut = shortcutMap[actionName];
+		if (shortcut) {
+			shortcut.action({
+				pageWebContents: this.#tabViews[this.#currentTabId]?.webContents,
+				titlebarWebContents: this.#titleBarView.webContents,
+			});
+		}
 	}
 }
 

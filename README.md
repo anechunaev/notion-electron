@@ -8,19 +8,19 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/anechunaev/notion-electron)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/screenshot_light.png">
-  <img alt="Fallback image description" src="docs/screenshot_both.png" width="800">
+	<source media="(prefers-color-scheme: dark)" srcset="docs/screenshot_dark.png">
+	<source media="(prefers-color-scheme: light)" srcset="docs/screenshot_light.png">
+	<img alt="Screenshot" src="docs/screenshot_both.png" width="800">
 </picture>
 
 ## Installation
 
 <a href="https://github.com/anechunaev/notion-electron/releases/download/v1.9.2/notion-electron-1.9.2.x86_64.AppImage">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/banner-appimage-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="docs/banner-appimage-light.svg">
-    <img alt="Fallback image description" src="docs/banner-appimage-dark.svg" width="150">
-  </picture>
+	<picture>
+		<source media="(prefers-color-scheme: dark)" srcset="./docs/banner-appimage-dark.svg">
+		<source media="(prefers-color-scheme: light)" srcset="./docs/banner-appimage-light.svg">
+		<img alt="Download as AppImage" src="./docs/banner-appimage-dark.svg">
+	</picture>
 </a>
 
 - **[Any Distribution `.AppImage` (x64)](https://github.com/anechunaev/notion-electron/releases/download/v1.9.2/notion-electron-1.9.2.x86_64.AppImage)**
@@ -92,6 +92,20 @@ Contributions are welcome! Please follow these steps to contribute:
 ## License
 
 This project is licensed under the MIT License.
+
+## Disclaimer
+
+**Trademark Notice:**
+“Notion” is a trademark owned by its respective rights holder. Notion Electron is an independent, community-driven, open-source application and is not affiliated with, endorsed by, sponsored by, or in any way officially connected to Notion or any related entities.
+
+**Project Independence:**
+Notion Electron is an unofficial desktop wrapper designed solely to provide an alternative interface for accessing the Notion web service. It does not modify or redistribute any portion of Notion’s proprietary code or content.
+
+**No Warranty, No Liability:**
+This project is provided “as is,” without any warranties, express or implied. Use of Notion Electron is at your own risk. Users remain fully responsible for complying with Notion’s terms of service and all applicable laws.
+
+**Non-commercial Use:**
+Notion Electron is free and open source, developed for educational and personal-use purposes. No commercial association or revenue is generated from the use of Notion’s service.
 
 ## Acknowledgements
 

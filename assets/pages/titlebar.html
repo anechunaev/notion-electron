@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Title</title>
+	<title>Notion Electron</title>
 	<style>
 :root {
 	--bg: #191919;
@@ -382,6 +382,13 @@ document.addEventListener('DOMContentLoaded', () => {
 	};
 	let sidebarContinueToTitlebar = false;
 	let initialTabId = null;
+	let currentTabId = null;
+	let sidebarBaseWidth = 240;
+	const zoomFactorMap = {
+		notes: 1,
+		calendar: 1,
+		mail: 1,
+	};
 
 	const addTabButton = document.querySelector('.control[data-action="add"]');
 	const historyBackButton = document.querySelector('.control[data-action="history-back"]');
@@ -396,6 +403,30 @@ document.addEventListener('DOMContentLoaded', () => {
 	const tabgroupPinned = document.querySelector('.tabgroup-pinned');
 	const allTabsButton = document.querySelector('.tab-all .control');
 
+	function getCurrentApp() {
+		for (const [app, tabIds] of Object.entries(tabAppMap)) {
+			if (tabIds.has(currentTabId)) {
+				return app;
+			}
+		}
+		return 'notes';
+	}
+
+	function getAppFromUrl(url) {
+		const u = new URL(url);
+		if (u.pathname.startsWith('/calendarAuth')) {
+			return 'calendar';
+		}
+		switch(u.hostname) {
+		case 'calendar.notion.so':
+			return 'calendar';
+		case 'mail.notion.so':
+			return 'mail';
+		default:
+			return 'notes';
+		}
+	}
+
 	function createTabElement(title, iconUrl, documentUrl) {
 		const template = document.getElementById('tab-template');
 		const tab = template.content.cloneNode(true).querySelector('.tab');
@@ -409,21 +440,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	function onSelectTab(tabId, skipChange = false) {
 		Object.values(tabMap).forEach((tab) => {
+			const selected = tab.dataset.tabId === tabId;
 			if (skipChange) {
 				tab.classList.toggle('selected', tab.dataset.tabId === initialTabId);
 			} else {
-				const selected = tab.dataset.tabId === tabId;
 				tab.classList.toggle('selected', selected);
 
 				if (selected) {
-					window.notionElectronAPI.changeTab(tab.dataset.tabId);
+					window.notionElectronAPI.changeTab(tabId);
+					currentTabId = tabId;
 				}
 			}
 		});
 	}
 
-	function onSidebarStateChange(collapsed, width) {
-		const w = width === '0px' ? '36px' : width ?? '240px';
+	function onSidebarStateChange(collapsed, width, isZoomed) {
+		const widthNumber = parseInt(width.replace('calc(', ''), 10);
+		if (!isZoomed) {
+			sidebarBaseWidth = widthNumber;
+		}
+		const zoom = zoomFactorMap[getCurrentApp()] || 1;
+		const w = width === '0px' ? '36px' : widthNumber * zoom + 'px';
 		titlebarSidebar.classList.toggle('collapsed', collapsed);
 		titlebarSidebar.style.width = w;
 		titlebarSidebar.style.flex = `0 0 ${w}`;
@@ -450,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		tabMapSelect[tabId] = () => onSelectTab(tabId);
 		tabStack.push(tabId);
-		tabAppMap[app ?? 'notes'].add(tabId);
+		tabAppMap[app ?? getAppFromUrl(url)].add(tabId);
 
 		tab.addEventListener('click', tabMapSelect[tabId]);
 
@@ -643,6 +680,37 @@ document.addEventListener('DOMContentLoaded', () => {
 						notionElectronAPI.foldSidebar(true);
 					});
 				}
+			}
+		});
+		window.notionElectronAPI.subscribeOnZoomFactor((newZoomFactor) => {
+			if (!titlebarSidebar.classList.contains('hidden')) {
+				zoomFactorMap[getCurrentApp()] = newZoomFactor;
+				onSidebarStateChange(
+					titlebarSidebar.classList.contains('collapsed'),
+					`${sidebarBaseWidth}px`,
+					true
+				);
+			}
+		});
+		window.notionElectronAPI.subscribeOnAction((action, data) => {
+			const currentIndex = tabStack.indexOf(currentTabId);
+			switch(action) {
+			case 'tab-add':
+				onAddTab({ url: 'https://www.notion.so' });
+				break;
+			case 'tab-close':
+				if (currentTabId) {
+					onCloseTab(currentTabId);
+				}
+				break;
+			case 'tab-next':
+				const nextIndex = currentIndex + 1 >= tabStack.length ? 0 : currentIndex + 1;
+				onSelectTab(tabStack[nextIndex]);
+				break;
+			case 'tab-previous':
+				const prevIndex = currentIndex - 1 < 0 ? tabStack.length - 1 : currentIndex - 1;
+				onSelectTab(tabStack[prevIndex]);
+				break;
 			}
 		});
 		window.addEventListener('contextmenu', (e) => {

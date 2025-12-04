@@ -88,8 +88,8 @@ if (!app.requestSingleInstanceLock()) {
 
 			mainWindow = new BaseWindow({
 				title: 'Notion Electron',
-				minWidth: 800,
-				minHeight: 600,
+				minWidth: 600,
+				minHeight: 400,
 				width: screen.getPrimaryDisplay().workAreaSize.width * 0.8,
 				height: screen.getPrimaryDisplay().workAreaSize.height * 0.8,
 				titleBarStyle: 'hidden',
@@ -106,8 +106,8 @@ if (!app.requestSingleInstanceLock()) {
 				backgroundColor: bgColor,
 			});
 			const optionsWindow = new BrowserWindow({
-				minWidth: 800,
-				minHeight: 600,
+				minWidth: 600,
+				minHeight: 400,
 				width: screen.getPrimaryDisplay().workAreaSize.width * 0.5,
 				height: screen.getPrimaryDisplay().workAreaSize.height * 0.5,
 				show: false,
