@@ -36,12 +36,16 @@
 
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/anechunaev/notion-electron/refs/heads/main/docs/screenshot_notes.png</image>
+      <image>https://raw.githubusercontent.com/anechunaev/notion-electron/refs/heads/main/docs/screenshots/1.png</image>
       <caption>Default view of Notion Electron</caption>
     </screenshot>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/anechunaev/notion-electron/refs/heads/main/docs/screenshot_calendar.png</image>
+      <image>https://raw.githubusercontent.com/anechunaev/notion-electron/refs/heads/main/docs/screenshots/2.png</image>
       <caption>Notion Calendar</caption>
+    </screenshot>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/anechunaev/notion-electron/refs/heads/main/docs/screenshots/3.png</image>
+      <caption>Notion Electron with dark theme</caption>
     </screenshot>
   </screenshots>
 

@@ -10,10 +10,10 @@
     "pack": "electron-builder --linux",
     "install-desktop-file": "desktop-file-install --dir=$HOME/.local/share/applications ./notion-electron.desktop",
     "dev": "node ./dev/release-server.mjs",
-    "flatpak-lint": "flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest io.github.anechunaev.notion-electron.yaml && appstreamcli validate --explain io.github.anechunaev.notion-electron.metainfo.xml",
-    "flatpak-build": "flatpak-node-generator npm package-lock.json && rm -rf .flatpak-builder/build && flatpak-builder build io.github.anechunaev.notion-electron.yaml --install-deps-from=flathub --force-clean --user --install",
-    "flatpak-test": "flatpak run --log-session-bus --user io.github.anechunaev.notion-electron",
-    "flatpak-delete": "flatpak uninstall --delete-data io.github.anechunaev.notion-electron || true && rm -rf .flatpak-builder",
+    "flatpak-lint": "./dev/flatpak/lint.sh",
+    "flatpak-build": "./dev/flatpak/build.sh",
+    "flatpak-test": "./dev/flatpak/test.sh",
+    "flatpak-clean": "./dev/flatpak/clean.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -94,7 +94,7 @@
     "appImage": {
       "artifactName": "Notion_Electron-${version}-${arch}.AppImage"
     },
-    "flatpack": {
+    "flatpak": {
       "artifactName": "Notion_Electron-${version}-${arch}.flatpak",
       "branch": "main"
     },
