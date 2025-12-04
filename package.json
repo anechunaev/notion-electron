@@ -13,6 +13,7 @@
     "flatpak-lint": "flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest io.github.anechunaev.notion-electron.yaml && appstreamcli validate --explain io.github.anechunaev.notion-electron.metainfo.xml",
     "flatpak-build": "flatpak-node-generator npm package-lock.json && rm -rf .flatpak-builder/build && flatpak-builder build io.github.anechunaev.notion-electron.yaml --install-deps-from=flathub --force-clean --user --install",
     "flatpak-test": "flatpak run --log-session-bus --user io.github.anechunaev.notion-electron",
+    "flatpak-delete": "flatpak uninstall --delete-data io.github.anechunaev.notion-electron || true && rm -rf .flatpak-builder",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
