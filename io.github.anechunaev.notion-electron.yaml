@@ -37,7 +37,7 @@ modules:
       - cp -a dist/linux*unpacked /app/main
 
       - install -Dm755 ../run.sh /app/bin/notion-electron
-      - install -Dm644 io.github.anechunaev.notion-electron.appdata.xml -t /app/share/metainfo/
+      - install -Dm644 io.github.anechunaev.notion-electron.metainfo.xml -t /app/share/metainfo/
       - install -Dm644 io.github.anechunaev.notion-electron.desktop -t /app/share/applications/
 
       - install -Dm644 io.github.anechunaev.notion-electron.svg -t /app/share/icons/hicolor/scalable/apps/
@@ -53,7 +53,7 @@ modules:
         path: package-lock.json
         dest: main
       - type: file
-        path: io.github.anechunaev.notion-electron.appdata.xml
+        path: io.github.anechunaev.notion-electron.metainfo.xml
         dest: main
       - type: file
         path: io.github.anechunaev.notion-electron.desktop
