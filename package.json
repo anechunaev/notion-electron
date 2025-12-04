@@ -14,6 +14,8 @@
     "flatpak-build": "./dev/flatpak/build.sh",
     "flatpak-test": "./dev/flatpak/test.sh",
     "flatpak-clean": "./dev/flatpak/clean.sh",
+    "snap-build": "./dev/snap/build.sh",
+    "snap-upload": "snapcraft upload --release=stable \"$(find dist -maxdepth 1 -type f -name '*.snap')\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -34,7 +36,7 @@
   "devDependencies": {
     "@electron/packager": "^19.0.1",
     "electron": "^39.2.4",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.3.0"
   },
   "dependencies": {
     "@clebert/node-d-bus": "^1.0.0",
@@ -91,14 +93,15 @@
       },
       "category": "Utility;Office;"
     },
-    "appImage": {
-      "artifactName": "Notion_Electron-${version}-${arch}.AppImage"
+    "snap": {
+      "title": "Notion Electron",
+      "summary": "Unofficial Notion client",
+      "category": "Productivity",
+      "description": "Unofficial desktop application for Notion, built as an Electron wrapper with additional features. Fully functional clients for Notion Calendar and Notion Mail included as dedicated tabs.\n\nSome of notable features include:\n* **Integrated Notion Tools** — Fully functional dedicated tabs for Notion Calendar and Notion Mail within the same application. This approach saves system memory by reusing a single Electron process compared to running separate clients.\n* **Theme Support** — Switch effortlessly between light and dark UI themes.\n* **Tray Icon** — Minimize the application to the system tray for quick access. For environments without the tray like Gnome, there are actions available to access app options and updates.\n* **Performance Tweaks** — Optimized to reduce startup time for faster access.\n* **Browser-Like Tabs** — Tabs behave just like in a web browser: each has its own history, can be reordered, pinned, or even dragged from Notion Electron to your browser.\n\n**Disclaimer:** Notion Electron is an independent, open-source project and is not affiliated with, endorsed by, or sponsored by Notion or any of its owners. “Notion” is a trademark of its respective owner. This software is an unofficial wrapper intended solely for personal convenience. All usage of the Notion service remains subject to Notion’s own terms and policies.",
+      "base": "core24",
+      "grade": "stable"
     },
-    "flatpak": {
-      "artifactName": "Notion_Electron-${version}-${arch}.flatpak",
-      "branch": "main"
-    },
-    "artifactName": "notion-electron-${version}.${arch}.${ext}",
+    "artifactName": "Notion_Electron-${version}-${arch}.${ext}",
     "icon": "./assets/icons/desktop.png",
     "asar": true,
     "asarUnpack": [
