@@ -92,17 +92,7 @@
       },
       "category": "Utility;Office;"
     },
-    "appImage": {
-      "artifactName": "Notion_Electron-${version}-${arch}.AppImage"
-    },
-    "snap": {
-      "artifactName": "Notion_Electron-${version}-${arch}.snap"
-    },
-    "flatpak": {
-      "artifactName": "Notion_Electron-${version}-${arch}.flatpak",
-      "branch": "main"
-    },
-    "artifactName": "notion-electron-${version}.${arch}.${ext}",
+    "artifactName": "Notion_Electron-${version}-${arch}.${ext}",
     "icon": "./assets/icons/desktop.png",
     "asar": true,
     "asarUnpack": [

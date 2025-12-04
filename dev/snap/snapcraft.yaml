@@ -1,0 +1,51 @@
+name: notionelectron
+title: Notion Electron
+summary: Unoffical Notion client
+
+description: |
+  Unofficial desktop application for Notion, built as an Electron wrapper with additional features. Fully functional clients for Notion Calendar and Notion Mail included as dedicated tabs.
+
+  Some of notable features include:
+  - **Integrated Notion Tools** — Fully functional dedicated tabs for Notion Calendar and Notion Mail within the same application. This approach saves system memory by reusing a single Electron process compared to running separate clients.
+  - **Theme Support** — Switch effortlessly between light and dark UI themes.
+  - **Tray Icon** — Minimize the application to the system tray for quick access. For environments without the tray like Gnome, there are actions available to access app options and updates.
+  - **Performance Tweaks** — Optimized to reduce startup time for faster access.
+  - **Browser-Like Tabs** — Tabs behave just like in a web browser: each has its own history, can be reordered, pinned, or even dragged from Notion Electron to your browser.
+
+  **Disclaimer:** Notion Electron is an independent, open-source project and is not affiliated with, endorsed by, or sponsored by Notion or any of its owners. “Notion” is a trademark of its respective owner. This software is an unofficial wrapper intended solely for personal convenience. All usage of the Notion service remains subject to Notion’s own terms and policies.
+
+website: https://anechunaev.github.io/notion-electron
+contact: https://github.com/anechunaev/notion-electron/issues
+issues: https://github.com/anechunaev/notion-electron/issues
+source-code: https://github.com/anechunaev/notion-electron
+license: MIT
+icon: notion-electron.svg
+version: 1.9.2
+
+base: core24
+grade: stable
+confinement: strict
+
+apps:
+  notion-electron:
+    command: notion-electron
+    extensions: [gnome-3-38]
+    plugs:
+      - network
+      - network-bind
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - opengl
+
+parts:
+  notion-desktop:
+    plugin: dump
+    source: .
+    stage-packages:
+      - libnss3
+      - libxss1
+      - libgtk-3-0
+    after:
+      - desktop-gtk3
