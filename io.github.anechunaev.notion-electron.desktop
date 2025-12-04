@@ -12,12 +12,12 @@ Actions=Options;Updates;About;
 
 [Desktop Action Options]
 Name=Options
-Exec=dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Options
+Exec=dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.Options
 
 [Desktop Action Updates]
 Name=Preferences
-Exec=dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.Updates
+Exec=dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.Updates
 
 [Desktop Action About]
 Name=Preferences
-Exec=dbus-send --session --type=signal --dest=com.nechunaev.NotionElectron /com/nechunaev/NotionElectron com.nechunaev.NotionElectron.About
+Exec=dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.About

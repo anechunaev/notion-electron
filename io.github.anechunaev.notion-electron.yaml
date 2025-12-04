@@ -12,10 +12,12 @@ command: notion-electron
 finish-args:
   - --share=ipc
   - --device=dri
-  - --socket=x11
+  - --socket=wayland
+  - --socket=fallback-x11
   - --socket=pulseaudio
   - --share=network
-  - --env=ELECTRON_TRASH=gio
+  - --filesystem=xdg-config
+  - --filesystem=xdg-cache
 
 build-options:
   append-path: /usr/lib/sdk/node22/bin
@@ -68,5 +70,5 @@ modules:
         dest-filename: run.sh
         commands:
           # - export TMPDIR="${XDG_RUNTIME_DIR}/app/${FLATPAK_ID}" # the tray icon needs this in order to work
-          - export TMPDIR="${XDG_RUNTIME_DIR}/app/main"
+          # - export TMPDIR="${XDG_RUNTIME_DIR}/app/main"
           - zypak-wrapper.sh /app/main/notion-electron "$@"
