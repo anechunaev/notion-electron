@@ -26,10 +26,15 @@ base: core24
 grade: stable
 confinement: strict
 
+platforms:
+  amd64:
+    build-on: [amd64]
+  arm64:
+    build-on: [arm64]
+
 apps:
   notionelectron:
     command: notionelectron
-    extensions: [gnome-3-38]
     plugs:
       - network
       - network-bind
@@ -38,14 +43,22 @@ apps:
       - wayland
       - x11
       - opengl
+      - unity7
+    environment:
+      TMPDIR: $XDG_RUNTIME_DIR
 
 parts:
   notionelectron:
     plugin: dump
     source: .
     stage-packages:
+      - libasound2
+      - libnotify4
+      - libnspr4
       - libnss3
+      - libpcre3
+      - libpulse0
       - libxss1
-      - libgtk-3-0
+      - libxtst6
     after:
       - desktop-gtk3

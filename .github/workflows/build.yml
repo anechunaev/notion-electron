@@ -29,9 +29,12 @@ jobs:
       with:
         node-version: 24
         cache: 'npm'
+    - name: 'Setup jq'
+      uses: dcarbone/install-jq-action@v3
 
     - name: Electron Builder Action
       uses: anechunaev/action-electron-builder@v1
       with:
         github_token: ${{ secrets.github_token }}
         release: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        build_script_name: snap-build
