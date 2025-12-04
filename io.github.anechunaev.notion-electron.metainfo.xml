@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>io.github.anechunaev.notion-electron</id>
+  <name>Notion Electron</name>
+  <summary>Unofficial Notion client</summary>
+  
+  <launchable type="desktop-id">io.github.anechunaev.notion-electron.desktop</launchable>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+
+  <recommends>
+    <display_length compare="ge">800</display_length>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>touch</control>
+  </recommends>
+
+  <description>
+    <p>Unofficial desktop application for Notion, built as an Electron wrapper with additional features. Fully functional clients for Notion Calendar and Notion Mail included as dedicated tabs.</p>
+    <p>Some of notable features include:</p>
+    <ul>
+      <li><em>Integrated Notion Tools</em> — Fully functional dedicated tabs for Notion Calendar and Notion Mail within the same application. This approach saves system memory by reusing a single Electron process compared to running separate clients.</li>
+      <li><em>Theme Support</em> — Switch effortlessly between light and dark UI themes.</li>
+      <li><em>Tray Icon</em> — Minimize the application to the system tray for quick access. For environments without the tray like Gnome, there are actions available to access app options and updates.</li>
+      <li><em>Performance Tweaks</em> — Optimized to reduce startup time for faster access.</li>
+      <li><em>Browser-Like Tabs</em> — Tabs behave just like in a web browser: each has its own history, can be reordered, pinned, or even dragged from Notion Electron to your browser.</li>
+    </ul>
+  </description>
+
+  <content_rating type="oars-1.1">
+    <content_attribute id="money-purchasing">mild</content_attribute>
+  </content_rating>
+
+  <url type="bugtracker">https://github.com/anechunaev/notion-electron/issues</url>
+  <url type="homepage">https://anechunaev.github.io/notion-electron</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/anechunaev/notion-electron/refs/heads/main/docs/screenshot_notes.png</image>
+      <caption>Default view of Notion Electron</caption>
+    </screenshot>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/anechunaev/notion-electron/refs/heads/main/docs/screenshot_calendar.png</image>
+      <caption>Notion Calendar</caption>
+    </screenshot>
+  </screenshots>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#99c1f1</color>
+    <color type="primary" scheme_preference="dark">#1a5fb4</color>
+  </branding>
+
+  <releases>
+    <release version="1.9.2" date="2025-11-17">
+      <description>
+        <ul>
+          <li>Fixed visual bug when Chromium window do not respect system-wide color scheme (issue #1)</li>
+          <li>Fixed bug when multiple tabs would not re-open on application start (issue #44)</li>
+          <li>Fixed application icon not applying in some desktop environments</li>
+          <li>Added actions (Options, Updates, About) in Activities screen for Gnome desktop environment</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+
+  <developer id="io.github.anechunaev">
+    <name>Artem Nechunaev</name>
+  </developer>
+  <update_contact>artem_at_nechunaev.com</update_contact>
+</component>
