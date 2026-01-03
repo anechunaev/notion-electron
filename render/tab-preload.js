@@ -56,6 +56,11 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 			callback(collapsed, width);
 		});
 	},
+	subscribeOnSidebarFoldingStop: (callback) => {
+		ipcRenderer.on('sidebar-folding-stop', (event) => {
+			callback();
+		});
+	},
 	subscribeOnTabRequest: (callback) => {
 		ipcRenderer.on('tab-request', (event, options) => {
 			callback(options);

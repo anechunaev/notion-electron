@@ -88,6 +88,10 @@ class TabsService {
 				}
 			});
 
+			ipcMain.on('sidebar-folding-stop', (event) => {
+				this.#titleBarView.webContents.send('sidebar-folding-stop');
+			});
+
 			ipcMain.on('toggle-sidebar', () => {
 				this.sendKey({ keyCode: '\\', modifiers: ['Ctrl']}, 50, this.#tabViews[this.#currentTabId]);
 			});
@@ -181,7 +185,7 @@ class TabsService {
 			view.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
 		});
 	}
-	
+
 	#setVisibleTabs(tabId) {
 		Object.entries(this.#tabViews).forEach(([viewId, view]) => {
 			const visible = viewId === tabId;
@@ -295,7 +299,7 @@ class TabsService {
 
 		if (tabId) {
 			const view = this.#tabViews[tabId];
-			
+
 			if (icon) {
 				convertIcon(icon).then((convertedIcon) => {
 					this.#titleBarView.webContents.send('tab-info', tabId, {

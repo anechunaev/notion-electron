@@ -664,20 +664,33 @@ document.addEventListener('DOMContentLoaded', () => {
 				window.notionElectronAPI.requestSidebarData();
 
 				if (sidebarCollapsed && sidebarUnfold) {
+					let isCollapsingRequested = false;
 					sidebarCollapsed.addEventListener('click', () => {
+						let isCollapsingRequested = false;
 						notionElectronAPI.toggleSidebar();
 					});
 
 					sidebarUnfold.addEventListener('click', () => {
+						let isCollapsingRequested = false;
 						notionElectronAPI.toggleSidebar();
 					});
 
-					sidebarCollapsed.addEventListener('mouseenter', () => {
+					sidebarCollapsed.addEventListener('pointerenter', () => {
 						notionElectronAPI.foldSidebar(false);
 					});
 
-					sidebarCollapsed.addEventListener('mouseleave', () => {
-						notionElectronAPI.foldSidebar(true);
+					sidebarCollapsed.addEventListener('pointerleave', () => {
+						isCollapsingRequested = true;
+						setTimeout(() => {
+							if (isCollapsingRequested) {
+								notionElectronAPI.foldSidebar(true);
+								isCollapsingRequested = false;
+							}
+						}, 500);
+					});
+
+					window.notionElectronAPI.subscribeOnSidebarFoldingStop(() => {
+						isCollapsingRequested = false;
 					});
 				}
 			}
@@ -721,7 +734,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				window.notionElectronAPI.showContextMenu(tabId);
 			}
 		});
-	
+
 		window.notionElectronAPI.notifyReady();
 	}
 

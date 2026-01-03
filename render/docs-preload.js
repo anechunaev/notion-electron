@@ -42,12 +42,6 @@ class SelectorObserver {
 			this.#mutationObserver.disconnect();
 			this.#mutationObserver = null;
 		}
-
-		if (this.#element) {
-			this.#element = null;
-		}
-
-		this.#callback = null;
 	}
 }
 
@@ -216,6 +210,71 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 	}
 
+	// Sidebar event handling
+	function sendSignalFoldingStop() {
+		ipcRenderer.send('sidebar-folding-stop');
+	}
+	function sendSignalFold() {
+		ipcRenderer.send('sidebar-fold', true);
+	}
+	if (isCalendarApp) {
+		// Observe re-hydration
+		const observer = new SelectorObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				if (mutation.target.style.transform) {
+					const sidebar = mutation.target;
+					observer.disconnect();
+					if (sidebar) {
+						sidebar.addEventListener('pointerenter', sendSignalFoldingStop);
+						sidebar.addEventListener('pointerleave', sendSignalFold);
+					}
+				}
+			});
+		});
+		observer.observe(
+			'#main>div:first-child>div:nth-child(2)>div',
+			{
+				attributes: true,
+				attributeFilter: ['style'],
+			}
+		);
+	} else if (isMailApp) {
+		// Sidebar is re-created each time you fold it
+		let previousSidebar = null;
+		const observer = new SelectorObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				if (mutation.target.style.transform) {
+					const sidebar = mutation.target;
+					if (sidebar) {
+						if (previousSidebar) {
+							previousSidebar.removeEventListener('pointerenter', sendSignalFoldingStop);
+							previousSidebar.removeEventListener('pointerleave', sendSignalFold);
+						}
+						previousSidebar = sidebar;
+						sidebar.addEventListener('pointerenter', sendSignalFoldingStop);
+						sidebar.addEventListener('pointerleave', sendSignalFold);
+					}
+				}
+			});
+		});
+		observer.observe(
+			'.app>div>div>div:first-child',
+			{
+				attributes: true,
+				attributeFilter: ['style', 'class'],
+			}
+		);
+	} else {
+		waitForElement('.notion-sidebar')
+			.then((sidebar) => {
+				if (sidebar) {
+					sidebar.addEventListener('pointerenter', sendSignalFoldingStop);
+					sidebar.addEventListener('pointerleave', sendSignalFold);
+				}
+			})
+			.catch(console.error);
+	}
+
 	if (notionApp) {
 		// Context menu handling
 		document.addEventListener('contextmenu', (e) => {
@@ -254,9 +313,9 @@ document.addEventListener('visibilitychange', () => {
 
 		if (isCalendarApp) {
 			reportSidebarWidth({
-				selector: '#main>div>div:nth-child(3)>div',
-				getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
-				getReportedWidth: (computedStyle) => `calc(${computedStyle.width} + 1px)`,
+				selector: '#main>div:first-child>div:nth-child(2)>div',
+				getCollapsedValue: (_, elementStyle) => elementStyle.transform !== 'none',
+				getReportedWidth: (computedStyle) => `${parseInt(computedStyle.width) + 1}px`,
 			});
 		} else if (isMailApp) {
 			reportSidebarWidth({
@@ -273,9 +332,9 @@ ipcRenderer.on('request-sidebar-data', () => {
 
 	if (isCalendarApp) {
 		reportSidebarWidth({
-			selector: '#main>div>div:nth-child(3)>div',
-			getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
-			getReportedWidth: (computedStyle) => `calc(${computedStyle.width} + 1px)`,
+			selector: '#main>div:first-child>div:nth-child(2)>div',
+			getCollapsedValue: (_, elementStyle) => elementStyle.transform !== 'none',
+			getReportedWidth: (computedStyle) => `${parseInt(computedStyle.width) + 1}px`,
 		});
 	} else if (isMailApp) {
 		reportSidebarWidth({
@@ -300,9 +359,9 @@ ipcRenderer.on('global-options', (event, options) => {
 
 		if (isCalendarApp) {
 			reportSidebarWidth({
-				selector: '#main>div>div:nth-child(3)>div',
-				getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
-				getReportedWidth: (computedStyle) => `calc(${computedStyle.width} + 1px)`,
+				selector: '#main>div:first-child>div:nth-child(2)>div',
+				getCollapsedValue: (_, elementStyle) => elementStyle.transform !== 'none',
+				getReportedWidth: (computedStyle) => `${parseInt(computedStyle.width) + 1}px`,
 				useSelectorObserver: true,
 			});
 		} else if (isMailApp) {
@@ -320,6 +379,71 @@ ipcRenderer.on('global-options', (event, options) => {
 				getReportedWidth: (_, elementStyle) => elementStyle.width,
 				useMutationObserver: true,
 				addStyle: `.notion-topbar>div>div>div:first-child,.notion-open-sidebar,.notion-close-sidebar{display:none !important}`,
+			});
+		}
+	}
+});
+
+ipcRenderer.on('sidebar-fold', (event, collapsed) => {
+	const { isCalendarApp, isMailApp } = getCurrentApp();
+	if (isCalendarApp) {
+		const sidebar = document.querySelector('#main>div:first-child>div:nth-child(2)>div');
+		if (!sidebar) return;
+		const isSidebarUnfolded = sidebar.style.transform === 'none';
+		if (isSidebarUnfolded) return;
+
+		if (collapsed) {
+			sidebar.style.transform = 'translateX(calc(-100% - 40px))';
+		} else {
+			sidebar.style.transform = 'translateX(calc(0% - 0px))';
+		}
+	} else if (isMailApp) {
+		const sidebar = document.querySelector('.app>div>div>div:first-child');
+		if (!sidebar) return;
+		const isSidebarUnfolded = !sidebar.style.top;
+		if (isSidebarUnfolded) return;
+
+		if (collapsed) {
+			sidebar.style.boxShadow = 'none';
+			sidebar.style.transform = 'translateX(-100%)';
+		} else {
+			sidebar.style.boxShadow = 'rgb(49, 49, 49) 0px 0px 0px 1px, rgba(0, 0, 0, 0.56) 0px 20px 48px -8px';
+			sidebar.style.transform = 'translateX(0px)';
+		}
+	} else {
+		const sidebar = document.querySelector('.notion-sidebar');
+		if (!sidebar) return;
+		const isSidebarUnfolded = sidebar.style.height === '100%';
+		if (isSidebarUnfolded) return;
+
+		const style = collapsed ? {
+			opacity: '0',
+			transform: 'translateX(-220px) translateY(59px)',
+		} : {
+			opacity: '1',
+			transform: 'translateX(0) translateY(59px)',
+		};
+		const styleDescrete = collapsed ? {
+			visibility: 'hidden',
+			pointerEvents: 'none',
+		} : {
+			visibility: 'visible',
+			pointerEvents: 'auto',
+		};
+
+		Object.entries(style).forEach(([key, value]) => {
+			sidebar.style[key] = value;
+		});
+
+		if (collapsed) {
+			setTimeout(() => {
+				Object.entries(styleDescrete).forEach(([key, value]) => {
+					sidebar.style[key] = value;
+				});
+			}, 200);
+		} else {
+			Object.entries(styleDescrete).forEach(([key, value]) => {
+				sidebar.style[key] = value;
 			});
 		}
 	}
