@@ -15,7 +15,7 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 
 ## Installation
 
-<a href="https://github.com/anechunaev/notion-electron/releases/download/v1.9.3/Notion_Electron-1.9.3-x86_64.AppImage">
+<a href="https://github.com/anechunaev/notion-electron/releases/download/v1.9.4/Notion_Electron-1.9.4-x86_64.AppImage">
 	<picture>
 		<source media="(prefers-color-scheme: dark)" srcset="./docs/banner-appimage-dark.svg">
 		<source media="(prefers-color-scheme: light)" srcset="./docs/banner-appimage-light.svg">
@@ -24,14 +24,14 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 </a>
 
 - **Any Distribution `.AppImage`**
-	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.3/Notion_Electron-1.9.3-x86_64.AppImage)
-	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.3/Notion_Electron-1.9.3-arm64.AppImage)
+	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.4/Notion_Electron-1.9.4-x86_64.AppImage)
+	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.4/Notion_Electron-1.9.4-arm64.AppImage)
 - **Ubuntu / Debian `.deb` package**
-	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.3/Notion_Electron-1.9.3-amd64.deb)
-	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.3/Notion_Electron-1.9.3-arm64.deb)
+	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.4/Notion_Electron-1.9.4-amd64.deb)
+	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.4/Notion_Electron-1.9.4-arm64.deb)
 - **Fedora / CentOS / OpenSUSE `.rpm` package**
-	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.3/Notion_Electron-1.9.3-x86_64.rpm)
-	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.3/Notion_Electron-1.9.3-aarch64.rpm)
+	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.4/Notion_Electron-1.9.4-x86_64.rpm)
+	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.4/Notion_Electron-1.9.4-aarch64.rpm)
 
 ### Manual Installation
 
