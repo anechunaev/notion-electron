@@ -47,7 +47,7 @@
     "d-bus-type-system": "^1.0.0",
     "decode-ico": "^0.4.1",
     "electron-store": "^11.0.2",
-    "electron-updater": "^6.6.2",
+    "electron-updater": "^6.7.3",
     "sharp": "^0.34.4",
     "sortablejs": "^1.15.6"
   },
