@@ -452,6 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				}
 			}
 		});
+		scrollToSelectedTab();
 	}
 
 	function onSidebarStateChange(collapsed, width, isZoomed) {
@@ -580,6 +581,24 @@ document.addEventListener('DOMContentLoaded', () => {
 		historyForwardButton.disabled = !tab || !canGoForward;
 	}
 
+	function scrollToSelectedTab() {
+		const selected = titlebar.querySelector('.tab.selected');
+		if (
+			selected
+			&& selected.closest('.tabgroup')
+			&& (
+				selected.offsetLeft < tabgroup.scrollLeft
+				|| selected.offsetLeft + selected.clientWidth >= tabgroup.scrollLeft + tabgroup.clientWidth
+		)) {
+			const bb = selected.getBoundingClientRect();
+			const tgbb = tabgroup.getBoundingClientRect();
+			tabgroup.scrollTo({
+				left: bb.left + tabgroup.scrollLeft - tgbb.left - (tgbb.width - bb.width) / 2,
+				behavior: 'smooth',
+			});
+		}
+	}
+
 	if (window.notionElectronAPI) {
 		if (addTabButton) {
 			addTabButton.addEventListener('click', () => onAddTab({ url: 'https://www.notion.so' }));
@@ -595,8 +614,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		if (tabgroup) {
 			tabgroup.addEventListener('scroll', () => {
-				tabgroupShadowLeft.classList.toggle('hidden', tabgroup.scrollLeft <= 1);
-				tabgroupShadowRight.classList.toggle('hidden', tabgroup.scrollLeft >= tabgroup.scrollWidth - tabgroup.clientWidth - 1);
+				if (tabgroup.scrollLeft <= 1) {
+					tabgroupShadowLeft.classList.add('hidden');
+				} else if (tabgroupShadowLeft.classList.contains('hidden')) {
+					tabgroupShadowLeft.classList.remove('hidden');
+				}
+				if (tabgroup.scrollLeft >= tabgroup.scrollWidth - tabgroup.clientWidth - 1) {
+					tabgroupShadowRight.classList.add('hidden');
+				} else if (tabgroupShadowRight.classList.contains('hidden')) {
+					tabgroupShadowRight.classList.remove('hidden');
+				}
+			});
+			tabgroup.addEventListener('wheel', e => {
+				if (e.deltaY != 0 && e.deltaX == 0) {
+					e.preventDefault();
+					const maxScrollLeft = tabgroup.scrollWidth - tabgroup.clientWidth;
+					const targetScrollLeft = Math.max(0, Math.min(maxScrollLeft, tabgroup.scrollLeft + e.deltaY));
+					tabgroup.scrollLeft = targetScrollLeft;
+				}
 			});
 
 			const tabgroupObserver = new MutationObserver(() => {
