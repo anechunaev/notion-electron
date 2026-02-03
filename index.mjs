@@ -105,73 +105,79 @@ if (!app.requestSingleInstanceLock()) {
 				contextIsolation: false,
 				backgroundColor: bgColor,
 			});
-			const optionsWindow = new BrowserWindow({
-				minWidth: 600,
-				minHeight: 400,
-				width: screen.getPrimaryDisplay().workAreaSize.width * 0.5,
-				height: screen.getPrimaryDisplay().workAreaSize.height * 0.5,
-				show: false,
-				parent: mainWindow,
-				webPreferences: {
-					spellcheck: false,
-					preload: path.join(__dirname, './render/options-preload.js'),
-				},
-				title: 'Notion Electron Options',
-				icon: path.join(__dirname, './assets/icons/desktop.png'),
-				backgroundColor: bgColor,
-			});
-			optionsWindow.loadFile(path.join(__dirname, './assets/pages/options.html'));
 
-			const notificationService = new NotificationService();
-			const optionsService = new OptionsService(mainWindow, optionsWindow, store);
+			const optionsService = new OptionsService(store);
 			const tabService = new TabService(mainWindow, optionsService, store);
 			const windowPositionService = new WindowPositionService(mainWindow, store);
-			const trayService = new TrayService(mainWindow, optionsWindow);
-			const contextMenuService = new ContextMenuService(mainWindow, tabService);
-			const changelogService = new ChangelogService(pkg.repository.owner, pkg.repository.name);
-			const updateService = new UpdateService(optionsWindow, notificationService, changelogService, store);
 
-			updateService.on('update-available', trayService.onUpdateAvailable);
-			updateService.on('update-not-available', trayService.onUpdateNotAvailable);
+			setTimeout(function() {
+				const optionsWindow = new BrowserWindow({
+					minWidth: 600,
+					minHeight: 400,
+					width: screen.getPrimaryDisplay().workAreaSize.width * 0.5,
+					height: screen.getPrimaryDisplay().workAreaSize.height * 0.5,
+					show: false,
+					parent: mainWindow,
+					webPreferences: {
+						spellcheck: false,
+						preload: path.join(__dirname, './render/options-preload.js'),
+					},
+					title: 'Notion Electron Options',
+					icon: path.join(__dirname, './assets/icons/desktop.png'),
+					backgroundColor: bgColor,
+				});
+				optionsWindow.loadFile(path.join(__dirname, './assets/pages/options.html'));
 
-			mainWindow.on('minimize', function (event) {
-				event.preventDefault();
-				mainWindow.hide();
-			});
+				optionsWindow.on('close', function (event) {
+					if (!app.isQuiting) {
+						event.preventDefault();
+						optionsWindow.hide();
+					}
+				});
 
-			mainWindow.on('close', function (event) {
-				if (!app.isQuiting) {
+				const notificationService = new NotificationService();
+				const changelogService = new ChangelogService(pkg.repository.owner, pkg.repository.name);
+				const updateService = new UpdateService(optionsWindow, notificationService, changelogService, store);
+				const trayService = new TrayService(mainWindow, optionsWindow);
+				const contextMenuService = new ContextMenuService(mainWindow, tabService);
+
+				optionsService.setOptionsWindow(optionsWindow);
+
+				updateService.on('update-available', trayService.onUpdateAvailable);
+				updateService.on('update-not-available', trayService.onUpdateNotAvailable);
+
+				onDBusSignal('Options', () => {
+					optionsWindow.webContents.send('show-tab', 'options');
+					optionsWindow.show();
+				});
+
+				onDBusSignal('Updates', () => {
+					optionsWindow.webContents.send('show-tab', 'updates');
+					optionsWindow.show();
+				});
+
+				onDBusSignal('About', () => {
+					optionsWindow.webContents.send('show-tab', 'about');
+					optionsWindow.show();
+				});
+
+				mainWindow.on('minimize', function (event) {
 					event.preventDefault();
 					mainWindow.hide();
-				}
-				try {
-					windowPositionService.savePosition();
-					dBusMonitorDisconnect();
-				} catch (e) {}
-				return false;
-			});
+				});
 
-			optionsWindow.on('close', function (event) {
-				if (!app.isQuiting) {
-					event.preventDefault();
-					optionsWindow.hide();
-				}
-			});
-
-			onDBusSignal('Options', () => {
-				optionsWindow.webContents.send('show-tab', 'options');
-				optionsWindow.show();
-			});
-
-			onDBusSignal('Updates', () => {
-				optionsWindow.webContents.send('show-tab', 'updates');
-				optionsWindow.show();
-			});
-
-			onDBusSignal('About', () => {
-				optionsWindow.webContents.send('show-tab', 'about');
-				optionsWindow.show();
-			});
+				mainWindow.on('close', function (event) {
+					if (!app.isQuiting) {
+						event.preventDefault();
+						mainWindow.hide();
+					}
+					try {
+						windowPositionService.savePosition();
+						dBusMonitorDisconnect();
+					} catch (e) {}
+					return false;
+				});
+			}, 1); // Guaranteed to run on next tick despite engine optimizations
 
 			windowPositionService.restorePosition();
 		});

@@ -6,21 +6,13 @@ import { readFileSync } from 'node:fs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 class OptionsService {
-	#window = null;
 	#options = null;
 	#config = null;
 	#store = null;
 
-	constructor(mainWindow, optionsWindow, store) {
-		this.#window = mainWindow;
-		this.#options = optionsWindow;
+	constructor(store) {
 		this.#store = store;
 		this.#config = JSON.parse(readFileSync(path.join(__dirname, '../options.json'), 'utf8'));
-
-		this.#options.webContents.setWindowOpenHandler(({ url }) => {
-			shell.openExternal(url);
-			return { action: 'deny' };
-		});
 
 		Object.keys(this.#config.options).forEach((optionId) => {
 			this.#config.options[optionId].value.data = this.#store.get(optionId, this.#config.options[optionId].value.default);
@@ -31,11 +23,15 @@ class OptionsService {
 		ipcMain.on('get-app-metadata', this.#sendAppMetadata.bind(this));
 
 		ipcMain.on('get-options', (event) => {
-			this.#options.webContents.send('options', this.#config);
+			if (this.#options) {
+				this.#options.webContents.send('options', this.#config);
+			}
 		});
 
 		ipcMain.on('close-window', () => {
-			this.#options.close();
+			if (this.#options) {
+				this.#options.close();
+			}
 		});
 
 		ipcMain.on('set-option', (event, optionId, value) => {
@@ -44,6 +40,7 @@ class OptionsService {
 	}
 
 	#sendAppMetadata(event) {
+		if (!this.#options) return;
 		const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
 		this.#options.webContents.send('app-metadata', {
 			version: pkg.version,
@@ -57,6 +54,14 @@ class OptionsService {
 		app.isQuiting = true;
 		app.relaunch();
 		app.quit();
+	}
+
+	setOptionsWindow(optionsWindow) {
+		this.#options = optionsWindow;
+		this.#options.webContents.setWindowOpenHandler(({ url }) => {
+			shell.openExternal(url);
+			return { action: 'deny' };
+		});
 	}
 
 	getOption(optionId) {
