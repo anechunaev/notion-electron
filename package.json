@@ -34,7 +34,7 @@
     "releaseType": "release"
   },
   "devDependencies": {
-    "@electron/packager": "^19.0.1",
+    "@electron/packager": "^19.0.2",
     "electron": "^38.1.2",
     "electron-builder": "^26.4.0"
   },
