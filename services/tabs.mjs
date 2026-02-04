@@ -3,6 +3,7 @@ import { URL, fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { convertIcon } from '../lib/image.mjs';
 import { detectShortcut, shortcutMap } from '../lib/shortcuts.mjs';
+import pkg from "../package.json" with { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -214,8 +215,7 @@ class TabsService {
 		view.setBounds({ x: 0, y: TITLEBAR_HEIGHT, width: bounds.width, height: bounds.height - TITLEBAR_HEIGHT });
 
 		view.webContents.loadURL(url ?? HOME_PAGE, {
-			// TODO: Remove when Notion Mail fixes their device detection logic
-			userAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0",
+			userAgent: `Mozilla/5.0 (${process.env.XDG_SESSION_TYPE ?? 'X11'}; Linux ${process.arch}) Notion_Еlectron/${pkg.version} Chrome/${process.versions.chrome}`,
 		})
 			.then(() => {
 				this.#saveTabs();
