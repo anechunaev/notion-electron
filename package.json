@@ -1,6 +1,6 @@
 {
   "name": "notion-electron",
-  "version": "1.9.4",
+  "version": "1.9.5",
   "main": "index.mjs",
   "type": "module",
   "scripts": {
