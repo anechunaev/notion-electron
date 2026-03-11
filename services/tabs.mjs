@@ -219,7 +219,7 @@ class TabsService {
 	}
 
 	#setViewSize() {
-		const bounds = this.#window.getBounds();
+		const bounds = this.#window.getContentBounds();
 		this.#titleBarView.setBounds({
 			x: 0,
 			y: 0,
@@ -260,7 +260,7 @@ class TabsService {
 			view.webContents.openDevTools({ mode: "detach" });
 		}
 
-		const bounds = this.#window.getBounds();
+		const bounds = this.#window.getContentBounds();
 		view.setBounds({
 			x: 0,
 			y: TITLEBAR_HEIGHT,
