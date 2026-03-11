@@ -239,7 +239,7 @@ class TabsService {
 	#setVisibleTabs(tabId) {
 		Object.entries(this.#tabViews).forEach(([viewId, view]) => {
 			const visible = viewId === tabId;
-			if (visible) {
+			if (visible && view) {
 				this.#window.contentView.addChildView(view);
 			} else {
 				this.#window.contentView.removeChildView(view);
@@ -302,10 +302,7 @@ class TabsService {
 
 		const isAuthHost = AUTH_HOSTS.some((host) => u.hostname.includes(host));
 
-		console.log(">> DISPOSITION: ", disposition, url);
-
 		if (isAuthHost && disposition === "new-window") {
-			console.log(">> AUTH HOST");
 			return {
 				action: "allow",
 				overrideBrowserWindowOptions: {
@@ -361,7 +358,7 @@ class TabsService {
 	#onCloseTab(tabId) {
 		const view = this.#tabViews[tabId];
 		if (view) {
-			view.webContents.close();
+			view.webContents?.close();
 			delete this.#tabViews[tabId];
 			delete this.#iconMap[tabId];
 			delete this.#titlesMap[tabId];
