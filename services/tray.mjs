@@ -26,13 +26,13 @@ class TrayService {
 		this.#tray.setContextMenu(this.#menu);
 
 		this.#tray.on("click", () => {
-			if (this.#window.isVisible()) {
+			if (this.#window?.isVisible()) {
 				this.#window.hide();
 			} else {
-				if (this.#window.isMinimized()) {
+				if (this.#window?.isMinimized()) {
 					this.#window.restore();
 				}
-				this.#window.show();
+				this.#window?.show();
 			}
 		});
 

@@ -9,6 +9,7 @@ import {
 import Store from "electron-store";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { readFileSync } from "node:fs";
 import pkg from "./package.json" with { type: "json" };
 import TabService from "./services/tabs.mjs";
 import WindowPositionService from "./services/windowPosition.mjs";
@@ -28,6 +29,13 @@ const LIGHT_THEME_BACKGROUND = "#f8f8f7";
 
 let mainWindow = null;
 const store = new Store();
+
+if (
+	process.env.XDG_SESSION_DESKTOP.toLowerCase() === "gnome" &&
+	!store.get("hide-to-tray", true)
+) {
+	store.set("hide-to-tray", false);
+}
 
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
@@ -119,7 +127,14 @@ if (!app.requestSingleInstanceLock()) {
 						backgroundColor: bgColor,
 					});
 
-					const optionsService = new OptionsService(store);
+					const optionsConfig = JSON.parse(
+						readFileSync(path.join(__dirname, "./options.json"), "utf8"),
+					);
+					//@todo: make possible to configure default values when initialize OptionsService
+					if (process.env.XDG_SESSION_DESKTOP.toLowerCase() === "gnome") {
+						optionsConfig.options["hide-to-tray"].value.default = false;
+					}
+					const optionsService = new OptionsService(store, optionsConfig);
 					const tabService = new TabService(mainWindow, optionsService, store);
 					const windowPositionService = new WindowPositionService(
 						mainWindow,
@@ -146,12 +161,12 @@ if (!app.requestSingleInstanceLock()) {
 							path.join(__dirname, "./assets/pages/options.html"),
 						);
 
-						optionsWindow.on("close", function (event) {
-							if (!app.isQuiting) {
-								event.preventDefault();
-								optionsWindow.hide();
-							}
-						});
+						// optionsWindow.on("close", function (event) {
+						// 	if (!app.isQuiting) {
+						// 		event.preventDefault();
+						// 		optionsWindow.hide();
+						// 	}
+						// });
 
 						const notificationService = new NotificationService();
 						const changelogService = new ChangelogService(
@@ -194,20 +209,28 @@ if (!app.requestSingleInstanceLock()) {
 						});
 
 						mainWindow.on("minimize", function (event) {
-							event.preventDefault();
-							mainWindow.hide();
+							const hideToTray = store.get("hide-to-tray", true);
+
+							if (hideToTray) {
+								event.preventDefault();
+								mainWindow.hide();
+							}
 						});
 
 						mainWindow.on("close", function (event) {
-							if (!app.isQuiting) {
+							const hideOnClose = store.get("hide-window-on-close", true);
+
+							if (!app.isQuiting && hideOnClose) {
 								event.preventDefault();
 								mainWindow.hide();
+								return false;
 							}
 							try {
 								windowPositionService.savePosition();
 								dBusMonitorDisconnect();
 							} catch (e) {}
-							return false;
+							app.quit();
+							process.exit(0);
 						});
 					}, 1); // Guaranteed to run on next tick despite engine optimizations
 
@@ -217,8 +240,12 @@ if (!app.requestSingleInstanceLock()) {
 		});
 
 	app.on("window-all-closed", (event) => {
-		if (process.platform !== "darwin") {
+		const hideOnClose = store.get("hide-window-on-close", true);
+		if (hideOnClose) {
 			event.preventDefault();
+		} else {
+			app.quit();
+			process.exit(0);
 		}
 	});
 }

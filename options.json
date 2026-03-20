@@ -105,6 +105,22 @@
 				"type": "checkbox",
 				"default": false
 			}
+		},
+		"hide-to-tray": {
+			"group": "g1",
+			"name": "When enabled will hide window to tray",
+			"value": {
+				"type": "checkbox",
+				"default": true
+			}
+		},
+		"hide-window-on-close": {
+			"group": "g1",
+			"name": "When enabled will hide window to tray instead of closing it",
+			"value": {
+				"type": "checkbox",
+				"default": true
+			}
 		}
 	},
 	"groups": {
