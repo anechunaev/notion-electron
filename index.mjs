@@ -133,6 +133,7 @@ if (!app.requestSingleInstanceLock()) {
 					//@todo: make possible to configure default values when initialize OptionsService
 					if (process.env.XDG_SESSION_DESKTOP.toLowerCase() === "gnome") {
 						optionsConfig.options["hide-to-tray"].value.default = false;
+						optionsConfig.options["hide-window-on-close"].value.default = false;
 					}
 					const optionsService = new OptionsService(store, optionsConfig);
 					const tabService = new TabService(mainWindow, optionsService, store);
