@@ -1,7 +1,14 @@
-import { ipcMain, shell, Menu, clipboard, nativeTheme, nativeImage } from 'electron';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
-import { shortcutMap } from '../lib/shortcuts.mjs';
+import {
+	ipcMain,
+	shell,
+	Menu,
+	clipboard,
+	nativeTheme,
+	nativeImage,
+} from "electron";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import { shortcutMap } from "../lib/shortcuts.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,30 +16,30 @@ const __dirname = path.dirname(__filename);
 class ContextMenuService {
 	#window = null;
 	#tabService = null;
+	#mainBus = null;
 
-	constructor(window, tabService) {
+	constructor(window, tabService, mainBus) {
 		this.#window = window;
 		this.#tabService = tabService;
+		this.#mainBus = mainBus;
 
-		ipcMain.on('show-tab-context-menu', (event, tabId) => {
-			const menu = Menu.buildFromTemplate(
-				this.#templateTabContextMenu(tabId)
-			);
+		ipcMain.on("show-tab-context-menu", (event, tabId) => {
+			const menu = Menu.buildFromTemplate(this.#templateTabContextMenu(tabId));
 			menu.popup({ window: this.#window });
 		});
 
-		ipcMain.on('show-page-context-menu', (event, payload) => {
+		this.#mainBus.on("show-page-context-menu", (event) => {
 			const wc = event.sender;
 			const menu = Menu.buildFromTemplate(
-				this.#templatePageContextMenu(wc, payload)
+				this.#templatePageContextMenu(wc, event),
 			);
 			menu.popup({ window: this.#window });
 		});
 
-		ipcMain.on('show-all-tabs-menu', () => {
+		ipcMain.on("show-all-tabs-menu", () => {
 			const tabIds = this.#tabService.getTabIds();
 			const menu = Menu.buildFromTemplate(
-				this.#templateAllTabsContextMenu(tabIds)
+				this.#templateAllTabsContextMenu(tabIds),
 			);
 			menu.popup({ window: this.#window });
 		});
@@ -44,86 +51,94 @@ class ContextMenuService {
 		const titlebar = this.#tabService.getTitleBarView();
 		return [
 			{
-				label: isPinned ? 'Unpin Tab' : 'Pin Tab',
+				label: isPinned ? "Unpin Tab" : "Pin Tab",
 				click: () => {
 					this.#tabService.togglePinTab(tabId, !isPinned);
-					titlebar.webContents.send('context-menu-command', { id: 'pin', tabId });
+					titlebar.webContents.send("context-menu-command", {
+						id: "pin",
+						tabId,
+					});
 				},
 			},
-			{ type: 'separator' },
+			{ type: "separator" },
 			{
-				label: 'Close Tab',
+				label: "Close Tab",
 				accelerator: shortcutMap.tabClose.accelerator,
 				click: () => {
-					titlebar.webContents.send('context-menu-command', { id: 'close', tabId });
-				},
-			},
-			{
-				label: 'Close Other Tabs',
-				click: () => {
-					titlebar.webContents.send('context-menu-command', {
-						id: 'closeOther',
-						tabIds: this.#tabService.getTabIds().filter((id) => id !== tabId && !this.#tabService.isPinned(id)),
+					titlebar.webContents.send("context-menu-command", {
+						id: "close",
+						tabId,
 					});
 				},
 			},
 			{
-				label: 'Close All Tabs',
+				label: "Close Other Tabs",
 				click: () => {
-					titlebar.webContents.send('context-menu-command', { id: 'closeAll' });
+					titlebar.webContents.send("context-menu-command", {
+						id: "closeOther",
+						tabIds: this.#tabService
+							.getTabIds()
+							.filter((id) => id !== tabId && !this.#tabService.isPinned(id)),
+					});
 				},
 			},
-			{ type: 'separator' },
 			{
-				label: 'Duplicate Current Tab',
+				label: "Close All Tabs",
+				click: () => {
+					titlebar.webContents.send("context-menu-command", { id: "closeAll" });
+				},
+			},
+			{ type: "separator" },
+			{
+				label: "Duplicate Current Tab",
 				click: () => {
 					this.#tabService.duplicateTab(tabId);
 				},
 				enabled: Boolean(view),
 			},
-			{ type: 'separator' },
+			{ type: "separator" },
 			{
-				label: 'Zoom In',
+				label: "Zoom In",
 				accelerator: shortcutMap.zoomIn.accelerator,
-				click: () => this.#tabService.runAction('zoomIn'),
+				click: () => this.#tabService.runAction("zoomIn"),
 			},
 			{
-				label: 'Zoom Out',
+				label: "Zoom Out",
 				accelerator: shortcutMap.zoomOut.accelerator,
-				click: () => this.#tabService.runAction('zoomOut'),
+				click: () => this.#tabService.runAction("zoomOut"),
 			},
 			{
-				label: 'Reset Zoom',
+				label: "Reset Zoom",
 				accelerator: shortcutMap.zoomReset.accelerator,
-				click: () => this.#tabService.runAction('zoomReset'),
+				click: () => this.#tabService.runAction("zoomReset"),
 			},
-			{ type: 'separator' },
+			{ type: "separator" },
 			{
-				label: 'Reload',
+				label: "Reload",
 				accelerator: shortcutMap.pageReload.accelerator,
-				click: () => this.#tabService.runAction('pageReload'),
+				click: () => this.#tabService.runAction("pageReload"),
 			},
 			{
-				label: 'Back',
+				label: "Back",
 				accelerator: shortcutMap.historyBack.accelerator,
-				click: () => this.#tabService.runAction('historyBack'),
+				click: () => this.#tabService.runAction("historyBack"),
 				enabled: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 			},
 			{
-				label: 'Forward',
+				label: "Forward",
 				accelerator: shortcutMap.historyForward.accelerator,
-				click: () => this.#tabService.runAction('historyForward'),
+				click: () => this.#tabService.runAction("historyForward"),
 				enabled: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 			},
-			{ type: 'separator' },
+			{ type: "separator" },
 			{
-				label: 'Copy URL',
+				label: "Copy URL",
 				click: () => {
 					clipboard.writeText(view?.webContents?.getURL());
 				},
 			},
 			{
-				label: 'Open in Browser',
+				label: "Open in Browser",
 				click: () => {
 					shell.openExternal(view?.webContents?.getURL());
 				},
@@ -131,80 +146,137 @@ class ContextMenuService {
 		];
 	}
 
-	#templatePageContextMenu(wc, { isLink, isImage, isSelection, linkUrl, imageUrl }) {
-		return [
+	#templatePageContextMenu(
+		wc,
+		{
+			isLink,
+			isImage,
+			isSelection,
+			linkUrl,
+			imageUrl,
+			misspelledWord,
+			dictionarySuggestions,
+		},
+	) {
+		const template = [
 			{
-				label: 'Cut',
-				role: 'cut',
-				accelerator: 'CmdOrCtrl+X',
+				label: "Cut",
+				role: "cut",
+				accelerator: "CmdOrCtrl+X",
 				enabled: isSelection,
 			},
 			{
-				label: 'Copy',
-				role: 'copy',
-				accelerator: 'CmdOrCtrl+C',
+				label: "Copy",
+				role: "copy",
+				accelerator: "CmdOrCtrl+C",
 				enabled: isSelection,
 			},
 			{
-				label: 'Paste',
-				role: 'paste',
-				accelerator: 'CmdOrCtrl+V',
+				label: "Paste",
+				role: "paste",
+				accelerator: "CmdOrCtrl+V",
 			},
-			{ type: 'separator' },
+			{ type: "separator" },
 			{
-				label: 'Copy Link URL',
+				label: "Copy Link URL",
 				click: () => {
 					clipboard.writeText(linkUrl);
 				},
 				visible: isLink,
 			},
 			{
-				label: 'Open Link in New Tab',
+				label: "Open Link in New Tab",
 				click: () => {
 					this.#tabService.requestTab({ url: linkUrl });
 				},
 				visible: isLink,
-				enabled: linkUrl?.startsWith('https://notion') || linkUrl?.startsWith('https://www.notion'),
+				enabled:
+					linkUrl?.startsWith("https://notion") ||
+					linkUrl?.startsWith("https://www.notion"),
 			},
 			{
-				label: 'Open Link in Browser',
+				label: "Open Link in Browser",
 				click: () => {
 					shell.openExternal(linkUrl);
 				},
 				visible: isLink,
 			},
 			{
-				label: 'Save Image As...',
+				label: "Save Image As...",
 				click: () => {
 					wc.downloadURL(imageUrl);
 				},
 				visible: isImage,
 			},
 			{
-				label: 'Open Page in Browser',
+				label: "Open Page in Browser",
 				click: () => {
 					shell.openExternal(wc.getURL());
 				},
 			},
 		];
+
+		if (
+			(Array.isArray(dictionarySuggestions) &&
+				dictionarySuggestions.length > 0) ||
+			misspelledWord
+		) {
+			template.unshift({
+				type: "separator",
+			});
+		}
+
+		if (
+			Array.isArray(dictionarySuggestions) &&
+			dictionarySuggestions.length > 0
+		) {
+			template.unshift(
+				...dictionarySuggestions.map((suggestion) => {
+					return {
+						label: `Replace to "${suggestion}"`,
+						click: () => {
+							wc.replaceMisspelling(suggestion);
+						},
+					};
+				}),
+			);
+		}
+
+		if (misspelledWord) {
+			template.unshift({
+				label: `Add "${misspelledWord}" to dictionary`,
+				click: () => {
+					wc.session.addWordToSpellCheckerDictionary(misspelledWord);
+				},
+			});
+		}
+
+		return template;
 	}
 
 	#templateAllTabsContextMenu(tabs) {
-		const dir = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+		const dir = nativeTheme.shouldUseDarkColors ? "dark" : "light";
 		const defaultIcon = nativeImage
-			.createFromPath(path.join(__dirname, `../assets/icons/${dir}/document.png`))
+			.createFromPath(
+				path.join(__dirname, `../assets/icons/${dir}/document.png`),
+			)
 			.resize({ width: 16, height: 16 });
-		return tabs.map(id => {
+		return tabs.map((id) => {
 			const storedIcon = this.#tabService.getTabIcon(id);
-			const icon = storedIcon && !storedIcon.includes("favicon.ico")
-				? nativeImage.createFromDataURL(this.#tabService.getTabIcon(id)).resize({ width: 16, height: 16 })
-				: defaultIcon;
+			const icon =
+				storedIcon && !storedIcon.includes("favicon.ico")
+					? nativeImage
+							.createFromDataURL(this.#tabService.getTabIcon(id))
+							.resize({ width: 16, height: 16 })
+					: defaultIcon;
 			return {
-				label: (this.#tabService.getTabTitle(id) ?? 'New Tab') + (this.#tabService.isPinned(id) ? ' 📌' : ''),
+				label:
+					(this.#tabService.getTabTitle(id) ?? "New Tab") +
+					(this.#tabService.isPinned(id) ? " 📌" : ""),
 				click: () => {
 					this.#tabService.requestTab({ tabId: id });
 				},
-				type: 'radio',
+				type: "radio",
 				checked: id === this.#tabService.getCurrentTabId(),
 				icon,
 			};

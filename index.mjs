@@ -7,6 +7,7 @@ import {
 	Menu,
 } from "electron";
 import Store from "electron-store";
+import EventEmitter from "node:events";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { readFileSync } from "node:fs";
@@ -135,8 +136,14 @@ if (!app.requestSingleInstanceLock()) {
 						optionsConfig.options["hide-to-tray"].value.default = false;
 						optionsConfig.options["hide-window-on-close"].value.default = false;
 					}
+					const mainBus = new EventEmitter();
 					const optionsService = new OptionsService(store, optionsConfig);
-					const tabService = new TabService(mainWindow, optionsService, store);
+					const tabService = new TabService(
+						mainWindow,
+						optionsService,
+						store,
+						mainBus,
+					);
 					const windowPositionService = new WindowPositionService(
 						mainWindow,
 						store,
@@ -162,12 +169,12 @@ if (!app.requestSingleInstanceLock()) {
 							path.join(__dirname, "./assets/pages/options.html"),
 						);
 
-						// optionsWindow.on("close", function (event) {
-						// 	if (!app.isQuiting) {
-						// 		event.preventDefault();
-						// 		optionsWindow.hide();
-						// 	}
-						// });
+						optionsWindow.on("close", function (event) {
+							if (!app.isQuiting) {
+								event.preventDefault();
+								optionsWindow.hide();
+							}
+						});
 
 						const notificationService = new NotificationService();
 						const changelogService = new ChangelogService(
@@ -184,6 +191,7 @@ if (!app.requestSingleInstanceLock()) {
 						const contextMenuService = new ContextMenuService(
 							mainWindow,
 							tabService,
+							mainBus,
 						);
 
 						optionsService.setOptionsWindow(optionsWindow);

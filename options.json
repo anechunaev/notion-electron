@@ -108,7 +108,7 @@
 		},
 		"hide-to-tray": {
 			"group": "g1",
-			"name": "When enabled will hide window to tray",
+			"name": "Minimize window to tray instead of app bar",
 			"value": {
 				"type": "checkbox",
 				"default": true
@@ -116,7 +116,7 @@
 		},
 		"hide-window-on-close": {
 			"group": "g1",
-			"name": "When enabled will hide window to tray instead of closing it",
+			"name": "Hide window to tray instead of closing it",
 			"value": {
 				"type": "checkbox",
 				"default": true

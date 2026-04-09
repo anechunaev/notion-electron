@@ -36,11 +36,13 @@ class TabsService {
 	#currentTabId = null;
 	#options = null;
 	#store = null;
+	#mainBus = null;
 
-	constructor(window, optionsService, store) {
+	constructor(window, optionsService, store, mainBus) {
 		this.#window = window;
 		this.#options = optionsService;
 		this.#store = store;
+		this.#mainBus = mainBus;
 
 		this.#titleBarView = new WebContentsView({
 			webPreferences: {
@@ -253,6 +255,9 @@ class TabsService {
 		const view = new WebContentsView({
 			webPreferences: {
 				preload: path.join(__dirname, "../render/docs-preload.js"),
+				spellcheck: process.argv.includes("--disable-spellcheck")
+					? false
+					: this.#options.getOption("general-enable-spellcheck").data,
 			},
 		});
 
@@ -290,6 +295,19 @@ class TabsService {
 				view.webContents,
 				this.#titleBarView.webContents,
 			);
+		});
+
+		view.webContents.on("context-menu", (event, params) => {
+			this.#mainBus.emit("show-page-context-menu", {
+				sender: view.webContents,
+				isLink: Boolean(params.linkURL),
+				isImage: params.mediaType === "image" && Boolean(params.srcURL),
+				linkUrl: params.linkURL,
+				imageUrl: params.srcURL,
+				isSelection: Boolean(params.selectionText),
+				misspelledWord: params.misspelledWord,
+				dictionarySuggestions: params.dictionarySuggestions,
+			});
 		});
 
 		this.#tabViews[tabId] = view;
