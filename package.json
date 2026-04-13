@@ -41,7 +41,7 @@
   "dependencies": {
     "@clebert/node-d-bus": "^1.0.0",
     "@jimp/core": "^1.6.1",
-    "@jimp/js-png": "^1.6.0",
+    "@jimp/js-png": "^1.6.1",
     "@jimp/plugin-resize": "^1.6.0",
     "d-bus-message-protocol": "^1.0.0",
     "d-bus-type-system": "^1.0.0",
