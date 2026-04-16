@@ -22,7 +22,7 @@
 		},
 		"general-enable-spellcheck": {
 			"group": "g1",
-			"name": "Enable Spllcheck",
+			"name": "Enable Spellcheck",
 			"value": {
 				"type": "checkbox",
 				"default": false
