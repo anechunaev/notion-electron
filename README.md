@@ -68,6 +68,50 @@ Run program with this flags to enable features:
 - `--hide-on-startup` – This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
 - `--disable-spellcheck` - disables OS-defined spellcheck.
 
+### Spellcheck dictionaries
+
+On Linux, non-English spellcheck may appear not to work even after updating spellcheck language settings in `Preferences`.
+
+This usually happens because Electron/Chromium requires matching `.bdic` dictionary files to be installed locally. Updating `Preferences` alone may not be sufficient if the corresponding dictionary file is missing.
+
+#### Preferences location
+```sh
+~/.config/notion-electron/Preferences
+```
+Example of the relevant section in `Preferences`:
+```json
+"spellcheck":{"dictionaries":["es-MX"],"dictionary":"es-MX"}
+```
+
+#### Dictionaries location
+```sh
+~/.config/notion-electron/Dictionaries
+```
+
+Prepare dictionaries directory:
+```sh
+mkdir -p ~/.config/notion-electron/Dictionaries
+cd ~/.config/notion-electron/Dictionaries
+```
+
+Example installing Spanish (Mexico) dictionary:
+```sh
+curl -LO https://redirector.gvt1.com/edgedl/chrome/dict/es-MX-9-0.bdic
+mv es-MX-9-0.bdic es-MX.bdic
+```
+
+Example installing Spanish (Spain) dictionary:
+```sh
+curl -LO https://redirector.gvt1.com/edgedl/chrome/dict/es-ES-9-0.bdic
+mv es-ES-9-0.bdic es-ES.bdic
+```
+
+After installing dictionaries, restart Notion Electron:
+```sh
+pkill -f notion-electron
+```
+
+
 ## Highlights
 
 This is not a complete feature list, but here are some of the key highlights of the application:
