@@ -70,41 +70,26 @@ Run program with this flags to enable features:
 
 ### Spellcheck dictionaries
 
-On Linux, non-English spellcheck may appear not to work even after updating spellcheck language settings in `Preferences`.
+Sometimes, for a non-system language, spellcheck may appear not to work correctly because the application is shipped with the default English dictionary only.
 
-This usually happens because Electron/Chromium requires matching `.bdic` dictionary files to be installed locally. Updating `Preferences` alone may not be sufficient if the corresponding dictionary file is missing.
+This behavior can be adjusted by updating Electron preferences at `~/.config/notion-electron/Preferences`. Since Electron cannot reliably download dictionaries in sandboxed environments, you may need to install them manually.
 
-#### Preferences location
-```sh
-~/.config/notion-electron/Preferences
-```
 Example of the relevant section in `Preferences`:
 ```json
 "spellcheck":{"dictionaries":["es-MX"],"dictionary":"es-MX"}
 ```
 
-#### Dictionaries location
-```sh
-~/.config/notion-electron/Dictionaries
-```
+Dictionary files should be placed in `~/.config/notion-electron/Dictionaries`.
 
-Prepare dictionaries directory:
-```sh
-mkdir -p ~/.config/notion-electron/Dictionaries
-cd ~/.config/notion-electron/Dictionaries
-```
+`.bdic` files can be obtained from the [Chromium Hunspell dictionaries repository](https://chromium.googlesource.com/chromium/deps/hunspell_dictionaries/+/refs/heads/main).
 
-Example installing Spanish (Mexico) dictionary:
-```sh
-curl -LO https://redirector.gvt1.com/edgedl/chrome/dict/es-MX-9-0.bdic
-mv es-MX-9-0.bdic es-MX.bdic
-```
+Note that:
+* Not all languages/locales are available (e.g. `es-MX` may not be present)
+* File naming includes version suffixes (e.g. `es-ES-3-0.bdic`)
+* You may need to rename the file to match the expected locale (e.g. `es-ES.bdic`)
 
-Example installing Spanish (Spain) dictionary:
-```sh
-curl -LO https://redirector.gvt1.com/edgedl/chrome/dict/es-ES-9-0.bdic
-mv es-ES-9-0.bdic es-ES.bdic
-```
+
+After downloading a dictionary file (e.g. `es-ES-3-0.bdic`), place it in the `Dictionaries` directory and rename it if necessary (e.g. `es-ES.bdic`).
 
 After installing dictionaries, restart Notion Electron:
 ```sh
