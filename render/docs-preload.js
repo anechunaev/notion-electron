@@ -368,7 +368,6 @@ ipcRenderer.on("global-options", (event, options) => {
 				getCollapsedValue: (_, elementStyle) => elementStyle.width === "0px",
 				getReportedWidth: (_, elementStyle) => elementStyle.width,
 				useMutationObserver: true,
-				addStyle: `.notion-topbar>div>div>div:first-child,.notion-open-sidebar,.notion-close-sidebar{display:none !important}`,
 			});
 		}
 	}
