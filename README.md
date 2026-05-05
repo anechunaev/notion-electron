@@ -68,6 +68,35 @@ Run program with this flags to enable features:
 - `--hide-on-startup` – This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
 - `--disable-spellcheck` - disables OS-defined spellcheck.
 
+### Spellcheck dictionaries
+
+Sometimes, for a non-system language, spellcheck may appear not to work correctly because the application is shipped with the default English dictionary only.
+
+This behavior can be adjusted by updating Electron preferences at `~/.config/notion-electron/Preferences`. Since Electron cannot reliably download dictionaries in sandboxed environments, you may need to install them manually.
+
+Example of the relevant section in `Preferences`:
+```json
+"spellcheck":{"dictionaries":["es-MX"],"dictionary":"es-MX"}
+```
+
+Dictionary files should be placed in `~/.config/notion-electron/Dictionaries`.
+
+`.bdic` files can be obtained from the [Chromium Hunspell dictionaries repository](https://chromium.googlesource.com/chromium/deps/hunspell_dictionaries/+/refs/heads/main).
+
+Note that:
+* Not all languages/locales are available (e.g. `es-MX` may not be present)
+* File naming includes version suffixes (e.g. `es-ES-3-0.bdic`)
+* You may need to rename the file to match the expected locale (e.g. `es-ES.bdic`)
+
+
+After downloading a dictionary file (e.g. `es-ES-3-0.bdic`), place it in the `Dictionaries` directory and rename it if necessary (e.g. `es-ES.bdic`).
+
+After installing dictionaries, restart Notion Electron:
+```sh
+pkill -f notion-electron
+```
+
+
 ## Highlights
 
 This is not a complete feature list, but here are some of the key highlights of the application:
