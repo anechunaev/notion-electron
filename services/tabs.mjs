@@ -2,7 +2,7 @@ import { WebContentsView, ipcMain, shell, app } from "electron";
 import { URL, fileURLToPath } from "node:url";
 import path from "node:path";
 import { convertIcon } from "../lib/image.mjs";
-import { detectShortcut, shortcutMap } from "../lib/shortcuts.mjs";
+import { detectShortcut, shortcutMap } from "../lib/shortcuts/index.mjs";
 import pkg from "../package.json" with { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
