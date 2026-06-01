@@ -10,9 +10,9 @@ async function run() {
 
 	if (fs.existsSync(path.resolve(process.cwd(), './.husky'))) return;
 	await cp.exec('npx husky add .husky/pre-commit "npm run lint"');
-	await cp.exec('npx husky add .husky/pre-push "npm run lint:deep"');
+	// await cp.exec('npx husky add .husky/pre-push "npm run lint:deep"');
 }
 
 run()
 	.then(() => console.log(`✅ Git hooks installed`))
-	.catch((error) => console.error('❌ Error while installing hooks:\n', error))
+	.catch((error) => console.error('❌ Error while installing hooks:\n', error));

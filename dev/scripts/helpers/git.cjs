@@ -1,10 +1,10 @@
-import cp from 'node:child_process';
-import path from 'node:path';
-import { ALLOWED_EXTENSIONS } from './constants.mjs';
+const cp = require('node:child_process');
+const path = require('node:path');
+const { ALLOWED_EXTENSIONS } = require('./constants.cjs');
 
-export async function getCurrentChanges() {
+async function getCurrentChanges() {
 	const changed = new Promise((resolve, reject) => {
-		cp.exec('git diff-index --name-only --diff-filter=d HEAD', (error, stdout, _stderr) => {
+		cp.exec('git diff-index --name-only --diff-filter=d HEAD', (error, stdout) => {
 			if (error) {
 				return reject(error);
 			}
@@ -13,7 +13,7 @@ export async function getCurrentChanges() {
 		});
 	});
 	const untracked = new Promise((resolve, reject) => {
-		cp.exec('git ls-files --others --exclude-standard', (error, stdout, _stderr) => {
+		cp.exec('git ls-files --others --exclude-standard', (error, stdout) => {
 			if (error) {
 				return reject(error);
 			}
@@ -22,33 +22,34 @@ export async function getCurrentChanges() {
 		});
 	});
 
-	try {
-		const [ changedList, untrackedList ] = await Promise.all([ changed, untracked ]);
-		const files = ([]).concat(changedList, untrackedList);
-		return files.filter(file => ALLOWED_EXTENSIONS.has(path.extname(file)) && file.startsWith('src/'));
-	} catch (error) {
-		throw error;
-	}
+	const [changedList, untrackedList] = await Promise.all([changed, untracked]);
+	const files = [].concat(changedList, untrackedList);
+	return files.filter((file) => ALLOWED_EXTENSIONS.has(path.extname(file)));
 }
 
-export async function stageFiles(files = '.') {
-	return await cp.exec(`git add ${files}`);
+async function stageFiles(files = '.') {
+	return cp.exec(`git add ${files}`);
 }
 
-export async function getMainBranch() {
+async function getMainBranch() {
 	return new Promise((resolve, reject) => {
 		cp.exec('git remote show origin', (error, stdout) => {
 			if (error) {
 				return reject(error);
 			}
 
-			const lines = stdout.split('\n').map(line => line.trim());
-			resolve(lines.find(line => line.startsWith('HEAD branch:'))?.split(' ').pop())
+			const lines = stdout.split('\n').map((line) => line.trim());
+			resolve(
+				lines
+					.find((line) => line.startsWith('HEAD branch:'))
+					?.split(' ')
+					.pop(),
+			);
 		});
 	});
 }
 
-export async function getCurrentBranch() {
+async function getCurrentBranch() {
 	return new Promise((resolve, reject) => {
 		cp.exec('git rev-parse --abbrev-ref HEAD', (error, stdout) => {
 			if (error) {
@@ -60,8 +61,8 @@ export async function getCurrentBranch() {
 	});
 }
 
-export async function getMergeBase(curBranch) {
-	const currentBranch = curBranch ?? await getCurrentBranch();
+async function getMergeBase(curBranch) {
+	const currentBranch = curBranch ?? (await getCurrentBranch());
 	const mainBranch = await getMainBranch();
 
 	return new Promise((resolve, reject) => {
@@ -75,7 +76,7 @@ export async function getMergeBase(curBranch) {
 	});
 }
 
-export async function getChangesFromMergeBase() {
+async function getChangesFromMergeBase() {
 	const currentBranch = await getCurrentBranch();
 	const mergeBase = await getMergeBase(currentBranch);
 
@@ -88,16 +89,20 @@ export async function getChangesFromMergeBase() {
 			resolve(
 				stdout
 					.split('\n')
-					.map(line => {
+					.map((line) => {
 						const parts = line.split(/\s+/);
 						return parts[1];
 					})
 					.filter(Boolean)
-					.map(line => line.trim())
-					.filter(file =>
-						ALLOWED_EXTENSIONS.has(path.extname(file))
-					)
+					.map((line) => line.trim())
+					.filter((file) => ALLOWED_EXTENSIONS.has(path.extname(file))),
 			);
 		});
 	});
 }
+
+module.exports = {
+	getCurrentChanges,
+	stageFiles,
+	getChangesFromMergeBase,
+};

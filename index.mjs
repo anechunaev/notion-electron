@@ -1,48 +1,41 @@
-import {
-	app,
-	screen,
-	nativeTheme,
-	BaseWindow,
-	BrowserWindow,
-	Menu,
-} from "electron";
-import Store from "electron-store";
-import EventEmitter from "node:events";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-import { readFileSync } from "node:fs";
-import pkg from "./package.json" with { type: "json" };
-import TabService from "./services/tabs.mjs";
-import WindowPositionService from "./services/windowPosition.mjs";
-import TrayService from "./services/tray.mjs";
-import ContextMenuService from "./services/contextMenu.mjs";
-import OptionsService from "./services/options.mjs";
-import UpdateService from "./services/update.mjs";
-import ChangelogService from "./services/changelog.mjs";
-import NotificationService from "./services/notifications.mjs";
-import { createMonitorBus } from "./lib/dbus.mjs";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { app, screen, nativeTheme, BaseWindow, BrowserWindow, Menu } from 'electron';
+import Store from 'electron-store';
+import EventEmitter from 'node:events';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import { readFileSync } from 'node:fs';
+import pkg from './package.json' with { type: 'json' };
+import TabService from './services/tabs.mjs';
+import WindowPositionService from './services/windowPosition.mjs';
+import TrayService from './services/tray.mjs';
+import ContextMenuService from './services/contextMenu.mjs';
+import OptionsService from './services/options.mjs';
+import UpdateService from './services/update.mjs';
+import ChangelogService from './services/changelog.mjs';
+import NotificationService from './services/notifications.mjs';
+import { createMonitorBus } from './lib/dbus.mjs';
 
+// eslint-disable-next-line no-underscore-dangle
 const __filename = fileURLToPath(import.meta.url);
+// eslint-disable-next-line no-underscore-dangle
 const __dirname = path.dirname(__filename);
 const TITLEBAR_HEIGHT = 40;
-const DARK_THEME_BACKGROUND = "#202020";
-const LIGHT_THEME_BACKGROUND = "#f8f8f7";
+const DARK_THEME_BACKGROUND = '#202020';
+const LIGHT_THEME_BACKGROUND = '#f8f8f7';
 
 let mainWindow = null;
 const store = new Store();
 
-if (
-	process.env.XDG_SESSION_DESKTOP.toLowerCase() === "gnome" &&
-	!store.get("hide-to-tray", true)
-) {
-	store.set("hide-to-tray", false);
+if (process.env.XDG_SESSION_DESKTOP.toLowerCase() === 'gnome' && !store.get('hide-to-tray', true)) {
+	store.set('hide-to-tray', false);
 }
 
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
 	process.exit(0);
 } else {
-	app.on("second-instance", () => {
+	app.on('second-instance', () => {
 		if (mainWindow) {
 			if (mainWindow.isMinimized()) mainWindow.restore();
 			mainWindow.show();
@@ -50,12 +43,12 @@ if (!app.requestSingleInstanceLock()) {
 		}
 	});
 
-	const showOnStartup = process.argv.includes("--hide-on-startup")
+	const showOnStartup = process.argv.includes('--hide-on-startup')
 		? false
-		: store.get("general-show-window-on-start", true);
-	const enableSpellcheck = process.argv.includes("--disable-spellcheck")
+		: store.get('general-show-window-on-start', true);
+	const enableSpellcheck = process.argv.includes('--disable-spellcheck')
 		? false
-		: store.get("general-enable-spellcheck", false);
+		: store.get('general-enable-spellcheck', false);
 
 	let themeProxyPromise = Promise.resolve();
 	let dBusMonitorDisconnect = () => {};
@@ -63,7 +56,7 @@ if (!app.requestSingleInstanceLock()) {
 
 	createMonitorBus({
 		requestedName: pkg.dbus.name,
-		onError: (error) => console.error("D-Bus Monitor Error:", error),
+		onError: (error) => console.error('D-Bus Monitor Error:', error),
 	})
 		.then(({ dBus, disconnect, addSignalListener }) => {
 			themeProxyPromise = dBus.callMethod({
@@ -75,181 +68,162 @@ if (!app.requestSingleInstanceLock()) {
 				destination: `org.freedesktop.portal.Desktop`,
 				types: [
 					{
-						typeCode: "s",
+						typeCode: 's',
 						bytePadding: 4,
-						predicate: (value) => typeof value === "string",
+						predicate: (value) => typeof value === 'string',
 					},
 					{
-						typeCode: "s",
+						typeCode: 's',
 						bytePadding: 4,
-						predicate: (value) => typeof value === "string",
+						predicate: (value) => typeof value === 'string',
 					},
 				],
-				args: ["org.freedesktop.appearance", "color-scheme"],
+				args: ['org.freedesktop.appearance', 'color-scheme'],
 			});
 			dBusMonitorDisconnect = disconnect;
 			onDBusSignal = addSignalListener;
 		})
 		.catch((error) => {
-			console.error("Failed to connect to D-Bus:", error);
+			console.error('Failed to connect to D-Bus:', error);
 		})
 		.finally(() => {
-			Promise.all([themeProxyPromise, app.whenReady()]).then(
-				([dBusColorScheme]) => {
-					Menu.setApplicationMenu(null);
-					nativeTheme.themeSource = store.get("general-theme", "system");
-					const bgColor =
-						store.get("general-theme", "system") === "system"
-							? (dBusColorScheme?.args[0][1][1] ??
-								nativeTheme.shouldUseDarkColors)
-								? DARK_THEME_BACKGROUND
-								: LIGHT_THEME_BACKGROUND
-							: store.get("general-theme", "system") === "dark"
-								? DARK_THEME_BACKGROUND
-								: LIGHT_THEME_BACKGROUND;
+			Promise.all([themeProxyPromise, app.whenReady()]).then(([dBusColorScheme]) => {
+				Menu.setApplicationMenu(null);
+				nativeTheme.themeSource = store.get('general-theme', 'system');
+				let bgColor = LIGHT_THEME_BACKGROUND;
+				if (store.get('general-theme', 'system') === 'system') {
+					bgColor =
+						(dBusColorScheme?.args[0][1][1] ?? nativeTheme.shouldUseDarkColors)
+							? DARK_THEME_BACKGROUND
+							: LIGHT_THEME_BACKGROUND;
+				} else {
+					bgColor =
+						store.get('general-theme', 'system') === 'dark'
+							? DARK_THEME_BACKGROUND
+							: LIGHT_THEME_BACKGROUND;
+				}
 
-					mainWindow = new BaseWindow({
-						title: "Notion Electron",
+				mainWindow = new BaseWindow({
+					title: 'Notion Electron',
+					minWidth: 600,
+					minHeight: 400,
+					width: screen.getPrimaryDisplay().workAreaSize.width * 0.8,
+					height: screen.getPrimaryDisplay().workAreaSize.height * 0.8,
+					titleBarStyle: 'hidden',
+					icon: path.join(__dirname, './assets/icons/desktop.png'),
+					show: showOnStartup,
+					webPreferences: {
+						spellcheck: enableSpellcheck,
+					},
+					titleBarOverlay: {
+						color: bgColor,
+						height: TITLEBAR_HEIGHT,
+					},
+					contextIsolation: false,
+					backgroundColor: bgColor,
+				});
+
+				const optionsConfig = JSON.parse(readFileSync(path.join(__dirname, './options.json'), 'utf8'));
+				// @todo: make possible to configure default values when initialize OptionsService
+				if (process.env.XDG_SESSION_DESKTOP.toLowerCase() === 'gnome') {
+					optionsConfig.options['hide-to-tray'].value.default = false;
+					optionsConfig.options['hide-window-on-close'].value.default = false;
+				}
+				const mainBus = new EventEmitter();
+				const optionsService = new OptionsService(store, optionsConfig);
+				const tabService = new TabService(mainWindow, optionsService, store, mainBus);
+				const windowPositionService = new WindowPositionService(mainWindow, store);
+
+				setTimeout(function initApp() {
+					const optionsWindow = new BrowserWindow({
 						minWidth: 600,
 						minHeight: 400,
-						width: screen.getPrimaryDisplay().workAreaSize.width * 0.8,
-						height: screen.getPrimaryDisplay().workAreaSize.height * 0.8,
-						titleBarStyle: "hidden",
-						icon: path.join(__dirname, "./assets/icons/desktop.png"),
-						show: showOnStartup,
+						width: screen.getPrimaryDisplay().workAreaSize.width * 0.5,
+						height: screen.getPrimaryDisplay().workAreaSize.height * 0.5,
+						show: false,
+						parent: mainWindow,
 						webPreferences: {
-							spellcheck: enableSpellcheck,
+							spellcheck: false,
+							preload: path.join(__dirname, './render/options-preload.js'),
 						},
-						titleBarOverlay: {
-							color: bgColor,
-							height: TITLEBAR_HEIGHT,
-						},
-						contextIsolation: false,
+						title: 'Notion Electron Options',
+						icon: path.join(__dirname, './assets/icons/desktop.png'),
 						backgroundColor: bgColor,
 					});
+					optionsWindow.loadFile(path.join(__dirname, './assets/pages/options.html'));
 
-					const optionsConfig = JSON.parse(
-						readFileSync(path.join(__dirname, "./options.json"), "utf8"),
-					);
-					//@todo: make possible to configure default values when initialize OptionsService
-					if (process.env.XDG_SESSION_DESKTOP.toLowerCase() === "gnome") {
-						optionsConfig.options["hide-to-tray"].value.default = false;
-						optionsConfig.options["hide-window-on-close"].value.default = false;
-					}
-					const mainBus = new EventEmitter();
-					const optionsService = new OptionsService(store, optionsConfig);
-					const tabService = new TabService(
-						mainWindow,
-						optionsService,
-						store,
-						mainBus,
-					);
-					const windowPositionService = new WindowPositionService(
-						mainWindow,
+					optionsWindow.on('close', function onOptionsClose(event) {
+						if (!app.isQuiting) {
+							event.preventDefault();
+							optionsWindow.hide();
+						}
+					});
+
+					const notificationService = new NotificationService();
+					const changelogService = new ChangelogService(pkg.repository.owner, pkg.repository.name);
+					const updateService = new UpdateService(
+						optionsWindow,
+						notificationService,
+						changelogService,
 						store,
 					);
+					const trayService = new TrayService(mainWindow, optionsWindow);
+					const contextMenuService = new ContextMenuService(mainWindow, tabService, mainBus);
 
-					setTimeout(function () {
-						const optionsWindow = new BrowserWindow({
-							minWidth: 600,
-							minHeight: 400,
-							width: screen.getPrimaryDisplay().workAreaSize.width * 0.5,
-							height: screen.getPrimaryDisplay().workAreaSize.height * 0.5,
-							show: false,
-							parent: mainWindow,
-							webPreferences: {
-								spellcheck: false,
-								preload: path.join(__dirname, "./render/options-preload.js"),
-							},
-							title: "Notion Electron Options",
-							icon: path.join(__dirname, "./assets/icons/desktop.png"),
-							backgroundColor: bgColor,
-						});
-						optionsWindow.loadFile(
-							path.join(__dirname, "./assets/pages/options.html"),
-						);
+					optionsService.setOptionsWindow(optionsWindow);
 
-						optionsWindow.on("close", function (event) {
-							if (!app.isQuiting) {
-								event.preventDefault();
-								optionsWindow.hide();
-							}
-						});
+					updateService.on('update-available', trayService.onUpdateAvailable);
+					updateService.on('update-not-available', trayService.onUpdateNotAvailable);
 
-						const notificationService = new NotificationService();
-						const changelogService = new ChangelogService(
-							pkg.repository.owner,
-							pkg.repository.name,
-						);
-						const updateService = new UpdateService(
-							optionsWindow,
-							notificationService,
-							changelogService,
-							store,
-						);
-						const trayService = new TrayService(mainWindow, optionsWindow);
-						const contextMenuService = new ContextMenuService(
-							mainWindow,
-							tabService,
-							mainBus,
-						);
+					onDBusSignal('Options', () => {
+						optionsWindow.webContents.send('show-tab', 'options');
+						optionsWindow.show();
+					});
 
-						optionsService.setOptionsWindow(optionsWindow);
+					onDBusSignal('Updates', () => {
+						optionsWindow.webContents.send('show-tab', 'updates');
+						optionsWindow.show();
+					});
 
-						updateService.on("update-available", trayService.onUpdateAvailable);
-						updateService.on(
-							"update-not-available",
-							trayService.onUpdateNotAvailable,
-						);
+					onDBusSignal('About', () => {
+						optionsWindow.webContents.send('show-tab', 'about');
+						optionsWindow.show();
+					});
 
-						onDBusSignal("Options", () => {
-							optionsWindow.webContents.send("show-tab", "options");
-							optionsWindow.show();
-						});
+					mainWindow.on('minimize', function mainWindowMinimize(event) {
+						const hideToTray = store.get('hide-to-tray', true);
 
-						onDBusSignal("Updates", () => {
-							optionsWindow.webContents.send("show-tab", "updates");
-							optionsWindow.show();
-						});
+						if (hideToTray) {
+							event.preventDefault();
+							mainWindow.hide();
+						}
+					});
 
-						onDBusSignal("About", () => {
-							optionsWindow.webContents.send("show-tab", "about");
-							optionsWindow.show();
-						});
+					mainWindow.on('close', function mainWindowClose(event) {
+						const hideOnClose = store.get('hide-window-on-close', true);
 
-						mainWindow.on("minimize", function (event) {
-							const hideToTray = store.get("hide-to-tray", true);
+						if (!app.isQuiting && hideOnClose) {
+							event.preventDefault();
+							mainWindow.hide();
+							return false;
+						}
+						try {
+							windowPositionService.savePosition();
+							dBusMonitorDisconnect();
+						} catch (e) {
+							console.error(e);
+						}
+						app.quit();
+						process.exit(0);
+					});
+				}, 1); // Guaranteed to run on next tick despite engine optimizations
 
-							if (hideToTray) {
-								event.preventDefault();
-								mainWindow.hide();
-							}
-						});
-
-						mainWindow.on("close", function (event) {
-							const hideOnClose = store.get("hide-window-on-close", true);
-
-							if (!app.isQuiting && hideOnClose) {
-								event.preventDefault();
-								mainWindow.hide();
-								return false;
-							}
-							try {
-								windowPositionService.savePosition();
-								dBusMonitorDisconnect();
-							} catch (e) {}
-							app.quit();
-							process.exit(0);
-						});
-					}, 1); // Guaranteed to run on next tick despite engine optimizations
-
-					windowPositionService.restorePosition();
-				},
-			);
+				windowPositionService.restorePosition();
+			});
 		});
 
-	app.on("window-all-closed", (event) => {
-		const hideOnClose = store.get("hide-window-on-close", true);
+	app.on('window-all-closed', (event) => {
+		const hideOnClose = store.get('hide-window-on-close', true);
 		if (hideOnClose) {
 			event.preventDefault();
 		} else {

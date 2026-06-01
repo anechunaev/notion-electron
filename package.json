@@ -18,8 +18,8 @@
     "snap-build": "./dev/snap/build.sh",
     "snap-upload": "snapcraft upload --release=stable \"$(find dist -maxdepth 1 -type f -name '*.snap')\"",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "node ./dev/scripts/default.mjs && node ./dev/scripts/prettify.mjs",
-    "lint:deep": "node ./dev/scripts/deep.mjs && node ./dev/scripts/prettify.mjs",
+    "lint": "node ./dev/scripts/default.cjs && node ./dev/scripts/prettify.cjs",
+    "lint:deep": "node ./dev/scripts/deep.cjs && node ./dev/scripts/prettify.cjs",
     "prepare": "node ./dev/scripts/hooks/install.mjs"
   },
   "keywords": [],
