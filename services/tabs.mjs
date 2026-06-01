@@ -3,11 +3,11 @@ import { URL, fileURLToPath } from "node:url";
 import path from "node:path";
 import { convertIcon } from "../lib/image.mjs";
 import { detectShortcut, shortcutMap } from "../lib/shortcuts/index.mjs";
+import { getTabViewLayout } from "./viewLayout.mjs";
 import pkg from "../package.json" with { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const TITLEBAR_HEIGHT = 40;
 const HOME_PAGE = "https://www.notion.com/login";
 const CALENDAR_PAGE = "https://calendar.notion.so/notion-auth";
 const MAIL_PAGE = "https://mail.notion.so/notion-auth";
@@ -37,6 +37,7 @@ class TabsService {
 	#options = null;
 	#store = null;
 	#mainBus = null;
+	#layoutQueued = false;
 
 	constructor(window, optionsService, store, mainBus) {
 		this.#window = window;
@@ -198,7 +199,21 @@ class TabsService {
 			Object.values(this.#tabViews).forEach((view) => view.webContents.close());
 		});
 
-		this.#window.on("resize", this.#setViewSize.bind(this));
+		this.#window.contentView.on(
+			"bounds-changed",
+			this.#queueSetViewSize.bind(this),
+		);
+
+		[
+			"resize",
+			"maximize",
+			"unmaximize",
+			"restore",
+			"enter-full-screen",
+			"leave-full-screen",
+		].forEach((eventName) => {
+			this.#window.on(eventName, this.#queueSetViewSize.bind(this));
+		});
 
 		app.on("before-quit", () => {
 			this.#saveTabs();
@@ -221,20 +236,22 @@ class TabsService {
 	}
 
 	#setViewSize() {
-		const bounds = this.#window.getContentBounds();
-		this.#titleBarView.setBounds({
-			x: 0,
-			y: 0,
-			width: bounds.width,
-			height: TITLEBAR_HEIGHT,
-		});
+		const { titlebar, page } = getTabViewLayout(
+			this.#window.contentView.getBounds(),
+		);
+		this.#titleBarView.setBounds(titlebar);
 		Object.values(this.#tabViews).forEach((view) => {
-			view.setBounds({
-				x: 0,
-				y: TITLEBAR_HEIGHT,
-				width: bounds.width,
-				height: bounds.height - TITLEBAR_HEIGHT,
-			});
+			view.setBounds(page);
+		});
+	}
+
+	#queueSetViewSize() {
+		if (this.#layoutQueued) return;
+
+		this.#layoutQueued = true;
+		setImmediate(() => {
+			this.#layoutQueued = false;
+			this.#setViewSize();
 		});
 	}
 
@@ -265,13 +282,8 @@ class TabsService {
 			view.webContents.openDevTools({ mode: "detach" });
 		}
 
-		const bounds = this.#window.getContentBounds();
-		view.setBounds({
-			x: 0,
-			y: TITLEBAR_HEIGHT,
-			width: bounds.width,
-			height: bounds.height - TITLEBAR_HEIGHT,
-		});
+		const { page } = getTabViewLayout(this.#window.contentView.getBounds());
+		view.setBounds(page);
 
 		view.webContents
 			.loadURL(url ?? HOME_PAGE, {

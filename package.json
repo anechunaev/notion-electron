@@ -17,7 +17,7 @@
     "flatpak-clean": "./dev/flatpak/clean.sh",
     "snap-build": "./dev/snap/build.sh",
     "snap-upload": "snapcraft upload --release=stable \"$(find dist -maxdepth 1 -type f -name '*.snap')\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "keywords": [],
   "author": "Artem Nechunaev <artem@nechunaev.com>",
