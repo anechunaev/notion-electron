@@ -17,7 +17,10 @@
     "flatpak-clean": "./dev/flatpak/clean.sh",
     "snap-build": "./dev/snap/build.sh",
     "snap-upload": "snapcraft upload --release=stable \"$(find dist -maxdepth 1 -type f -name '*.snap')\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "node ./dev/scripts/default.mjs && node ./dev/scripts/prettify.mjs",
+    "lint:deep": "node ./dev/scripts/deep.mjs && node ./dev/scripts/prettify.mjs",
+    "prepare": "node ./dev/scripts/hooks/install.mjs"
   },
   "keywords": [],
   "author": "Artem Nechunaev <artem@nechunaev.com>",
@@ -36,8 +39,20 @@
   },
   "devDependencies": {
     "@electron/packager": "^20.0.0",
-    "electron": "^42.3.0",
-    "electron-builder": "^26.8.1"
+    "@typescript-eslint/parser": "^7.18.0",
+    "electron": "^42.1.0",
+    "electron-builder": "^26.8.1",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^18.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-deprecation": "^3.0.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.6",
+    "husky": "^9.1.7",
+    "prettier": "^3.8.3"
   },
   "dependencies": {
     "@clebert/node-d-bus": "^1.0.0",
