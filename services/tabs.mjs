@@ -37,6 +37,7 @@ class TabsService {
 	#options = null;
 	#store = null;
 	#mainBus = null;
+	#resizeDebounceTimer = null;
 
 	constructor(window, optionsService, store, mainBus) {
 		this.#window = window;
@@ -222,20 +223,23 @@ class TabsService {
 
 	#setViewSize() {
 		const bounds = this.#window.getContentBounds();
-		this.#titleBarView.setBounds({
-			x: 0,
-			y: 0,
-			width: bounds.width,
-			height: TITLEBAR_HEIGHT,
-		});
-		Object.values(this.#tabViews).forEach((view) => {
-			view.setBounds({
+		clearTimeout(this.#resizeDebounceTimer);
+		this.#resizeDebounceTimer = setTimeout(() => {
+			this.#titleBarView.setBounds({
 				x: 0,
-				y: TITLEBAR_HEIGHT,
+				y: 0,
 				width: bounds.width,
-				height: bounds.height - TITLEBAR_HEIGHT,
+				height: TITLEBAR_HEIGHT,
 			});
-		});
+			Object.values(this.#tabViews).forEach((view) => {
+				view.setBounds({
+					x: 0,
+					y: TITLEBAR_HEIGHT,
+					width: bounds.width,
+					height: bounds.height - TITLEBAR_HEIGHT,
+				});
+			});
+		}, 16);
 	}
 
 	#setVisibleTabs(tabId) {
