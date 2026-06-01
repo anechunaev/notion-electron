@@ -49,6 +49,9 @@ if (!app.requestSingleInstanceLock()) {
 	const enableSpellcheck = process.argv.includes('--disable-spellcheck')
 		? false
 		: store.get('general-enable-spellcheck', false);
+	const enableAutoUpdate = process.argv.includes('--disable-auto-update')
+		? false
+		: store.get('general-enable-auto-update', true);
 
 	let themeProxyPromise = Promise.resolve();
 	let dBusMonitorDisconnect = () => {};
@@ -166,6 +169,7 @@ if (!app.requestSingleInstanceLock()) {
 						notificationService,
 						changelogService,
 						store,
+						enableAutoUpdate,
 					);
 					const trayService = new TrayService(mainWindow, optionsWindow);
 					const contextMenuService = new ContextMenuService(mainWindow, tabService, mainBus);
