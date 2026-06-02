@@ -36,6 +36,14 @@
 				"default": true
 			}
 		},
+		"general-enable-auto-update": {
+			"group": "g1",
+			"name": "Enable Auto Update (for AppImage only)",
+			"value": {
+				"type": "checkbox",
+				"default": true
+			}
+		},
 		"tabs-show-calendar": {
 			"group": "g2",
 			"name": "Show Calendar App as Pinned Tab",

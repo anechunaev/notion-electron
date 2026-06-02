@@ -25,7 +25,7 @@ class UpdateService extends EventEmitter {
 	#notifications;
 	#changelog;
 
-	constructor(optionsWindow, notificationService, changelogService, store) {
+	constructor(optionsWindow, notificationService, changelogService, store, enableAutoUpdate = true) {
 		super();
 		this.#optionsWindow = optionsWindow;
 		this.#store = store;
@@ -54,10 +54,12 @@ class UpdateService extends EventEmitter {
 			break;
 		}
 
-		this.#checkUpdate();
-		setInterval(() => {
+		if (enableAutoUpdate) {
 			this.#checkUpdate();
-		}, ONE_HOUR_MS);
+			setInterval(() => {
+				this.#checkUpdate();
+			}, ONE_HOUR_MS);
+		}
 
 		setImmediate(() => {
 			if (this.#stage === 'available') {
