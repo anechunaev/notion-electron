@@ -56,7 +56,7 @@ if (!app.requestSingleInstanceLock()) {
 		: store.get('general-enable-spellcheck', false);
 	const enableAutoUpdate = process.argv.includes('--disable-auto-update')
 		? false
-		: store.get('general-enable-auto-update', true);
+		: !store.get('disable-update-functionality', false);
 
 	let themeProxyPromise = Promise.resolve();
 	let dBusMonitorDisconnect = () => {};
