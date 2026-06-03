@@ -67,7 +67,7 @@ Run program with this flags to enable features:
 
 - `--hide-on-startup` – This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
 - `--disable-spellcheck` – Disables OS-defined spellcheck.
-- `--disable-auto-update` – Disables automatic update checks on startup, regardless of the in-app setting.
+- `--disable-update-functionality` – Disables all update functionality (automatic checks, downloads, and installs). Recommended for sandboxed package formats like nix, where updates are managed by the package manager, regardless of the in-app setting.
 
 ### Spellcheck dictionaries
 

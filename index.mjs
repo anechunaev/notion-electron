@@ -54,7 +54,7 @@ if (!app.requestSingleInstanceLock()) {
 	const enableSpellcheck = process.argv.includes('--disable-spellcheck')
 		? false
 		: store.get('general-enable-spellcheck', false);
-	const enableAutoUpdate = process.argv.includes('--disable-auto-update')
+	const enableAutoUpdate = process.argv.includes('--disable-update-functionality')
 		? false
 		: !store.get('disable-update-functionality', false);
 
