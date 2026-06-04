@@ -48,15 +48,18 @@ if (!app.requestSingleInstanceLock()) {
 		}
 	});
 
-	const showOnStartup = process.argv.includes('--hide-on-startup')
-		? false
-		: store.get('general-show-window-on-start', true);
-	const enableSpellcheck = process.argv.includes('--disable-spellcheck')
-		? false
-		: store.get('general-enable-spellcheck', false);
-	const enableAutoUpdate = process.argv.includes('--disable-update-functionality')
-		? false
-		: !store.get('disable-update-functionality', false);
+	if (process.argv.includes('--hide-on-startup')) {
+		store.set('general-show-window-on-start', false);
+	}
+	const showOnStartup = store.get('general-show-window-on-start', true);
+	if (process.argv.includes('--disable-spellcheck')) {
+		store.set('general-enable-spellcheck', false);
+	}
+	const enableSpellcheck = store.get('general-enable-spellcheck', false);
+	if (process.argv.includes('--disable-update-functionality')) {
+		store.set('disable-update-functionality', true);
+	}
+	const enableAutoUpdate = !store.get('disable-update-functionality', false);
 
 	let themeProxyPromise = Promise.resolve();
 	let dBusMonitorDisconnect = () => {};
