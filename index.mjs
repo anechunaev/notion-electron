@@ -139,6 +139,15 @@ if (!app.requestSingleInstanceLock()) {
 				}
 				const mainBus = new EventEmitter();
 				const optionsService = new OptionsService(store, optionsConfig);
+				if (process.argv.includes('--hide-on-startup')) {
+					optionsService.getOption('general-show-window-on-start').data = false;
+				}
+				if (process.argv.includes('--disable-spellcheck')) {
+					optionsService.getOption('general-enable-spellcheck').data = false;
+				}
+				if (process.argv.includes('--disable-update-functionality')) {
+					optionsService.getOption('disable-update-functionality').data = true;
+				}
 				const tabService = new TabService(mainWindow, optionsService, store, mainBus);
 				const windowPositionService = new WindowPositionService(mainWindow, store);
 
