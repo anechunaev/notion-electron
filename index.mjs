@@ -27,8 +27,13 @@ const LIGHT_THEME_BACKGROUND = '#f8f8f7';
 let mainWindow = null;
 const store = new Store();
 
-if (process.env.XDG_SESSION_DESKTOP.toLowerCase() === 'gnome' && !store.get('hide-to-tray', true)) {
-	store.set('hide-to-tray', false);
+if (process.env.XDG_SESSION_DESKTOP?.toLowerCase() === 'gnome') {
+	if (!store.has('hide-to-tray')) {
+		store.set('hide-to-tray', false);
+	}
+	if (!store.has('hide-window-on-close')) {
+		store.set('hide-window-on-close', false);
+	}
 }
 
 if (!app.requestSingleInstanceLock()) {
@@ -49,9 +54,9 @@ if (!app.requestSingleInstanceLock()) {
 	const enableSpellcheck = process.argv.includes('--disable-spellcheck')
 		? false
 		: store.get('general-enable-spellcheck', false);
-	const enableAutoUpdate = process.argv.includes('--disable-auto-update')
+	const enableAutoUpdate = process.argv.includes('--disable-update-functionality')
 		? false
-		: store.get('general-enable-auto-update', true);
+		: !store.get('disable-update-functionality', false);
 
 	let themeProxyPromise = Promise.resolve();
 	let dBusMonitorDisconnect = () => {};
@@ -128,7 +133,7 @@ if (!app.requestSingleInstanceLock()) {
 
 				const optionsConfig = JSON.parse(readFileSync(path.join(__dirname, './options.json'), 'utf8'));
 				// @todo: make possible to configure default values when initialize OptionsService
-				if (process.env.XDG_SESSION_DESKTOP.toLowerCase() === 'gnome') {
+				if (process.env.XDG_SESSION_DESKTOP?.toLowerCase() === 'gnome') {
 					optionsConfig.options['hide-to-tray'].value.default = false;
 					optionsConfig.options['hide-window-on-close'].value.default = false;
 				}
@@ -195,7 +200,7 @@ if (!app.requestSingleInstanceLock()) {
 					});
 
 					mainWindow.on('minimize', function mainWindowMinimize(event) {
-						const hideToTray = store.get('hide-to-tray', true);
+						const hideToTray = store.get('hide-to-tray', optionsService.getOption('hide-to-tray').default);
 
 						if (hideToTray) {
 							event.preventDefault();
@@ -204,7 +209,10 @@ if (!app.requestSingleInstanceLock()) {
 					});
 
 					mainWindow.on('close', function mainWindowClose(event) {
-						const hideOnClose = store.get('hide-window-on-close', true);
+						const hideOnClose = store.get(
+							'hide-window-on-close',
+							optionsService.getOption('hide-window-on-close').default,
+						);
 
 						if (!app.isQuiting && hideOnClose) {
 							event.preventDefault();

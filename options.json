@@ -36,12 +36,12 @@
 				"default": true
 			}
 		},
-		"general-enable-auto-update": {
-			"group": "g1",
-			"name": "Enable Auto Update (for AppImage only)",
+		"disable-update-functionality": {
+			"group": "g3",
+			"name": "Disable Update Functionality",
 			"value": {
 				"type": "checkbox",
-				"default": true
+				"default": false
 			}
 		},
 		"tabs-show-calendar": {
