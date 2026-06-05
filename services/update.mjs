@@ -12,6 +12,7 @@ class UpdateService extends EventEmitter {
 	#updater = electronUpdater.autoUpdater;
 	#optionsWindow = null;
 	#store = null;
+	#options = null;
 	#lastChecked = null;
 	#checkInterval = ONE_DAY_MS;
 	#availableVersion = null;
@@ -25,10 +26,11 @@ class UpdateService extends EventEmitter {
 	#notifications;
 	#changelog;
 
-	constructor(optionsWindow, notificationService, changelogService, store, enableAutoUpdate = true) {
+	constructor(optionsWindow, notificationService, changelogService, store, optionsService) {
 		super();
 		this.#optionsWindow = optionsWindow;
 		this.#store = store;
+		this.#options = optionsService;
 		this.#notifications = notificationService;
 		this.#changelog = changelogService;
 
@@ -39,7 +41,7 @@ class UpdateService extends EventEmitter {
 		this.#availableVersion = this.#store.get('update-available-version', this.#localVersion);
 		this.#lastChecked = this.#store.get('update-last-checked', ERA_START.toISOString());
 		this.#stage = this.#semverIsBigger(this.#availableVersion, this.#localVersion) ? 'available' : 'latest';
-		switch(this.#store.get('update-check-interval', 'daily')) {
+		switch(this.#options.getOption('update-check-interval')) {
 		case 'daily':
 			this.#checkInterval = ONE_DAY_MS;
 			break;
@@ -54,7 +56,7 @@ class UpdateService extends EventEmitter {
 			break;
 		}
 
-		if (enableAutoUpdate) {
+		if (!this.#options.getOption('disable-update-functionality')) {
 			this.#checkUpdate();
 			setInterval(() => {
 				this.#checkUpdate();
@@ -81,14 +83,14 @@ class UpdateService extends EventEmitter {
 			this.#store.set('update-last-checked', this.#lastChecked);
 			this.#store.set('update-available-version', this.#availableVersion);
 
-			if (this.#store.get('update-notification', false)) {
+			if (this.#options.getOption('update-notification')) {
 				this.#notifications.notify({
 					title: 'Update available',
 					body: `Version ${this.#availableVersion} is available for download.`,
 				});
 			}
 
-			if (process.env.APPIMAGE && store.get('update-auto-download', false)) {
+			if (process.env.APPIMAGE && this.#options.getOption('update-auto-download')) {
 				this.#downloadUpdate();
 			} else {
 				this.#stage = this.#semverIsBigger(this.#availableVersion, this.#localVersion) ? 'available' : 'latest';
@@ -118,7 +120,7 @@ class UpdateService extends EventEmitter {
 			this.#sendStatus();
 		});
 		this.#updater.on('update-downloaded', (info) => {
-			if (process.env.APPIMAGE && store.get('update-auto-install', false)) {
+			if (process.env.APPIMAGE && this.#options.getOption('update-auto-install')) {
 				this.#installUpdate();
 			} else {
 				this.#stage = 'ready';

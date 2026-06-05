@@ -26,15 +26,8 @@ const LIGHT_THEME_BACKGROUND = '#f8f8f7';
 
 let mainWindow = null;
 const store = new Store();
-
-if (process.env.XDG_SESSION_DESKTOP?.toLowerCase() === 'gnome') {
-	if (!store.has('hide-to-tray')) {
-		store.set('hide-to-tray', false);
-	}
-	if (!store.has('hide-window-on-close')) {
-		store.set('hide-window-on-close', false);
-	}
-}
+const optionsConfig = JSON.parse(readFileSync(path.join(__dirname, './options.json'), 'utf8'));
+const optionsService = new OptionsService(store, optionsConfig);
 
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
@@ -47,16 +40,6 @@ if (!app.requestSingleInstanceLock()) {
 			mainWindow.focus();
 		}
 	});
-
-	const showOnStartup = process.argv.includes('--hide-on-startup')
-		? false
-		: store.get('general-show-window-on-start', true);
-	const enableSpellcheck = process.argv.includes('--disable-spellcheck')
-		? false
-		: store.get('general-enable-spellcheck', false);
-	const enableAutoUpdate = process.argv.includes('--disable-update-functionality')
-		? false
-		: !store.get('disable-update-functionality', false);
 
 	let themeProxyPromise = Promise.resolve();
 	let dBusMonitorDisconnect = () => {};
@@ -97,16 +80,19 @@ if (!app.requestSingleInstanceLock()) {
 		.finally(() => {
 			Promise.all([themeProxyPromise, app.whenReady()]).then(([dBusColorScheme]) => {
 				Menu.setApplicationMenu(null);
-				nativeTheme.themeSource = store.get('general-theme', 'system');
+
+				const mainBus = new EventEmitter();
+
+				nativeTheme.themeSource = optionsService.getOption('general-theme');
 				let bgColor = LIGHT_THEME_BACKGROUND;
-				if (store.get('general-theme', 'system') === 'system') {
+				if (optionsService.getOption('general-theme') === 'system') {
 					bgColor =
 						(dBusColorScheme?.args[0][1][1] ?? nativeTheme.shouldUseDarkColors)
 							? DARK_THEME_BACKGROUND
 							: LIGHT_THEME_BACKGROUND;
 				} else {
 					bgColor =
-						store.get('general-theme', 'system') === 'dark'
+						optionsService.getOption('general-theme') === 'dark'
 							? DARK_THEME_BACKGROUND
 							: LIGHT_THEME_BACKGROUND;
 				}
@@ -119,9 +105,9 @@ if (!app.requestSingleInstanceLock()) {
 					height: screen.getPrimaryDisplay().workAreaSize.height * 0.8,
 					titleBarStyle: 'hidden',
 					icon: path.join(__dirname, './assets/icons/desktop.png'),
-					show: showOnStartup,
+					show: optionsService.getOption('general-show-window-on-start'),
 					webPreferences: {
-						spellcheck: enableSpellcheck,
+						spellcheck: optionsService.getOption('general-enable-spellcheck'),
 					},
 					titleBarOverlay: {
 						color: bgColor,
@@ -131,14 +117,6 @@ if (!app.requestSingleInstanceLock()) {
 					backgroundColor: bgColor,
 				});
 
-				const optionsConfig = JSON.parse(readFileSync(path.join(__dirname, './options.json'), 'utf8'));
-				// @todo: make possible to configure default values when initialize OptionsService
-				if (process.env.XDG_SESSION_DESKTOP?.toLowerCase() === 'gnome') {
-					optionsConfig.options['hide-to-tray'].value.default = false;
-					optionsConfig.options['hide-window-on-close'].value.default = false;
-				}
-				const mainBus = new EventEmitter();
-				const optionsService = new OptionsService(store, optionsConfig);
 				const tabService = new TabService(mainWindow, optionsService, store, mainBus);
 				const windowPositionService = new WindowPositionService(mainWindow, store);
 
@@ -174,7 +152,7 @@ if (!app.requestSingleInstanceLock()) {
 						notificationService,
 						changelogService,
 						store,
-						enableAutoUpdate,
+						optionsService,
 					);
 					const trayService = new TrayService(mainWindow, optionsWindow);
 					const contextMenuService = new ContextMenuService(mainWindow, tabService, mainBus);
@@ -200,21 +178,14 @@ if (!app.requestSingleInstanceLock()) {
 					});
 
 					mainWindow.on('minimize', function mainWindowMinimize(event) {
-						const hideToTray = store.get('hide-to-tray', optionsService.getOption('hide-to-tray').default);
-
-						if (hideToTray) {
+						if (optionsService.getOption('hide-to-tray')) {
 							event.preventDefault();
 							mainWindow.hide();
 						}
 					});
 
 					mainWindow.on('close', function mainWindowClose(event) {
-						const hideOnClose = store.get(
-							'hide-window-on-close',
-							optionsService.getOption('hide-window-on-close').default,
-						);
-
-						if (!app.isQuiting && hideOnClose) {
+						if (!app.isQuiting && optionsService.getOption('hide-window-on-close')) {
 							event.preventDefault();
 							mainWindow.hide();
 							return false;
@@ -229,14 +200,12 @@ if (!app.requestSingleInstanceLock()) {
 						process.exit(0);
 					});
 				}, 1); // Guaranteed to run on next tick despite engine optimizations
-
 				windowPositionService.restorePosition();
 			});
 		});
 
 	app.on('window-all-closed', (event) => {
-		const hideOnClose = store.get('hide-window-on-close', true);
-		if (hideOnClose) {
+		if (optionsService.getOption('hide-window-on-close')) {
 			event.preventDefault();
 		} else {
 			app.quit();
