@@ -11,6 +11,7 @@ class OptionsService {
 	#store = null;
 	#cliOverrides = {};
 	#envDefaults = {};
+	#mainBus = null;
 
 	static #DE_PRESETS = {
 		gnome: {
@@ -24,10 +25,10 @@ class OptionsService {
 		return de && de in OptionsService.#DE_PRESETS ? { ...OptionsService.#DE_PRESETS[de] } : {};
 	}
 
-	constructor(store, config, argv = process.argv, env = process.env) {
+	constructor(store, config, mainBus, argv = process.argv, env = process.env) {
 		this.#store = store;
 		this.#config = config;
-
+		this.#mainBus = mainBus;
 		this.#envDefaults = OptionsService.#buildEnvDefaults(env);
 
 		if (argv.includes('--hide-on-startup')) this.#cliOverrides['general-show-window-on-start'] = false;
@@ -101,6 +102,11 @@ class OptionsService {
 
 	setOption(optionId, value) {
 		this.#store.set(optionId, value);
+
+		// Broadcast the change (if you added the event emitter from earlier)
+		if (this.#mainBus) {
+			this.#mainBus.emit('option-changed', optionId, value);
+		}
 	}
 
 	setPersistentOption(optionId, value) {

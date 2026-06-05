@@ -37,6 +37,15 @@ class TabsService {
 		this.#store = store;
 		this.#mainBus = mainBus;
 
+		this.#mainBus.on('option-changed', (optionId, value) => {
+			if (optionId === 'tabs-show-calendar' && value === false) {
+				this.#closeTabsByApp('calendar');
+			}
+			if (optionId === 'tabs-show-mail' && value === false) {
+				this.#closeTabsByApp('mail');
+			}
+		});
+
 		this.#titleBarView = new WebContentsView({
 			webPreferences: {
 				preload: path.join(__dirname, '../render/tab-preload.js'),
@@ -211,6 +220,14 @@ class TabsService {
 				width: bounds.width,
 				height: bounds.height - TITLEBAR_HEIGHT,
 			});
+		});
+	}
+
+	#closeTabsByApp(appName) {
+		const tabIds = this.#tabAppMap[appName] || [];
+		// Clone the array with [...] because #onCloseTab mutates the original array
+		[...tabIds].forEach((tabId) => {
+			this.#onCloseTab(tabId);
 		});
 	}
 

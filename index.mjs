@@ -26,8 +26,9 @@ const LIGHT_THEME_BACKGROUND = '#f8f8f7';
 
 let mainWindow = null;
 const store = new Store();
+const mainBus = new EventEmitter();
 const optionsConfig = JSON.parse(readFileSync(path.join(__dirname, './options.json'), 'utf8'));
-const optionsService = new OptionsService(store, optionsConfig);
+const optionsService = new OptionsService(store, optionsConfig, mainBus);
 
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
@@ -80,9 +81,6 @@ if (!app.requestSingleInstanceLock()) {
 		.finally(() => {
 			Promise.all([themeProxyPromise, app.whenReady()]).then(([dBusColorScheme]) => {
 				Menu.setApplicationMenu(null);
-
-				const mainBus = new EventEmitter();
-
 				nativeTheme.themeSource = optionsService.getOption('general-theme');
 				let bgColor = LIGHT_THEME_BACKGROUND;
 				if (optionsService.getOption('general-theme') === 'system') {
