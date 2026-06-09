@@ -1,7 +1,7 @@
-import { ipcMain, app, shell } from "electron";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { readFileSync } from "node:fs";
+import { ipcMain, app, shell } from 'electron';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -9,45 +9,65 @@ class OptionsService {
 	#options = null;
 	#config = null;
 	#store = null;
+	#cliOverrides = {};
+	#envDefaults = {};
+	#mainBus = null;
 
-	constructor(store, config) {
+	static #DE_PRESETS = {
+		gnome: {
+			'hide-to-tray': false,
+			'hide-window-on-close': false,
+		},
+	};
+
+	static #buildEnvDefaults(env) {
+		const de = env.XDG_SESSION_DESKTOP?.toLowerCase();
+		return de && de in OptionsService.#DE_PRESETS ? { ...OptionsService.#DE_PRESETS[de] } : {};
+	}
+
+	constructor(store, config, mainBus, argv = process.argv, env = process.env) {
 		this.#store = store;
 		this.#config = config;
+		this.#mainBus = mainBus;
+		this.#envDefaults = OptionsService.#buildEnvDefaults(env);
 
-		Object.keys(this.#config.options).forEach((optionId) => {
-			this.#config.options[optionId].value.data = this.#store.get(
-				optionId,
-				this.#config.options[optionId].value.default,
-			);
+		if (argv.includes('--hide-on-startup')) this.#cliOverrides['general-show-window-on-start'] = false;
+		if (argv.includes('--disable-spellcheck')) this.#cliOverrides['general-enable-spellcheck'] = false;
+		if (argv.includes('--disable-update-functionality')) this.#cliOverrides['disable-update-functionality'] = true;
+
+		ipcMain.on('restart', this.#restartApp.bind(this));
+
+		ipcMain.on('get-app-metadata', this.#sendAppMetadata.bind(this));
+
+		ipcMain.on('get-options', (event) => {
+			if (!this.#options) return;
+			const payload = {
+				groups: this.#config.groups,
+				options: Object.fromEntries(
+					Object.entries(this.#config.options).map(([id, opt]) => [
+						id,
+						{ ...opt, value: { ...opt.value, data: this.getPersistentOption(id) } },
+					]),
+				),
+			};
+			this.#options.webContents.send('options', payload);
 		});
 
-		ipcMain.on("restart", this.#restartApp.bind(this));
-
-		ipcMain.on("get-app-metadata", this.#sendAppMetadata.bind(this));
-
-		ipcMain.on("get-options", (event) => {
-			if (this.#options) {
-				this.#options.webContents.send("options", this.#config);
-			}
-		});
-
-		ipcMain.on("close-window", () => {
+		ipcMain.on('close-window', () => {
 			if (this.#options) {
 				this.#options.close();
 			}
 		});
 
-		ipcMain.on("set-option", (event, optionId, value) => {
-			this.setOption(optionId, value);
+		ipcMain.on('set-option', (event, optionId, value) => {
+			this.setPersistentOption(optionId, value);
 		});
 	}
 
 	#sendAppMetadata(event) {
 		if (!this.#options) return;
-		const pkg = JSON.parse(
-			readFileSync(path.join(__dirname, "../package.json"), "utf8"),
-		);
-		this.#options.webContents.send("app-metadata", {
+		const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
+		this.#options.webContents.send('app-metadata', {
 			version: pkg.version,
 			author: pkg.author,
 			license: pkg.license,
@@ -65,18 +85,32 @@ class OptionsService {
 		this.#options = optionsWindow;
 		this.#options.webContents.setWindowOpenHandler(({ url }) => {
 			shell.openExternal(url);
-			return { action: "deny" };
+			return { action: 'deny' };
 		});
 	}
 
 	getOption(optionId) {
-		return this.#config.options[optionId].value;
+		if (optionId in this.#cliOverrides) return this.#cliOverrides[optionId];
+		return this.getPersistentOption(optionId);
+	}
+
+	getPersistentOption(optionId) {
+		const configDefault = this.#config.options[optionId].value.default;
+		const fallback = optionId in this.#envDefaults ? this.#envDefaults[optionId] : configDefault;
+		return this.#store.get(optionId, fallback);
 	}
 
 	setOption(optionId, value) {
-		const optionValue = this.getOption(optionId);
 		this.#store.set(optionId, value);
-		optionValue.data = value;
+
+		// Broadcast the change (if you added the event emitter from earlier)
+		if (this.#mainBus) {
+			this.#mainBus.emit('option-changed', optionId, value);
+		}
+	}
+
+	setPersistentOption(optionId, value) {
+		this.setOption(optionId, value);
 	}
 }
 
