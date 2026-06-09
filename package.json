@@ -41,7 +41,7 @@
     "@electron/packager": "^20.0.0",
     "@typescript-eslint/parser": "^7.18.0",
     "electron": "^42.3.3",
-    "electron-builder": "^26.8.1",
+    "electron-builder": "^26.15.2",
     "eslint": "^8.57.1",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-base": "^15.0.0",
