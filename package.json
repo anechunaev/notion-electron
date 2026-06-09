@@ -38,7 +38,7 @@
     "releaseType": "release"
   },
   "devDependencies": {
-    "@electron/packager": "^20.0.0",
+    "@electron/packager": "^20.0.1",
     "@typescript-eslint/parser": "^7.18.0",
     "electron": "^42.3.3",
     "electron-builder": "^26.15.2",
