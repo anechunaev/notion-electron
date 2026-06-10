@@ -43,13 +43,12 @@ export default defineConfig([
 			'no-case-declarations': 'error',
 			'no-constructor-return': 'error',
 			'no-else-return': ['error', { allowElseIf: false }],
-			'no-empty-function': ['error', {
-				allow: [
-					'arrowFunctions',
-					'functions',
-					'methods',
-				]
-			}],
+			'no-empty-function': [
+				'error',
+				{
+					allow: ['arrowFunctions', 'functions', 'methods'],
+				},
+			],
 			'no-empty-pattern': 'error',
 			'no-empty-static-block': 'error',
 			'no-eq-null': 'error',
@@ -77,13 +76,16 @@ export default defineConfig([
 			'no-object-constructor': 'off',
 			'no-octal': 'error',
 			'no-octal-escape': 'error',
-			'no-param-reassign': ['error', {
-				props: true,
-				ignorePropertyModificationsFor: [
-					'acc', // for reduce accumulators
-					'accumulator', // for reduce accumulators
-				]
-			}],
+			'no-param-reassign': [
+				'error',
+				{
+					props: true,
+					ignorePropertyModificationsFor: [
+						'acc', // for reduce accumulators
+						'accumulator', // for reduce accumulators
+					],
+				},
+			],
 			'no-proto': 'error',
 			'no-redeclare': 'error',
 			'no-return-assign': ['error', 'always'],
@@ -93,11 +95,14 @@ export default defineConfig([
 			'no-self-compare': 'error',
 			'no-sequences': 'error',
 			'no-throw-literal': 'error',
-			'no-unused-expressions': ['error', {
-				allowShortCircuit: false,
-				allowTernary: false,
-				allowTaggedTemplates: false,
-			}],
+			'no-unused-expressions': [
+				'error',
+				{
+					allowShortCircuit: false,
+					allowTernary: false,
+					allowTaggedTemplates: false,
+				},
+			],
 			'no-unused-labels': 'error',
 			'no-useless-call': 'off',
 			'no-useless-catch': 'error',
@@ -109,9 +114,12 @@ export default defineConfig([
 			'prefer-promise-reject-errors': 'off',
 			'prefer-named-capture-group': 'off',
 			'prefer-object-has-own': 'error',
-			'prefer-regex-literals': ['error', {
-				disallowRedundantWrapping: true,
-			}],
+			'prefer-regex-literals': [
+				'error',
+				{
+					disallowRedundantWrapping: true,
+				},
+			],
 			'radix': 'error',
 			'require-await': 'off',
 			'require-unicode-regexp': 'off',
@@ -136,12 +144,16 @@ export default defineConfig([
 			'no-empty': 'error',
 			'no-ex-assign': 'off',
 			'no-extra-boolean-cast': 'error',
-			'no-extra-parens': ['off', 'all', {
-				conditionalAssign: true,
-				nestedBinaryExpressions: false,
-				returnAssign: false,
-				enforceForArrowConditionals: false,
-			}],
+			'no-extra-parens': [
+				'off',
+				'all',
+				{
+					conditionalAssign: true,
+					nestedBinaryExpressions: false,
+					returnAssign: false,
+					enforceForArrowConditionals: false,
+				},
+			],
 			'no-extra-semi': 'error',
 			'no-func-assign': 'error',
 			'no-import-assign': 'error',
@@ -172,6 +184,16 @@ export default defineConfig([
 			'global-require': 'off',
 			'no-plusplus': 'off',
 			'prefer-arrow-callback': 'off',
+			'no-unused-vars': 'off',
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{
+					varsIgnorePattern: '^_',
+					argsIgnorePattern: '^_',
+					caughtErrorsIgnorePattern: '^_',
+					destructuredArrayIgnorePattern: '^_',
+				},
+			],
 		},
 	},
 	{
@@ -179,7 +201,7 @@ export default defineConfig([
 			publicMethods,
 		},
 		rules: {
-			"publicMethods/public-class-methods-use-this": "error"
-		}
+			'publicMethods/public-class-methods-use-this': 'error',
+		},
 	},
 ]);

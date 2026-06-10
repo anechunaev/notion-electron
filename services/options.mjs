@@ -39,7 +39,7 @@ class OptionsService {
 
 		ipcMain.on('get-app-metadata', this.#sendAppMetadata.bind(this));
 
-		ipcMain.on('get-options', (event) => {
+		ipcMain.on('get-options', () => {
 			if (!this.#options) return;
 			const payload = {
 				groups: this.#config.groups,
@@ -64,7 +64,7 @@ class OptionsService {
 		});
 	}
 
-	#sendAppMetadata(event) {
+	#sendAppMetadata() {
 		if (!this.#options) return;
 		const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
 		this.#options.webContents.send('app-metadata', {

@@ -1,5 +1,5 @@
-import { ipcMain, app, autoUpdater, shell } from "electron";
-import electronUpdater from "electron-updater";
+import { ipcMain, app, autoUpdater, shell } from 'electron';
+import electronUpdater from 'electron-updater';
 import { execSync, execFile } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { getSystemFormattedDate } from '../lib/dateFormat.mjs';
@@ -41,19 +41,19 @@ class UpdateService extends EventEmitter {
 		this.#availableVersion = this.#store.get('update-available-version', this.#localVersion);
 		this.#lastChecked = this.#store.get('update-last-checked', ERA_START.toISOString());
 		this.#stage = this.#semverIsBigger(this.#availableVersion, this.#localVersion) ? 'available' : 'latest';
-		switch(this.#options.getOption('update-check-interval')) {
-		case 'daily':
-			this.#checkInterval = ONE_DAY_MS;
-			break;
-		case 'weekly':
-			this.#checkInterval = ONE_DAY_MS * 7;
-			break;
-		case 'monthly':
-			this.#checkInterval = ONE_DAY_MS * 30;
-			break;
-		default:
-			this.#checkInterval = Number.MAX_SAFE_INTEGER;
-			break;
+		switch (this.#options.getOption('update-check-interval')) {
+			case 'daily':
+				this.#checkInterval = ONE_DAY_MS;
+				break;
+			case 'weekly':
+				this.#checkInterval = ONE_DAY_MS * 7;
+				break;
+			case 'monthly':
+				this.#checkInterval = ONE_DAY_MS * 30;
+				break;
+			default:
+				this.#checkInterval = Number.MAX_SAFE_INTEGER;
+				break;
 		}
 
 		if (!this.#options.getOption('disable-update-functionality')) {
@@ -78,7 +78,7 @@ class UpdateService extends EventEmitter {
 			if (this.#availableVersion === info.version) return;
 
 			this.#availableVersion = info.version;
-			this.#lastChecked = (new Date()).toISOString();
+			this.#lastChecked = new Date().toISOString();
 
 			this.#store.set('update-last-checked', this.#lastChecked);
 			this.#store.set('update-available-version', this.#availableVersion);
@@ -98,7 +98,7 @@ class UpdateService extends EventEmitter {
 			}
 		});
 		this.#updater.on('update-not-available', (info) => {
-			this.#lastChecked = (new Date()).toISOString();
+			this.#lastChecked = new Date().toISOString();
 			this.#store.set('update-last-checked', this.#lastChecked);
 
 			this.emit('update-not-available', { version: info.version });
@@ -119,7 +119,7 @@ class UpdateService extends EventEmitter {
 			this.#speed = `${this.#bytesSizeToHuman(progress.bytesPerSecond)}/s`;
 			this.#sendStatus();
 		});
-		this.#updater.on('update-downloaded', (info) => {
+		this.#updater.on('update-downloaded', () => {
 			if (process.env.APPIMAGE && this.#options.getOption('update-auto-install')) {
 				this.#installUpdate();
 			} else {
@@ -131,13 +131,13 @@ class UpdateService extends EventEmitter {
 		ipcMain.on('request-update-status', this.#sendStatus.bind(this));
 		ipcMain.on('check-update-forced', this.#checkUpdateForced.bind(this));
 		ipcMain.on('download-update', this.#downloadUpdate.bind(this));
-		ipcMain.on('install-update', this.#installUpdate.bind(this))
+		ipcMain.on('install-update', this.#installUpdate.bind(this));
 		ipcMain.on('request-changelog', this.#fetchChangelog.bind(this));
 	}
 
 	#sendStatus() {
 		if (!this.#optionsWindow || !this.#optionsWindow.webContents) return;
-		this.#optionsWindow.webContents.send("update-status", {
+		this.#optionsWindow.webContents.send('update-status', {
 			lastChecked: this.#lastChecked,
 			lastCheckedFormatted: getSystemFormattedDate(this.#lastChecked),
 			availableVersion: this.#availableVersion,
@@ -174,13 +174,12 @@ class UpdateService extends EventEmitter {
 
 		this.#fetchChangelog();
 
-		return this.#updater.doCheckForUpdates()
-			.catch((err) => {
-				console.error('>> Error in auto-updater. ', err);
-				this.#error = err;
-				this.#stage = 'error';
-				this.#sendStatus();
-			});
+		return this.#updater.doCheckForUpdates().catch((err) => {
+			console.error('>> Error in auto-updater. ', err);
+			this.#error = err;
+			this.#stage = 'error';
+			this.#sendStatus();
+		});
 	}
 
 	#downloadUpdate() {
@@ -216,7 +215,7 @@ class UpdateService extends EventEmitter {
 				this.#sendStatus();
 
 				setImmediate(() => {
-					autoUpdater.emit("before-quit-for-update");
+					autoUpdater.emit('before-quit-for-update');
 					if (process.env.APPIMAGE) {
 						try {
 							execFile(process.env.APPIMAGE, process.argv);
@@ -242,8 +241,8 @@ class UpdateService extends EventEmitter {
 
 	#bytesSizeToHuman(bytes) {
 		const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB'];
-		if (bytes == 0) return '0 Byte';
-		const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+		if (bytes === 0) return '0 Byte';
+		const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)), 10);
 		return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
 	}
 
@@ -255,7 +254,7 @@ class UpdateService extends EventEmitter {
 			})
 			.then((html) => {
 				if (!this.#optionsWindow || !this.#optionsWindow.webContents) return;
-				this.#optionsWindow.webContents.send("update-changelog", html);
+				this.#optionsWindow.webContents.send('update-changelog', html);
 			})
 			.catch((error) => {
 				console.error('Error fetching changelog:', error);

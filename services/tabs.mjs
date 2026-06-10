@@ -14,6 +14,21 @@ const MAIL_PAGE = 'https://mail.notion.so/notion-auth';
 const AUTH_HOSTS = ['notion.so', 'notion.com', 'google.com', 'live.com', 'microsoft.com', 'apple.com'];
 const USER_AGENT = `Mozilla/5.0 (${process.env.XDG_SESSION_TYPE ?? 'X11'}; Linux ${process.arch}) Notion_Еlectron/${pkg.version} Chrome/${process.versions.chrome}`;
 
+function sendKey(entry, delay, view) {
+	if (!view) return;
+	['keyDown', 'char', 'keyUp'].forEach(async (type) => {
+		const keyEntry = {
+			...entry,
+			type,
+		};
+		view.webContents.sendInputEvent(keyEntry);
+
+		await new Promise((resolve) => {
+			setTimeout(resolve, delay);
+		});
+	});
+}
+
 class TabsService {
 	#tabViews = {};
 	#tabAppMap = {
@@ -83,11 +98,11 @@ class TabsService {
 			this.#onHistoryChanged(event.sender, title, icon);
 		});
 
-		ipcMain.on('history-back', (event) => {
+		ipcMain.on('history-back', () => {
 			this.#tabViews[this.#currentTabId].webContents.goBack();
 		});
 
-		ipcMain.on('history-forward', (event) => {
+		ipcMain.on('history-forward', () => {
 			this.#tabViews[this.#currentTabId].webContents.goForward();
 		});
 
@@ -107,12 +122,12 @@ class TabsService {
 				}
 			});
 
-			ipcMain.on('sidebar-folding-stop', (event) => {
+			ipcMain.on('sidebar-folding-stop', () => {
 				this.#titleBarView.webContents.send('sidebar-folding-stop');
 			});
 
 			ipcMain.on('toggle-sidebar', () => {
-				this.sendKey({ keyCode: '\\', modifiers: ['Ctrl'] }, 50, this.#tabViews[this.#currentTabId]);
+				sendKey({ keyCode: '\\', modifiers: ['Ctrl'] }, 50, this.#tabViews[this.#currentTabId]);
 			});
 
 			ipcMain.on('request-sidebar-data', () => {
@@ -131,7 +146,7 @@ class TabsService {
 			event.sender.send('global-options', options);
 		});
 
-		ipcMain.on('show-offline-screen', (event, { url, isLocal }) => {
+		ipcMain.on('show-offline-screen', (event, { isLocal }) => {
 			if (isLocal) return;
 
 			const tabId = this.getTabIds().find((id) => this.#tabViews[id].webContents === event.sender);
@@ -180,7 +195,9 @@ class TabsService {
 		});
 
 		this.#window.on('closed', () => {
-			Object.values(this.#tabViews).forEach((view) => view.webContents.close());
+			Object.values(this.#tabViews).forEach((view) => {
+				view.webContents.close();
+			});
 		});
 
 		this.#window.on('resize', this.#setViewSize.bind(this));
@@ -406,16 +423,6 @@ class TabsService {
 				this.#titlesMap[tabId] = title;
 			}
 		}
-	}
-
-	sendKey(entry, delay, view) {
-		if (!view) return;
-		['keyDown', 'char', 'keyUp'].forEach(async (type) => {
-			entry.type = type;
-			view.webContents.sendInputEvent(entry);
-
-			await new Promise((resolve) => setTimeout(resolve, delay));
-		});
 	}
 
 	getTabView(tabId) {

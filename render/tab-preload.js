@@ -1,17 +1,20 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { contextBridge, ipcRenderer } = require('electron/renderer');
 
 contextBridge.exposeInMainWorld('notionElectronAPI', {
 	changeTab: (tabId) => {
 		ipcRenderer.send('change-tab', tabId);
 	},
-	addTab: (options) => new Promise((resolve, reject) => {
-		ipcRenderer.send('add-tab', options);
-		setTimeout(resolve, 0);
-	}),
-	closeTab: (tabId) => new Promise((resolve, reject) => {
-		ipcRenderer.send('close-tab', tabId);
-		setTimeout(resolve, 0);
-	}),
+	addTab: (options) =>
+		new Promise((resolve) => {
+			ipcRenderer.send('add-tab', options);
+			setTimeout(resolve, 0);
+		}),
+	closeTab: (tabId) =>
+		new Promise((resolve) => {
+			ipcRenderer.send('close-tab', tabId);
+			setTimeout(resolve, 0);
+		}),
 	setUrl: (tabId, url) => {
 		ipcRenderer.send('set-url', tabId, url);
 	},
@@ -57,7 +60,7 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 		});
 	},
 	subscribeOnSidebarFoldingStop: (callback) => {
-		ipcRenderer.on('sidebar-folding-stop', (event) => {
+		ipcRenderer.on('sidebar-folding-stop', () => {
 			callback();
 		});
 	},

@@ -2,6 +2,7 @@ import { getSystemFormattedDate } from '../lib/dateFormat.mjs';
 
 class ChangelogService {
 	#apiUrl;
+	#lastFetched = null;
 
 	constructor(repoOwner, repoName) {
 		this.#apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/releases`;
@@ -15,7 +16,8 @@ class ChangelogService {
 			}
 
 			const releases = await response.json();
-			return releases.map(release => ({
+			this.#lastFetched = new Date().toISOString();
+			return releases.map((release) => ({
 				version: release.tag_name,
 				date: release.published_at,
 				notes: release.body,
@@ -32,16 +34,20 @@ class ChangelogService {
 			return '<p>No changelog available.</p>';
 		}
 
-		const changelogHtml = data.map(release => `
+		const changelogHtml = data
+			.map(
+				(release) => `
 			<dt>
 				<a href="${release.url}" target="_blank">${release.version}</a>
 				<br />
 				<small>${getSystemFormattedDate(release.date)}</small>
 			</dt>
 			<dd>${release.notes.replace(/\n/g, '<br />')}</dd>
-		`).join('');
+		`,
+			)
+			.join('');
 
-		return `<dl>${changelogHtml}</dl>`;
+		return `<dl data-lastfetched="${this.#lastFetched}">${changelogHtml}</dl>`;
 	}
 }
 

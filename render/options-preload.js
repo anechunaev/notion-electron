@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { contextBridge, ipcRenderer } = require('electron/renderer');
 
 contextBridge.exposeInMainWorld('notionElectronAPI', {
@@ -7,7 +8,7 @@ contextBridge.exposeInMainWorld('notionElectronAPI', {
 	closeWindow: () => {
 		ipcRenderer.send('close-window');
 	},
-	getAppMetadata: (callback) => {
+	getAppMetadata: () => {
 		ipcRenderer.send('get-app-metadata');
 	},
 	getOptions: () => {

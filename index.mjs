@@ -185,7 +185,7 @@ if (!app.requestSingleInstanceLock()) {
 						if (!app.isQuiting && optionsService.getOption('hide-window-on-close')) {
 							event.preventDefault();
 							mainWindow.hide();
-							return false;
+							return;
 						}
 						try {
 							windowPositionService.savePosition();
