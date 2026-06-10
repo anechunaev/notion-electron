@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const { getChangesFromMergeBase } = require('./helpers/git.cjs');
-const { lint } = require('./helpers/eslint.cjs');
+import { getChangesFromMergeBase } from './helpers/git.cjs';
+import { lint } from './helpers/eslint.cjs';
 
 async function run() {
 	try {

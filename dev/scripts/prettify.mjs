@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const { getCurrentChanges, stageFiles } = require('./helpers/git.cjs');
-const { prettify } = require('./helpers/prettier.cjs');
+import { getCurrentChanges, stageFiles } from './helpers/git.mjs';
+import { prettify } from './helpers/prettier.mjs';
 
 async function run() {
 	try {

@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { app, screen, nativeTheme, BaseWindow, BrowserWindow, Menu } from 'electron';
 import Store from 'electron-store';
 import EventEmitter from 'node:events';
@@ -16,9 +15,7 @@ import ChangelogService from './services/changelog.mjs';
 import NotificationService from './services/notifications.mjs';
 import { createMonitorBus } from './lib/dbus.mjs';
 
-// eslint-disable-next-line no-underscore-dangle
 const __filename = fileURLToPath(import.meta.url);
-// eslint-disable-next-line no-underscore-dangle
 const __dirname = path.dirname(__filename);
 const TITLEBAR_HEIGHT = 40;
 const DARK_THEME_BACKGROUND = '#202020';
@@ -153,6 +150,8 @@ if (!app.requestSingleInstanceLock()) {
 						optionsService,
 					);
 					const trayService = new TrayService(mainWindow, optionsWindow);
+					// TODO: convert to function
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					const contextMenuService = new ContextMenuService(mainWindow, tabService, mainBus);
 
 					optionsService.setOptionsWindow(optionsWindow);

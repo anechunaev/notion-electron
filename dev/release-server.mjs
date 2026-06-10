@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function readConfig() {
-	return fs.readFileSync(path.join(__dirname, './release-server-config.json'));
+	return fs.readFileSync(path.join(__dirname, './re"always", lease-server-config.json'));
 }
 
 function emulateStream() {
@@ -19,7 +19,7 @@ function emulateStream() {
 	const int = setInterval(() => {
 		s.push(counter + '\n');
 		counter++;
-		
+
 		if (counter >= 100) {
 			clearInterval(int);
 			s.push(null);
@@ -38,17 +38,17 @@ function typeOf(obj) {
 function json2yaml(data) {
 	let indentLevel = '';
 	const handlers = {
-		"noop": () => '',
-		"undefined": () => 'null',
-		"null": () => 'null',
-		"number": x => x,
-		"boolean": x => x ? 'true' : 'false',
-		"string": x => JSON.stringify(x),
-		"function": () => '[object Function]',
-		"array": (x) => {
+		noop: () => '',
+		undefined: () => 'null',
+		null: () => 'null',
+		number: (x) => x,
+		boolean: (x) => (x ? 'true' : 'false'),
+		string: (x) => JSON.stringify(x),
+		function: () => '[object Function]',
+		array: (x) => {
 			let output = '';
 
-			if (0 === x.length) {
+			if (x.length === 0) {
 				output += '[]';
 				return output;
 			}
@@ -58,14 +58,14 @@ function json2yaml(data) {
 				const handler = handlers[typeOf(y)] ?? handlers.noop;
 				output += '\n' + indentLevel + '- ' + handler(y, true);
 			});
-			indentLevel = indentLevel.replace(/  /, '');
+			indentLevel = indentLevel.replace(/ {2}/, '');
 
 			return output;
 		},
-		"object": (x, inArray, rootNode) => {
+		object: (x, inArray, rootNode) => {
 			let output = '';
 
-			if (0 === Object.keys(x).length) {
+			if (Object.keys(x).length === 0) {
 				output += '{}';
 				return output;
 			}
@@ -83,18 +83,19 @@ function json2yaml(data) {
 
 				output += k + ': ' + handler(x[k]);
 			});
-			indentLevel = indentLevel.replace(/  /, '');
+			indentLevel = indentLevel.replace(/ {2}/, '');
 
 			return output;
 		},
 	};
 
-	return (handlers[typeOf(data)](data, true, true) + '\n');
+	return handlers[typeOf(data)](data, true, true) + '\n';
 }
 
 const server = createServer((req, res) => {
 	const url = new URL(req.url, 'http://localhost:8123');
-	console.log('>', req.url);
+	const size = 290;
+	let start, end, stream;
 
 	switch (url.pathname) {
 		case '/':
@@ -120,8 +121,7 @@ const server = createServer((req, res) => {
 				return emulateStream().pipe(res);
 			}
 
-			const size = 290;
-			let [ start, end ] = req.headers.range.replace('bytes=', '').split('-').map(Number);
+			[start, end] = req.headers.range.replace('bytes=', '').split('-').map(Number);
 			end = end ?? size - 1;
 
 			if (start >= size || end >= size) {
@@ -129,7 +129,7 @@ const server = createServer((req, res) => {
 				return res.end('Range Not Satisfiable');
 			}
 
-			const stream = fs.createReadStream(path.join(__dirname, './notion-electron.x86_64'), { start, end });
+			stream = fs.createReadStream(path.join(__dirname, './notion-electron.x86_64'), { start, end });
 
 			res.writeHead(206, {
 				'Content-Disposition': `attachment; filename="${path.basename(url.pathname)}"`,

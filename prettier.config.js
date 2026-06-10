@@ -1,15 +1,14 @@
-const config = {
+export default {
 	printWidth: 120,
 	tabWidth: 4,
 	useTabs: true,
 	semi: true,
 	singleQuote: true,
-	jsxSingleQuote: false,
+	quoteProps: 'consistent',
 	trailingComma: 'all',
 	bracketSpacing: true,
-	jsxBracketSameLine: false,
+	objectWrap: 'preserve',
+	bracketSameLine: false,
 	arrowParens: 'always',
 	endOfLine: 'lf',
 };
-
-module.exports = config;

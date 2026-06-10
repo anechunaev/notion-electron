@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 
-const { getCurrentChanges } = require('./helpers/git.cjs');
-const { lint } = require('./helpers/eslint.cjs');
+import { getCurrentChanges, getAllTrackedFiles } from './helpers/git.mjs';
+import { lint } from './helpers/eslint.mjs';
 
-async function run() {
+async function run(scanAllFiles = false) {
 	try {
-		const files = await getCurrentChanges();
+		let files = [];
+		if (scanAllFiles) {
+			files = await getAllTrackedFiles();
+		} else {
+			files = await getCurrentChanges();
+		}
 		if (!files.length) {
 			process.exitCode = 0;
 			return;
@@ -17,6 +22,6 @@ async function run() {
 	}
 }
 
-run()
+run(process.argv[3] === '--all-files')
 	.then(() => console.log(`✅ Linting done (exit code ${process.exitCode})`))
 	.catch((error) => console.error('❌ Error while running linter:\n', error));
