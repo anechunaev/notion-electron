@@ -116,14 +116,7 @@ This is not a complete feature list, but here are some of the key highlights of 
 
 ## Contributing
 
-Contributions are welcome! Please follow these steps to contribute:
-
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature-branch`).
-3. Make your changes.
-4. Commit your changes (`git commit -m 'Add some feature'`).
-5. Push to the branch (`git push origin feature-branch`).
-6. Open a pull request.
+Contributions are welcome! Please read **[CONTRIBUTING.md](CONTRIBUTING.md)** for development setup, architecture rules, code style, and the pull-request process. If you use AI tools to contribute, also read the **[AI usage policy](docs/ai-policy.md)**.
 
 ## License
 
