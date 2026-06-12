@@ -92,12 +92,15 @@ if (!app.requestSingleInstanceLock()) {
 							: LIGHT_THEME_BACKGROUND;
 				}
 
+				const windowPositionService = new WindowPositionService(store);
+				const savedPosition = windowPositionService.getPosition();
+
 				mainWindow = new BaseWindow({
 					title: 'Notion Electron',
 					minWidth: 600,
 					minHeight: 400,
-					width: screen.getPrimaryDisplay().workAreaSize.width * 0.8,
-					height: screen.getPrimaryDisplay().workAreaSize.height * 0.8,
+					width: savedPosition.bounds.width,
+					height: savedPosition.bounds.height,
 					titleBarStyle: 'hidden',
 					icon: path.join(__dirname, './assets/icons/desktop.png'),
 					show: optionsService.getOption('general-show-window-on-start'),
@@ -112,8 +115,9 @@ if (!app.requestSingleInstanceLock()) {
 					backgroundColor: bgColor,
 				});
 
+				windowPositionService.subscribeToPositionChange(mainWindow);
+
 				const tabService = new TabService(mainWindow, optionsService, store, mainBus);
-				const windowPositionService = new WindowPositionService(mainWindow, store);
 
 				setTimeout(function initApp() {
 					const optionsWindow = new BrowserWindow({
@@ -188,16 +192,16 @@ if (!app.requestSingleInstanceLock()) {
 							return;
 						}
 						try {
-							windowPositionService.savePosition();
 							dBusMonitorDisconnect();
 						} catch (e) {
-							console.error(e);
+							console.warn(e);
+						} finally {
+							app.quit();
+							process.exit(0);
 						}
-						app.quit();
-						process.exit(0);
 					});
 				}, 1); // Guaranteed to run on next tick despite engine optimizations
-				windowPositionService.restorePosition();
+				windowPositionService.restorePosition(mainWindow);
 			});
 		});
 
