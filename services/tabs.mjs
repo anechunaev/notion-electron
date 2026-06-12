@@ -9,8 +9,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TITLEBAR_HEIGHT = 40;
 const HOME_PAGE = 'https://www.notion.com/login';
-const CALENDAR_PAGE = 'https://calendar.notion.so/notion-auth';
-const MAIL_PAGE = 'https://mail.notion.so/notion-auth';
+const CALENDAR_PAGE = 'https://calendar.notion.so';
+const MAIL_PAGE = 'https://mail.notion.com';
 const AUTH_HOSTS = ['notion.so', 'notion.com', 'google.com', 'live.com', 'microsoft.com', 'apple.com'];
 const USER_AGENT = `Mozilla/5.0 (${process.env.XDG_SESSION_TYPE ?? 'X11'}; Linux ${process.arch}) Notion_Еlectron/${pkg.version} Chrome/${process.versions.chrome}`;
 
