@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Notion Electron</title>
+	<link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+	<template id="tab-template">
+		<button class="tab" role="button">
+			<picture>
+				<source class="tab-icon-source" srcset="../icons/light/document.svg"
+					media="(prefers-color-scheme: light)" />
+				<img class="tab-icon" src="../icons/dark/document.svg" />
+			</picture>
+			<span class="tab-title">Tab</span>
+			<span class="tab-close">×</span>
+		</button>
+	</template>
+	<div class="titlebar">
+		<div class="sidebar collapsed hidden">
+			<button class="control sidebar-collapsed" role="button" title="Open Sidebar">
+				<picture class="sidebar-icon-menu">
+					<source srcset="../icons/light/menu.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/menu.svg" />
+				</picture>
+				<picture class="sidebar-icon-unfold">
+					<source srcset="../icons/light/double_arrow_right.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/double_arrow_right.svg" />
+				</picture>
+			</button>
+			<button class="control sidebar-unfold" role="button" title="Collapse Sidebar">
+				<picture>
+					<source srcset="../icons/light/double_arrow_left.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/double_arrow_left.svg" />
+				</picture>
+			</button>
+		</div>
+		<div class="controls">
+			<button class="control" role="button" title="Back" data-action="history-back" disabled>
+				<picture>
+					<source srcset="../icons/light/arrow_left.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/arrow_left.svg" />
+				</picture>
+			</button>
+			<button class="control" role="button" title="Forward" data-action="history-forward" disabled>
+				<picture>
+					<source srcset="../icons/light/arrow_right.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/arrow_right.svg" />
+				</picture>
+			</button>
+			<button class="control" role="button" title="Open New Tab" data-action="add">
+				<picture>
+					<source srcset="../icons/light/add.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/add.svg" />
+				</picture>
+			</button>
+		</div>
+
+		<div class="tabgroup-container">
+			<div class="tabgroup-shadow-left hidden"></div>
+			<div class="tabgroup"></div>
+			<div class="tabgroup-shadow-right hidden"></div>
+		</div>
+
+		<div class="tabgroup-pinned"></div>
+
+		<div class="tab-all">
+			<button class="control" role="button" title="All Tabs">
+				<picture>
+					<source srcset="../icons/light/arrow_down.svg" media="(prefers-color-scheme: light)" />
+					<img class="icon" src="../icons/dark/arrow_down.svg" />
+				</picture>
+			</button>
+		</div>
+	</div>
+
+	<script type="module" src="./script.ts"></script>
+</body>
+
+</html>

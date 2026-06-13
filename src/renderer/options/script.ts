@@ -1,4 +1,4 @@
-import type { OptionsPayload, RendererOptionDefinition } from '../shared/ipc';
+import type { OptionsPayload, RendererOptionDefinition } from '../../shared/ipc';
 
 interface OptionGroup {
 	id: string;

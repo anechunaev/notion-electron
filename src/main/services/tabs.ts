@@ -85,7 +85,7 @@ class TabsService {
 
 		this.#titleBarView = new WebContentsView({
 			webPreferences: {
-				preload: resolvePreload('tab-preload.cjs'),
+				preload: resolvePreload('tab.cjs'),
 			},
 		});
 		loadRendererPage(this.#titleBarView.webContents, 'titlebar');
@@ -284,7 +284,7 @@ class TabsService {
 		if (!tabId) return;
 		const view = new WebContentsView({
 			webPreferences: {
-				preload: resolvePreload('docs-preload.cjs'),
+				preload: resolvePreload('docs.cjs'),
 				spellcheck: this.#options.getOption('general-enable-spellcheck'),
 			},
 		});

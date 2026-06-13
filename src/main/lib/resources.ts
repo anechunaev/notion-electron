@@ -34,8 +34,8 @@ export function loadRendererPage(
 	const devUrl = process.env.ELECTRON_RENDERER_URL;
 	if (devUrl) {
 		const search = query ? `?${new URLSearchParams(query)}` : '';
-		return target.loadURL(`${devUrl}/${page}.html${search}`);
+		return target.loadURL(`${devUrl}/${page}/index.html${search}`);
 	}
-	const file = path.join(__dirname, `../renderer/${page}.html`);
+	const file = path.join(__dirname, `../renderer/${page}/index.html`);
 	return query ? target.loadFile(file, { query }) : target.loadFile(file);
 }

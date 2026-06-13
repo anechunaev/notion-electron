@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Notion Electron Options</title>
+	<link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+	<template id="option-checkbox">
+		<div class="grid-row">
+			<div class="option">
+				<label for="option-id">Option Name</label>
+			</div>
+			<div class="option-control">
+				<input type="checkbox" id="option-id" />
+			</div>
+		</div>
+	</template>
+	<template id="option-select">
+		<div class="grid-row">
+			<div class="option">
+				<label for="select-id">Select Name</label>
+			</div>
+			<div class="option-control">
+				<select id="select-id"></select>
+			</div>
+		</div>
+	</template>
+	<template id="option-group">
+		<h1 class="option-group">Group Name</h1>
+		<div class="grid"></div>
+	</template>
+
+	<div class="container">
+		<div class="tabgroup">
+			<a class="tab" id="options" href="#options" target="_self">
+				<span class="indicator hidden">●</span>
+				<span class="tab-title">Options</span>
+			</a>
+			<a class="tab" id="updates" href="#updates" target="_self">
+				<span class="indicator hidden">●</span>
+				<span class="tab-title">Updates</span>
+			</a>
+			<a class="tab" id="about" href="#about" target="_self">
+				<span class="indicator hidden">●</span>
+				<span class="tab-title">About</span>
+			</a>
+		</div>
+		<div class="content">
+			<div class="tab-panel options" data-for="options"></div>
+			<div class="tab-panel updates" data-for="updates">
+				<div class="update-status">
+					<div class="status-row">
+						<div class="status-label">Last checked:</div>
+						<div class="status-value" id="status-date"></div>
+					</div>
+					<div class="status-row">
+						<div class="status-label">Available version:</div>
+						<div class="status-value" id="status-available"></div>
+					</div>
+					<div class="status-row">
+						<div class="status-label">Your version:</div>
+						<div class="status-value" id="status-local"></div>
+					</div>
+				</div>
+
+				<div class="update-stage stage-latest hidden">
+					<p class="stage-label">You are using the latest version</p>
+					<button class="align-end" role="button" id="update-manually">Check For Updates Manually</button>
+				</div>
+
+				<div class="update-stage stage-checking hidden">
+					<p class="stage-label">Checking update...</p>
+				</div>
+
+				<div class="update-stage stage-available hidden">
+					<p class="stage-label">New version is available!</p>
+					<button class="align-end" role="button" id="update-download">Download and Install</button>
+				</div>
+
+				<div class="update-stage stage-downloading hidden">
+					<p class="stage-label">Downloading update...</p>
+					<progress class="stage-progress" id="update-progress" value="0" max="100"></progress>
+					<div class="stage-progress-info">
+						<div class="stage-progress-info-cell">
+							<span id="update-percent"></span>
+							(<span id="update-downloaded"></span> / <span id="update-total"></span>)
+						</div>
+						<div class="stage-progress-info-cell">
+							<span id="update-speed"></span>
+						</div>
+					</div>
+				</div>
+
+				<div class="update-stage stage-ready hidden">
+					<p class="stage-label">New version is ready to install</p>
+					<button class="align-end" role="button" id="update-install">Restart And Install</button>
+				</div>
+
+				<div class="update-stage stage-installing hidden">
+					<p class="stage-label">Installing update...</p>
+				</div>
+
+				<div class="update-stage stage-installed hidden">
+					<p class="stage-label">A new version has been installed. It will be applied on the next restart.</p>
+				</div>
+
+				<div class="update-stage stage-error hidden">
+					<p class="stage-label">An error occurred while updating:</p>
+					<pre class="error-message" id="update-error"></pre>
+					<div>Restart app and try to update later.</div>
+				</div>
+
+				<span class="subheader">Changelog:</span>
+				<div class="changelog" id="changelog">
+					<span class="spinner"></span>
+				</div>
+			</div>
+			<div class="tab-panel about" data-for="about">
+				<img src="../logo.svg" alt="Notion Electron" class="logo" />
+				<h1 class="about-name">Notion Electron</h1>
+				<p class="about-text about-version">Version: <span id="version">0.0.0</span></p>
+				<p class="about-text" id="description">Unofficial Notion client</p>
+				<p class="about-text">Developed by <span id="author">Artem Nechunaev</span></p>
+				<p class="about-text">License: <span id="license">MIT</span></p>
+				<p class="about-text">
+					Source code:
+					<a href="https://github.com/anechunaev/notion-electron" target="_blank"
+						id="source">github.com/anechunaev/notion-electron</a>
+				</p>
+			</div>
+		</div>
+		<div class="footer">
+			<button class="button" role="button" id="cancel">Cancel</button>
+			<button class="button primary" role="button" id="restart">Save and Restart</button>
+		</div>
+	</div>
+
+	<script type="module" src="./script.ts"></script>
+</body>
+
+</html>

@@ -15,9 +15,9 @@ export default defineConfig({
 		build: {
 			rollupOptions: {
 				input: {
-					'tab-preload': resolve('src/preload/tab-preload.ts'),
-					'docs-preload': resolve('src/preload/docs-preload.ts'),
-					'options-preload': resolve('src/preload/options-preload.ts'),
+					tab: resolve('src/preload/tab.ts'),
+					docs: resolve('src/preload/docs.ts'),
+					options: resolve('src/preload/options.ts'),
 				},
 				// Sandboxed renderers (Electron's default) only support CommonJS
 				// preloads, so emit .cjs rather than the ESM .mjs default.
@@ -38,9 +38,9 @@ export default defineConfig({
 		build: {
 			rollupOptions: {
 				input: {
-					titlebar: resolve('src/renderer/titlebar.html'),
-					options: resolve('src/renderer/options.html'),
-					offline: resolve('src/renderer/offline.html'),
+					titlebar: resolve('src/renderer/titlebar/index.html'),
+					options: resolve('src/renderer/options/index.html'),
+					offline: resolve('src/renderer/offline/index.html'),
 				},
 			},
 		},

@@ -1,5 +1,5 @@
 import Sortable from 'sortablejs';
-import type { TabInfo, TabRequest } from '../shared/ipc';
+import type { TabInfo, TabRequest } from '../../shared/ipc';
 
 document.addEventListener('DOMContentLoaded', () => {
 	const tabMap: Record<string, HTMLElement> = {};
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const tabTitle = tab.querySelector('.tab-title');
 		if (tabTitle) tabTitle.textContent = title;
 		const tabIcon = tab.querySelector<HTMLImageElement>('.tab-icon');
-		if (tabIcon) tabIcon.src = iconUrl ?? './icons/dark/document.svg';
+		if (tabIcon) tabIcon.src = iconUrl ?? '../icons/dark/document.svg';
 		tab.dataset.tabId = tabId ?? crypto.randomUUID();
 		tab.dataset.documentUrl = documentUrl ?? 'https://www.notion.so';
 

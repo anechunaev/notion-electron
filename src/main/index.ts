@@ -118,7 +118,7 @@ if (!app.requestSingleInstanceLock()) {
 						parent: mainWindow,
 						webPreferences: {
 							spellcheck: false,
-							preload: resolvePreload('options-preload.cjs'),
+							preload: resolvePreload('options.cjs'),
 						},
 						title: 'Notion Electron Options',
 						icon: resolveAsset('icons/desktop.png'),
