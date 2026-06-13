@@ -1,16 +1,19 @@
 {
   "name": "notion-electron",
   "version": "2.1.0",
-  "main": "index.mjs",
+  "main": "out/main/index.js",
   "type": "module",
   "desktopName": "notion-electron.desktop",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
-    "start": "APPIMAGE=/ electron .",
-    "make": "electron-packager . notion-electron --platform=linux --arch=x64 --out=dist/ --icon=./notion-electron.png --overwrite && chmod -R 777 ./dist/notion-electron-linux-x64/",
-    "pack": "electron-builder --linux",
+    "start": "APPIMAGE=/ electron-vite -c ./config/electron.vite.config.ts dev",
+    "build": "electron-vite -c ./config/electron.vite.config.ts build",
+    "preview": "electron-vite -c ./config/electron.vite.config.ts preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.preload.json && tsc --noEmit -p tsconfig.web.json",
+    "make": "electron-vite -c ./config/electron.vite.config.ts build && electron-packager . notion-electron --platform=linux --arch=x64 --out=dist/ --icon=./notion-electron.png --overwrite && chmod -R 777 ./dist/notion-electron-linux-x64/",
+    "pack": "electron-vite -c ./config/electron.vite.config.ts build && electron-builder --linux",
     "install-desktop-file": "desktop-file-install --dir=$HOME/.local/share/applications ./notion-electron.desktop",
-    "dev": "node ./dev/release-server.mjs",
+    "dev:server": "node ./dev/release-server.mjs",
     "flatpak-lint": "./dev/flatpak/lint.sh",
     "flatpak-build": "./dev/flatpak/build.sh",
     "flatpak-test": "./dev/flatpak/test.sh",
@@ -43,14 +46,19 @@
     "@eslint/js": "^10.0.1",
     "@eslint/json": "^2.0.0",
     "@eslint/markdown": "^8.0.2",
+    "@types/node": "^25.9.3",
+    "@types/sortablejs": "^1.15.9",
     "electron": "^42.3.3",
     "electron-builder": "^26.15.2",
+    "electron-vite": "^5.0.0",
     "eslint": "^10.4.1",
     "eslint-plugin-prettier": "^5.5.6",
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "prettier": "^3.8.4",
-    "typescript-eslint": "^8.61.0"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.0",
+    "vite": "^7.3.5"
   },
   "dependencies": {
     "@clebert/node-d-bus": "^1.0.0",
@@ -113,6 +121,16 @@
     },
     "artifactName": "Notion_Electron-${version}-${arch}.${ext}",
     "icon": "./assets/icons/desktop.png",
+    "files": [
+      "out/**/*",
+      "options.json"
+    ],
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets"
+      }
+    ],
     "asar": true,
     "asarUnpack": [
       "**/node_modules/sharp/**",

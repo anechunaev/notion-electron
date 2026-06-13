@@ -55,29 +55,34 @@ contributing with AI assistance.
     npm start
     ```
 
-    This runs `APPIMAGE=/ electron .` — the `APPIMAGE=/` env is what makes the updater behave as if
-    running in AppImage mode.
+    This runs `APPIMAGE=/ electron-vite dev` — electron-vite bundles the TypeScript sources and
+    serves the renderer with HMR. The `APPIMAGE=/` env makes the updater behave as if running in
+    AppImage mode. For a production-like run, use `npm run build && npm run preview`.
 
 3. To test the auto-updater against fake releases, start the local release server:
 
     ```sh
-    npm run dev
+    npm run dev:server
     ```
 
 ## Project layout
 
 Detail lives in [`docs/architecture.md`](docs/architecture.md); this is just a map of where things
-go:
+go. Sources are **TypeScript**, bundled with **electron-vite** into `out/`:
 
-| Path            | What lives there                                                     |
-| --------------- | -------------------------------------------------------------------- |
-| `index.mjs`     | Composition root — instantiates and wires every service. No logic.   |
-| `services/`     | One class per file, each owning a single concern (tabs, options, …). |
-| `render/`       | Preload scripts (the IPC surface for the titlebar, tabs, options).   |
-| `assets/pages/` | Plain HTML renderer UI (no framework, no bundler).                   |
-| `lib/`          | Reusable helpers — D-Bus client, shortcut map, image conversion.     |
-| `options.json`  | Declarative schema for all user-facing settings.                     |
-| `dev/`          | Build, lint, and packaging scripts (Flatpak/Snap helpers included).  |
+| Path                  | What lives there                                                          |
+| --------------------- | ------------------------------------------------------------------------- |
+| `src/main/index.ts`   | Composition root — instantiates and wires every service. No logic.        |
+| `src/main/services/`  | One class per file, each owning a single concern (tabs, options, …).      |
+| `src/main/lib/`       | Reusable helpers — D-Bus client, shortcut map, image conversion, paths.   |
+| `src/preload/`        | Preload scripts (the IPC surface for the titlebar, tabs, options).        |
+| `src/renderer/`       | Renderer HTML pages + their `.ts` entry scripts (no framework).           |
+| `src/shared/`         | Types shared between preload and renderer (the IPC bridge surface).       |
+| `assets/`             | Static runtime assets (icons, logos), shipped via `extraResources`.       |
+| `options.json`        | Declarative schema for all user-facing settings.                          |
+| `electron.vite.config.ts` | Build config for the main / preload / renderer targets.               |
+| `tsconfig*.json`      | Strict type-check configs (node / preload / web + root references).       |
+| `dev/`                | Build, lint, and packaging scripts (Flatpak/Snap helpers included).       |
 
 ## Architectural rules
 
@@ -85,8 +90,8 @@ These are non-negotiable conventions enforced by review (see `docs/architecture.
 reasoning):
 
 - **View and Domain communicate only through Electron IPC.** No other channel crosses that boundary.
-- **`index.mjs` only wires things up** — it instantiates services and connects them to the data
-  layer. It must not contain application logic.
+- **`src/main/index.ts` only wires things up** — it instantiates services and connects them to the
+  data layer. It must not contain application logic.
 - **Services never import each other.** They collaborate via **dependency injection** (instances
   passed into constructors) and the **`mainBus`** `EventEmitter` for decoupled events.
 - **Persisted state goes through `store`** from a **main-process service** — never write to the
@@ -125,8 +130,8 @@ There is **no automated test suite** — `npm test` intentionally exits with an 
 not add references to running tests.
 
 Instead, **manually verify** your change on Linux: run `npm start` and exercise the area you touched
-(tabs, options window, tray, notifications, and the updater via `npm run dev`). Describe what you
-tested in your pull request.
+(tabs, options window, tray, notifications, and the updater via `npm run dev:server`). Describe what
+you tested in your pull request.
 
 ## Building and packaging
 
@@ -176,7 +181,7 @@ these reasons. Most map directly to the rules above.
 - **Not a priority.** A new feature that is neither parity with something the official Notion clients
   already ship, nor an integration with Linux and its desktop environments.
 - **Breaks the architecture.** Violates a rule in [`docs/architecture.md`](docs/architecture.md) —
-  e.g. logic in `index.mjs`, services importing each other, a renderer writing to `store`, or more
+  e.g. logic in `src/main/index.ts`, services importing each other, a renderer writing to `store`, or more
   than one class per file.
 - **Unfocused PR.** Bundles several unrelated changes instead of one concern.
 - **Unverified or non-conforming.** No description of what/why and how it was tested on Linux,
