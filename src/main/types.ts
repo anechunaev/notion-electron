@@ -9,6 +9,7 @@ export type TabAppMap = Record<AppName, string[]>;
 export interface StoreSchema {
 	'tab-current'?: string | null;
 	'tabs'?: Record<string, string>;
+	'tab-titles'?: Record<string, string>;
 	'tabs-pinned'?: Record<string, boolean>;
 	'tab-apps'?: TabAppMap;
 	'bounds'?: Rectangle;

@@ -4,6 +4,7 @@ import type OptionsService from './options';
 
 export interface PersistedTabState {
 	tabs: Record<string, string>;
+	titles: Record<string, string>;
 	currentTabId: string | null;
 	pinned: Record<string, boolean>;
 	apps: TabAppMap;
@@ -28,6 +29,10 @@ class TabPersistence {
 		return this.store.get('tabs', {});
 	}
 
+	public getSavedTitles(): Record<string, string> {
+		return this.store.get('tab-titles', {});
+	}
+
 	public isPinned(tabId: string): boolean {
 		return this.store.get('tabs-pinned', {})[tabId] ?? false;
 	}
@@ -49,6 +54,7 @@ class TabPersistence {
 	public save(state: PersistedTabState): void {
 		if (!this.options.getOption('tabs-reopen-on-start')) return;
 		this.store.set('tabs', state.tabs);
+		this.store.set('tab-titles', state.titles);
 		this.store.set('tab-current', state.currentTabId);
 		this.store.set('tabs-pinned', state.pinned);
 		this.store.set('tab-apps', state.apps);

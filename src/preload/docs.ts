@@ -173,64 +173,6 @@ let sidebarContinueToTitlebar = false;
 document.addEventListener('DOMContentLoaded', function () {
 	const { isCalendarApp, isMailApp } = getCurrentApp();
 
-	const titleTarget = document.querySelector('title');
-
-	// Watch for title changes
-	if (titleTarget) {
-		const titleObserver = new MutationObserver(() => {
-			ipcRenderer.send('history-changed', document.title, null);
-		});
-		titleObserver.observe(titleTarget, {
-			childList: true,
-		});
-	}
-
-	// Watch for icon changes
-	if (isCalendarApp) {
-		const headObserver = new MutationObserver((mutations) => {
-			let isSvgIcon = false;
-			mutations.forEach((mutation) => {
-				mutation.addedNodes.forEach((node) => {
-					if (node instanceof HTMLLinkElement && node.rel === 'icon' && node.href.endsWith('.svg')) {
-						isSvgIcon = true;
-						ipcRenderer.send('history-changed', null, node.href);
-					}
-				});
-			});
-
-			if (!isSvgIcon) {
-				const node = document.querySelector<HTMLLinkElement>('link[rel="icon"][href$=".svg"]');
-				if (node) {
-					ipcRenderer.send('history-changed', null, node.href);
-				}
-			}
-		});
-		headObserver.observe(document.head, {
-			childList: true,
-		});
-	} else if (isMailApp) {
-		const headObserver = new MutationObserver(() => {
-			const node = document.querySelector<HTMLLinkElement>('link[rel="icon"][sizes="32x32"]');
-			if (node) {
-				ipcRenderer.send('history-changed', null, node.href);
-			}
-		});
-		headObserver.observe(document.head, {
-			childList: true,
-		});
-	} else {
-		const icon = document.querySelector<HTMLLinkElement>('link[rel="shortcut icon"]');
-		if (icon) {
-			const iconObserver = new MutationObserver(() => {
-				ipcRenderer.send('history-changed', null, icon.href);
-			});
-			iconObserver.observe(icon, {
-				attributes: true,
-				attributeFilter: ['href'],
-			});
-		}
-	}
-
 	// Sidebar event handling
 	function sendSignalFoldingStop() {
 		ipcRenderer.send('sidebar-folding-stop');
@@ -291,10 +233,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	ipcRenderer.send('request-options');
-
-	window.addEventListener('popstate', () => {
-		ipcRenderer.send('history-changed', document.title, null);
-	});
 });
 
 document.addEventListener('visibilitychange', () => {

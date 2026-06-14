@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import { createJimp } from '@jimp/core';
 import png from '@jimp/js-png';
 import * as resize from '@jimp/plugin-resize';
+import type { AppName } from '../types';
 
 const Jimp = createJimp({
 	plugins: [resize.methods],
@@ -56,6 +57,18 @@ export function downloadIconAsDataString(url: string): Promise<string | null> {
 			console.error('Error downloading or converting icon:', error);
 			return null;
 		});
+}
+
+export function selectFavicon(app: AppName, favicons: string[]): string | undefined {
+	if (favicons.length === 0) return undefined;
+	const last = favicons[favicons.length - 1];
+	if (app === 'calendar') {
+		return favicons.find((url) => url.endsWith('.svg')) ?? last;
+	}
+	if (app === 'mail') {
+		return favicons.find((url) => url.includes('32x32')) ?? last;
+	}
+	return last;
 }
 
 export function convertIcon(urlOrDataString: string): Promise<string | null> {

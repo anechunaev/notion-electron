@@ -1,8 +1,8 @@
-import { WebContentsView, ipcMain, app, type BaseWindow, type WebContents, type KeyboardInputEvent } from 'electron';
+import { WebContentsView, ipcMain, app, type BaseWindow, type KeyboardInputEvent } from 'electron';
 import type EventEmitter from 'node:events';
 import { URL } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { convertIcon } from '../lib/image';
+import { convertIcon, selectFavicon } from '../lib/image';
 import { detectShortcut, shortcutMap } from '../lib/shortcuts/index';
 import { resolvePreload, loadRendererPage } from '../lib/resources';
 import { resolveWindowOpen } from '../lib/windowOpenPolicy';
@@ -122,10 +122,6 @@ class TabsService implements TabReader, TabCommands {
 
 		ipcMain.on('tab-reorder', (event, pinnedIds: string[], normalIds: string[]) => {
 			this.reorderTabs(pinnedIds, normalIds);
-		});
-
-		ipcMain.on('history-changed', (event, title: string | null, icon: string | null) => {
-			this.onHistoryChanged(event.sender, title, icon);
 		});
 
 		ipcMain.on('history-back', () => {
@@ -335,6 +331,23 @@ class TabsService implements TabReader, TabCommands {
 			return resolveWindowOpen(event.url, event.disposition, (tabUrl) => this.openTab({ url: tabUrl }));
 		});
 
+		view.webContents.on('page-title-updated', (_event, title) => {
+			if (!title || !this.tabViews[tabId]) return;
+			this.titlesMap[tabId] = title;
+			this.sendTabInfo(tabId, { title, icon: null });
+			this.saveTabs();
+		});
+
+		view.webContents.on('page-favicon-updated', (_event, favicons) => {
+			const iconUrl = selectFavicon(this.tabApp[tabId] ?? 'notes', favicons);
+			if (!iconUrl) return;
+			convertIcon(iconUrl).then((convertedIcon) => {
+				if (!convertedIcon || !this.tabViews[tabId]) return;
+				this.iconMap[tabId] = convertedIcon;
+				this.sendTabInfo(tabId, { title: null, icon: convertedIcon });
+			});
+		});
+
 		view.webContents.on('before-input-event', (event, input) => {
 			detectShortcut(input, event, view.webContents, this.titleBarView.webContents);
 		});
@@ -477,26 +490,6 @@ class TabsService implements TabReader, TabCommands {
 		}
 	}
 
-	private onHistoryChanged(sender: WebContents, title: string | null, icon: string | null): void {
-		const tabId = this.tabOrder.find((id) => this.tabViews[id]?.webContents === sender);
-		if (!tabId) return;
-
-		const view = this.tabViews[tabId];
-		if (!view) return;
-
-		if (icon) {
-			convertIcon(icon).then((convertedIcon) => {
-				if (!convertedIcon) return;
-				this.iconMap[tabId] = convertedIcon;
-				this.sendTabInfo(tabId, { title: null, icon: convertedIcon });
-			});
-		}
-		if (title) {
-			this.titlesMap[tabId] = title;
-			this.sendTabInfo(tabId, { title, icon: null });
-		}
-	}
-
 	private sendTabInfo(tabId: string, { title, icon }: { title: string | null; icon: string | null }): void {
 		const view = this.tabViews[tabId];
 		if (!view) return;
@@ -540,10 +533,15 @@ class TabsService implements TabReader, TabCommands {
 	}
 
 	private reopenTabs(tabs: Record<string, string>): void {
+		const titles = this.persistence.getSavedTitles();
 		Object.entries(tabs).forEach(([tabId, url]) => {
 			const isPinned = this.persistence.isPinned(tabId);
 			const app = this.persistence.getAppForTab(tabId);
 			this.openTab({ url, tabId, isPinned, app, skipChange: true });
+			const savedTitle = titles[tabId];
+			if (savedTitle) {
+				this.titlesMap[tabId] = savedTitle;
+			}
 		});
 	}
 
@@ -553,8 +551,17 @@ class TabsService implements TabReader, TabCommands {
 			appMap[this.tabApp[id] ?? 'notes'].push(id);
 		});
 
+		const titles = this.tabOrder.reduce<Record<string, string>>((acc, tabId) => {
+			const title = this.titlesMap[tabId];
+			if (title) {
+				acc[tabId] = title;
+			}
+			return acc;
+		}, {});
+
 		this.persistence.save({
 			tabs: this.getTabsJSON(),
+			titles,
 			currentTabId: this.currentTabId,
 			pinned: this.pinnedMap,
 			apps: appMap,
