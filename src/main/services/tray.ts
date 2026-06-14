@@ -1,5 +1,6 @@
-import { app, Tray, Menu, nativeTheme, type BaseWindow, type BrowserWindow } from 'electron';
+import { Tray, Menu, nativeTheme, type BaseWindow, type BrowserWindow } from 'electron';
 import { resolveAsset } from '../lib/resources';
+import { quitApp } from '../lib/quit';
 
 class TrayService {
 	private tray: Tray;
@@ -78,8 +79,7 @@ class TrayService {
 			{
 				label: 'Quit',
 				click: () => {
-					app.isQuiting = true;
-					app.quit();
+					quitApp();
 				},
 			},
 		]);

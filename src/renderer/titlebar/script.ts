@@ -1,4 +1,5 @@
 import Sortable from 'sortablejs';
+import { APP_NAMES, getAppFromUrl } from '../../shared/apps';
 import type { TabInfo, TabRequest } from '../../shared/ipc';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -6,19 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
 	const tabMapDisconnect: Record<string, (e: Event) => void> = {};
 	const tabMapSelect: Record<string, () => void> = {};
 	const tabStack: string[] = [];
-	const tabAppMap: Record<string, Set<string>> = {
-		notes: new Set(),
-		calendar: new Set(),
-		mail: new Set(),
-	};
+	const tabAppMap: Record<string, Set<string>> = Object.fromEntries(
+		APP_NAMES.map((app): [string, Set<string>] => [app, new Set<string>()]),
+	);
 	let initialTabId: string | null = null;
 	let currentTabId: string | null = null;
 	let sidebarBaseWidth = 240;
-	const zoomFactorMap: Record<string, number> = {
-		notes: 1,
-		calendar: 1,
-		mail: 1,
-	};
+	const zoomFactorMap: Record<string, number> = Object.fromEntries(
+		APP_NAMES.map((app): [string, number] => [app, 1]),
+	);
 
 	const addTabButton = document.querySelector<HTMLButtonElement>('.control[data-action="add"]');
 	const historyBackButton = document.querySelector<HTMLButtonElement>('.control[data-action="history-back"]');
@@ -40,21 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		}
 		return 'notes';
-	}
-
-	function getAppFromUrl(url: string): string {
-		const u = new URL(url);
-		if (u.pathname.startsWith('/calendarAuth')) {
-			return 'calendar';
-		}
-		switch (u.hostname) {
-			case 'calendar.notion.so':
-				return 'calendar';
-			case 'mail.notion.so':
-				return 'mail';
-			default:
-				return 'notes';
-		}
 	}
 
 	function createTabElement(title: string, iconUrl?: string, documentUrl?: string, tabId?: string): HTMLElement {

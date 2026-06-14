@@ -1,4 +1,25 @@
-import type { OptionsPayload, RendererOptionDefinition } from '../../shared/ipc';
+import type { ChangelogItem, OptionsPayload, RendererOptionDefinition } from '../../shared/ipc';
+
+function renderChangelog(items: ChangelogItem[]): string {
+	if (!items.length) {
+		return '<p>No changelog available.</p>';
+	}
+
+	const entries = items
+		.map(
+			(item) => `
+			<dt>
+				<a href="${item.url}" target="_blank">${item.version}</a>
+				<br />
+				<small>${item.dateFormatted}</small>
+			</dt>
+			<dd>${item.notes.replace(/\n/g, '<br />')}</dd>
+		`,
+		)
+		.join('');
+
+	return `<dl>${entries}</dl>`;
+}
 
 interface OptionGroup {
 	id: string;
@@ -271,8 +292,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		statusAvailable.textContent = availableVersion;
 		statusLocal.textContent = localVersion;
 	});
-	window.notionElectronAPI.subscribeOnUpdateChangelog((html) => {
-		changelog = html;
+	window.notionElectronAPI.subscribeOnUpdateChangelog((items) => {
+		changelog = renderChangelog(items);
 
 		if (changelogElement) {
 			changelogElement.innerHTML = changelog;

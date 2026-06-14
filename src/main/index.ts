@@ -1,8 +1,7 @@
-import { app, screen, nativeTheme, BaseWindow, BrowserWindow, Menu } from 'electron';
+import { app, screen, BaseWindow, BrowserWindow, Menu } from 'electron';
 import Store from 'electron-store';
 import EventEmitter from 'node:events';
-import { MessageType, type Message } from 'd-bus-message-protocol';
-import { stringType } from 'd-bus-type-system';
+import type { Message } from 'd-bus-message-protocol';
 import pkg from '../../package.json';
 import optionsConfig from '../../options.json';
 import TabService from './services/tabs';
@@ -13,20 +12,19 @@ import OptionsService from './services/options';
 import UpdateService from './services/update';
 import ChangelogService from './services/changelog';
 import NotificationService from './services/notifications';
+import ThemeService from './services/theme';
+import MainWindowService from './services/mainWindow';
 import { createMonitorBus } from './lib/dbus';
 import { resolveAsset, resolvePreload, loadRendererPage } from './lib/resources';
 import type { OptionsConfig, StoreSchema } from './types';
 
-type DBusReadReply = { args?: ReadonlyArray<ReadonlyArray<ReadonlyArray<unknown>>> };
-
 const TITLEBAR_HEIGHT = 40;
-const DARK_THEME_BACKGROUND = '#202020';
-const LIGHT_THEME_BACKGROUND = '#f8f8f7';
 
 let mainWindow: BaseWindow | null = null;
 const store = new Store<StoreSchema>();
 const mainBus = new EventEmitter();
 const optionsService = new OptionsService(store, optionsConfig as OptionsConfig, mainBus);
+const themeService = new ThemeService(optionsService);
 
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
@@ -49,16 +47,7 @@ if (!app.requestSingleInstanceLock()) {
 		onError: (error) => console.error('D-Bus Monitor Error:', error),
 	})
 		.then(({ dBus, disconnect, addSignalListener }) => {
-			themeProxyPromise = dBus.callMethod({
-				messageType: MessageType.MethodCall,
-				objectPath: `/org/freedesktop/portal/desktop`,
-				interfaceName: `org.freedesktop.portal.Settings`,
-				memberName: `Read`,
-				serial: dBus.nextSerial,
-				destination: `org.freedesktop.portal.Desktop`,
-				types: [stringType, stringType],
-				args: ['org.freedesktop.appearance', 'color-scheme'],
-			});
+			themeProxyPromise = themeService.queryColorScheme(dBus);
 			dBusMonitorDisconnect = disconnect;
 			onDBusSignal = addSignalListener;
 		})
@@ -68,20 +57,8 @@ if (!app.requestSingleInstanceLock()) {
 		.finally(() => {
 			Promise.all([themeProxyPromise, app.whenReady()]).then(([dBusColorScheme]) => {
 				Menu.setApplicationMenu(null);
-				nativeTheme.themeSource = optionsService.getOption('general-theme');
-				let bgColor = LIGHT_THEME_BACKGROUND;
-				if (optionsService.getOption('general-theme') === 'system') {
-					const colorScheme = (dBusColorScheme as DBusReadReply | undefined)?.args?.[0]?.[1]?.[1];
-					bgColor =
-						(colorScheme ?? nativeTheme.shouldUseDarkColors)
-							? DARK_THEME_BACKGROUND
-							: LIGHT_THEME_BACKGROUND;
-				} else {
-					bgColor =
-						optionsService.getOption('general-theme') === 'dark'
-							? DARK_THEME_BACKGROUND
-							: LIGHT_THEME_BACKGROUND;
-				}
+				themeService.applyThemeSource();
+				const bgColor = themeService.resolveBackgroundColor(dBusColorScheme);
 
 				const windowPositionService = new WindowPositionService(store);
 				const savedPosition = windowPositionService.getPosition();
@@ -105,6 +82,9 @@ if (!app.requestSingleInstanceLock()) {
 				windowPositionService.subscribeToPositionChange(mainWindow);
 
 				const tabService = new TabService(mainWindow, optionsService, store, mainBus);
+				const mainWindowService = new MainWindowService(mainWindow, optionsService, () =>
+					dBusMonitorDisconnect(),
+				);
 
 				setTimeout(function initApp() {
 					if (!mainWindow) return;
@@ -124,13 +104,7 @@ if (!app.requestSingleInstanceLock()) {
 						backgroundColor: bgColor,
 					});
 					loadRendererPage(optionsWindow, 'options');
-
-					optionsWindow.on('close', function onOptionsClose(event) {
-						if (!app.isQuiting) {
-							event.preventDefault();
-							optionsWindow.hide();
-						}
-					});
+					mainWindowService.manageOptionsWindow(optionsWindow);
 
 					const notificationService = new NotificationService();
 					const changelogService = new ChangelogService(pkg.repository.owner, pkg.repository.name);
@@ -165,40 +139,8 @@ if (!app.requestSingleInstanceLock()) {
 						optionsWindow.webContents.send('show-tab', 'about');
 						optionsWindow.show();
 					});
-
-					mainWindow.on('minimize', function mainWindowMinimize(event?: Electron.Event) {
-						if (optionsService.getOption('hide-to-tray')) {
-							event?.preventDefault();
-							mainWindow?.hide();
-						}
-					});
-
-					mainWindow.on('close', function mainWindowClose(event: Electron.Event) {
-						if (!app.isQuiting && optionsService.getOption('hide-window-on-close')) {
-							event.preventDefault();
-							mainWindow?.hide();
-							return;
-						}
-						try {
-							dBusMonitorDisconnect();
-						} catch (e) {
-							console.warn(e);
-						} finally {
-							app.quit();
-							process.exit(0);
-						}
-					});
 				}, 1); // Guaranteed to run on next tick despite engine optimizations
 				windowPositionService.restorePosition(mainWindow);
 			});
 		});
-
-	app.on('window-all-closed', (event?: Electron.Event) => {
-		if (optionsService.getOption('hide-window-on-close')) {
-			event?.preventDefault();
-		} else {
-			app.quit();
-			process.exit(0);
-		}
-	});
 }

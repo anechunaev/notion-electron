@@ -1,6 +1,7 @@
-import { ipcMain, app, shell, type BrowserWindow } from 'electron';
+import { ipcMain, shell, type BrowserWindow } from 'electron';
 import type EventEmitter from 'node:events';
 import pkg from '../../../package.json';
+import { relaunchApp } from '../lib/quit';
 import type { AppStore, OptionsConfig, OptionValues } from '../types';
 
 class OptionsService {
@@ -79,9 +80,7 @@ class OptionsService {
 	}
 
 	private restartApp(): void {
-		app.isQuiting = true;
-		app.relaunch();
-		app.quit();
+		relaunchApp();
 	}
 
 	public setOptionsWindow(optionsWindow: BrowserWindow): void {

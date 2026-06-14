@@ -3,6 +3,10 @@ import electronUpdater from 'electron-updater';
 import { execSync, execFile } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { getSystemFormattedDate } from '../lib/dateFormat';
+import { isSemverBigger } from '../lib/semver';
+import { bytesSizeToHuman } from '../lib/bytes';
+import { quitApp, relaunchApp } from '../lib/quit';
+import type { ChangelogItem } from '../../shared/ipc';
 import type { AppStore } from '../types';
 import type OptionsService from './options';
 import type NotificationService from './notifications';
@@ -13,11 +17,6 @@ const ONE_DAY_MS = ONE_HOUR_MS * 24;
 const ERA_START = new Date(0);
 
 type UpdateStage = 'latest' | 'available' | 'checking' | 'downloading' | 'ready' | 'installing' | 'installed' | 'error';
-
-function parseSemver(version: string): [number, number, number] {
-	const [major = 0, minor = 0, patch = 0] = (version.split('-')[0] ?? '').split('.').map(Number);
-	return [major, minor, patch];
-}
 
 interface UpdaterInternals {
 	doCheckForUpdates(): Promise<unknown>;
@@ -63,7 +62,7 @@ class UpdateService extends EventEmitter {
 
 		this.availableVersion = this.store.get('update-available-version', this.localVersion);
 		this.lastChecked = this.store.get('update-last-checked', ERA_START.toISOString());
-		this.stage = this.semverIsBigger(this.availableVersion, this.localVersion) ? 'available' : 'latest';
+		this.stage = isSemverBigger(this.availableVersion, this.localVersion) ? 'available' : 'latest';
 		switch (this.options.getOption('update-check-interval')) {
 			case 'daily':
 				this.checkInterval = ONE_DAY_MS;
@@ -116,7 +115,7 @@ class UpdateService extends EventEmitter {
 			if (process.env.APPIMAGE && this.options.getOption('update-auto-download')) {
 				this.downloadUpdate();
 			} else {
-				this.stage = this.semverIsBigger(this.availableVersion, this.localVersion) ? 'available' : 'latest';
+				this.stage = isSemverBigger(this.availableVersion, this.localVersion) ? 'available' : 'latest';
 				this.sendStatus();
 			}
 		});
@@ -137,9 +136,9 @@ class UpdateService extends EventEmitter {
 		this.updater.on('download-progress', (progress) => {
 			this.stage = 'downloading';
 			this.percentage = Math.round(progress.percent);
-			this.downloaded = this.bytesSizeToHuman(progress.transferred);
-			this.total = this.bytesSizeToHuman(progress.total);
-			this.speed = `${this.bytesSizeToHuman(progress.bytesPerSecond)}/s`;
+			this.downloaded = bytesSizeToHuman(progress.transferred);
+			this.total = bytesSizeToHuman(progress.total);
+			this.speed = `${bytesSizeToHuman(progress.bytesPerSecond)}/s`;
 			this.sendStatus();
 		});
 		this.updater.on('update-downloaded', () => {
@@ -172,13 +171,6 @@ class UpdateService extends EventEmitter {
 			speed: this.speed,
 			error: this.error,
 		});
-	}
-
-	private semverIsBigger(a: string, b: string): boolean {
-		const [aMajor, aMinor, aPatch] = parseSemver(a);
-		const [bMajor, bMinor, bPatch] = parseSemver(b);
-
-		return aMajor > bMajor || aMinor > bMinor || aPatch > bPatch;
 	}
 
 	private checkUpdate(): void {
@@ -244,39 +236,30 @@ class UpdateService extends EventEmitter {
 						} catch (relaunchError) {
 							console.error('>> Error in auto-updater. ', relaunchError);
 						}
-						app.isQuiting = true;
-						app.quit();
+						quitApp();
 						return;
 					}
-					app.isQuiting = true;
-					app.relaunch();
-					app.quit();
+					relaunchApp();
 				});
 			}
 		} else {
-			app.isQuiting = true;
 			execSync('rm -rf ~/.cache/notion-electron/pending');
-			app.relaunch();
-			app.quit();
+			relaunchApp();
 		}
-	}
-
-	private bytesSizeToHuman(bytes: number): string {
-		const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB'];
-		if (bytes === 0) return '0 Byte';
-		const i = Math.floor(Math.log(bytes) / Math.log(1024));
-		return Math.round(bytes / Math.pow(1024, i)) + ' ' + (sizes[i] ?? '');
 	}
 
 	private fetchChangelog() {
 		this.changelog
 			.fetch()
 			.then((releases) => {
-				return this.changelog.html(releases);
-			})
-			.then((html) => {
 				if (!this.optionsWindow || !this.optionsWindow.webContents) return;
-				this.optionsWindow.webContents.send('update-changelog', html);
+				const items: ChangelogItem[] = releases.map((release) => ({
+					version: release.version,
+					dateFormatted: getSystemFormattedDate(release.date),
+					notes: release.notes,
+					url: release.url,
+				}));
+				this.optionsWindow.webContents.send('update-changelog', items);
 			})
 			.catch((error) => {
 				console.error('Error fetching changelog:', error);

@@ -1,36 +1,27 @@
-import {
-	WebContentsView,
-	ipcMain,
-	shell,
-	app,
-	type BaseWindow,
-	type WebContents,
-	type KeyboardInputEvent,
-	type WindowOpenHandlerResponse,
-} from 'electron';
+import { WebContentsView, ipcMain, app, type BaseWindow, type WebContents, type KeyboardInputEvent } from 'electron';
 import type EventEmitter from 'node:events';
 import { URL } from 'node:url';
 import { convertIcon } from '../lib/image';
 import { detectShortcut, shortcutMap } from '../lib/shortcuts/index';
 import { resolvePreload, loadRendererPage } from '../lib/resources';
-import type { AppName, AppStore, TabAppMap } from '../types';
+import { resolveWindowOpen } from '../lib/windowOpenPolicy';
+import { APP_DEFINITIONS, createAppMap, getAppFromUrl, getAppHomeUrl } from '../../shared/apps';
+import TabLayout from './tabLayout';
+import TabPersistence from './tabPersistence';
+import type { AppName, AppStore, OptionValues, TabAppMap } from '../types';
+import type { TabCommands, TabReader, TabRequestOptions } from './tabs.types';
 import type OptionsService from './options';
 import pkg from '../../../package.json';
 
-const TITLEBAR_HEIGHT = 40;
-const HOME_PAGE = 'https://www.notion.com/login';
-const CALENDAR_PAGE = 'https://calendar.notion.so';
-const MAIL_PAGE = 'https://mail.notion.com';
-const AUTH_HOSTS = ['notion.so', 'notion.com', 'google.com', 'live.com', 'microsoft.com', 'apple.com'];
-const USER_AGENT = `Mozilla/5.0 (${process.env.XDG_SESSION_TYPE ?? 'X11'}; Linux ${process.arch}) Notion_Еlectron/${pkg.version} Chrome/${process.versions.chrome}`;
+export type { TabRequestOptions } from './tabs.types';
 
-export interface TabRequestOptions {
-	tabId?: string;
-	url?: string;
-	isPinned?: boolean;
-	app?: AppName;
-	skipChange?: boolean;
-}
+const HOME_PAGE = getAppHomeUrl('notes');
+
+const PINNED_APP_OPTIONS: Partial<Record<AppName, keyof OptionValues>> = {
+	calendar: 'tabs-show-calendar',
+	mail: 'tabs-show-mail',
+};
+const USER_AGENT = `Mozilla/5.0 (${process.env.XDG_SESSION_TYPE ?? 'X11'}; Linux ${process.arch}) Notion_Еlectron/${pkg.version} Chrome/${process.versions.chrome}`;
 
 function sendKey(
 	entry: { keyCode: string; modifiers?: string[] },
@@ -51,13 +42,9 @@ function sendKey(
 	});
 }
 
-class TabsService {
+class TabsService implements TabReader, TabCommands {
 	private tabViews: Record<string, WebContentsView> = {};
-	private tabAppMap: TabAppMap = {
-		notes: [],
-		calendar: [],
-		mail: [],
-	};
+	private tabAppMap: TabAppMap = createAppMap<string[]>(() => []);
 	private iconMap: Record<string, string> = {};
 	private titlesMap: Record<string, string> = {};
 	private pinnedMap: Record<string, boolean> = {};
@@ -65,13 +52,14 @@ class TabsService {
 	private window: BaseWindow;
 	private currentTabId: string | null = null;
 	private options: OptionsService;
-	private store: AppStore;
+	private persistence: TabPersistence;
+	private layout: TabLayout;
 	private mainBus: EventEmitter;
 
 	constructor(window: BaseWindow, optionsService: OptionsService, store: AppStore, mainBus: EventEmitter) {
 		this.window = window;
 		this.options = optionsService;
-		this.store = store;
+		this.persistence = new TabPersistence(store, optionsService);
 		this.mainBus = mainBus;
 
 		this.mainBus.on('option-changed', (optionId: string, value: unknown) => {
@@ -93,7 +81,8 @@ class TabsService {
 			detectShortcut(input, event, this.currentView()?.webContents, this.titleBarView.webContents);
 		});
 		this.window.contentView.addChildView(this.titleBarView);
-		this.currentTabId = this.store.get('tab-current', null);
+		this.layout = new TabLayout(this.window, this.titleBarView);
+		this.currentTabId = this.persistence.getCurrentTabId();
 
 		ipcMain.on('add-tab', (event, options: TabRequestOptions) => {
 			this.addTab(options);
@@ -179,28 +168,17 @@ class TabsService {
 			}
 
 			if (this.options.getOption('tabs-reopen-on-start')) {
-				this.reopenTabs(this.store.get('tabs', {}));
+				this.reopenTabs(this.persistence.getSavedTabs());
 			} else {
 				this.requestTab({ url: HOME_PAGE, app: 'notes' });
 			}
 
-			if (this.options.getOption('tabs-show-calendar')) {
-				this.requestTab({
-					url: CALENDAR_PAGE,
-					isPinned: true,
-					app: 'calendar',
-					skipChange: true,
-				});
-			}
-
-			if (this.options.getOption('tabs-show-mail')) {
-				this.requestTab({
-					url: MAIL_PAGE,
-					isPinned: true,
-					app: 'mail',
-					skipChange: true,
-				});
-			}
+			APP_DEFINITIONS.filter((app) => app.isPinnedByDefault).forEach((app) => {
+				const optionId = PINNED_APP_OPTIONS[app.id];
+				if (optionId && this.options.getOption(optionId)) {
+					this.requestTab({ url: app.homeUrl, isPinned: true, app: app.id, skipChange: true });
+				}
+			});
 
 			this.setViewSize();
 		});
@@ -226,37 +204,8 @@ class TabsService {
 		return this.currentTabId ? this.tabViews[this.currentTabId] : undefined;
 	}
 
-	private getAppFromUrl(url: string): AppName {
-		const u = new URL(url);
-		if (u.pathname.startsWith('/calendarAuth')) {
-			return 'calendar';
-		}
-		switch (u.hostname) {
-			case 'calendar.notion.so':
-				return 'calendar';
-			case 'mail.notion.so':
-				return 'mail';
-			default:
-				return 'notes';
-		}
-	}
-
 	private setViewSize(): void {
-		const bounds = this.window.getContentBounds();
-		this.titleBarView.setBounds({
-			x: 0,
-			y: 0,
-			width: bounds.width,
-			height: TITLEBAR_HEIGHT,
-		});
-		Object.values(this.tabViews).forEach((view) => {
-			view.setBounds({
-				x: 0,
-				y: TITLEBAR_HEIGHT,
-				width: bounds.width,
-				height: bounds.height - TITLEBAR_HEIGHT,
-			});
-		});
+		this.layout.layout(Object.values(this.tabViews));
 	}
 
 	private closeTabsByApp(appName: AppName): void {
@@ -292,13 +241,7 @@ class TabsService {
 			view.webContents.openDevTools({ mode: 'detach' });
 		}
 
-		const bounds = this.window.getContentBounds();
-		view.setBounds({
-			x: 0,
-			y: TITLEBAR_HEIGHT,
-			width: bounds.width,
-			height: bounds.height - TITLEBAR_HEIGHT,
-		});
+		view.setBounds(this.layout.contentBounds());
 
 		view.webContents
 			.loadURL(url ?? HOME_PAGE, {
@@ -312,7 +255,7 @@ class TabsService {
 			});
 		view.webContents.setWindowOpenHandler((event) => {
 			const { url, disposition } = event;
-			return this.tabOpenWindowHandler(url, disposition);
+			return resolveWindowOpen(url, disposition, (tabUrl) => this.requestTab({ url: tabUrl }));
 		});
 
 		view.webContents.on('before-input-event', (event, input) => {
@@ -334,43 +277,7 @@ class TabsService {
 
 		this.tabViews[tabId] = view;
 		this.pinnedMap[tabId] = isPinned;
-		this.tabAppMap[app ?? this.getAppFromUrl(url ?? HOME_PAGE)].push(tabId);
-	}
-
-	private tabOpenWindowHandler(url: string, disposition: string): WindowOpenHandlerResponse {
-		const u = new URL(url);
-
-		const isAuthHost = AUTH_HOSTS.some((host) => u.hostname.includes(host));
-
-		if (isAuthHost && disposition === 'new-window') {
-			return {
-				action: 'allow',
-				overrideBrowserWindowOptions: {
-					width: 520,
-					height: 760,
-					show: true,
-					autoHideMenuBar: true,
-					webPreferences: {
-						sandbox: true,
-						contextIsolation: true,
-						nodeIntegration: false,
-					},
-				},
-			};
-		}
-
-		if (u.hostname.includes('notion.com') || u.hostname.includes('notion.so')) {
-			if (disposition === 'new-window' || disposition === 'foreground-tab' || disposition === 'background-tab') {
-				this.titleBarView.webContents.send('tab-request', {
-					url: u.toString(),
-				});
-				return { action: 'deny' };
-			}
-			return { action: 'allow' };
-		}
-
-		shell.openExternal(url);
-		return { action: 'deny' };
+		this.tabAppMap[app ?? getAppFromUrl(url ?? HOME_PAGE)].push(tabId);
 	}
 
 	private onChangeTab(tabId: string): void {
@@ -477,29 +384,19 @@ class TabsService {
 
 	private reopenTabs(tabs: Record<string, string>): void {
 		Object.entries(tabs).forEach(([tabId, url]) => {
-			const isPinned = this.store.get('tabs-pinned', {})[tabId] ?? false;
-			const apps = this.store.get('tab-apps', {
-				notes: [],
-				calendar: [],
-				mail: [],
-			});
-			let app: AppName = 'notes';
-			(Object.entries(apps) as [AppName, string[]][]).forEach(([appName, tabIds]) => {
-				if (tabIds.includes(tabId)) {
-					app = appName;
-				}
-			});
+			const isPinned = this.persistence.isPinned(tabId);
+			const app = this.persistence.getAppForTab(tabId);
 			this.requestTab({ url, tabId, isPinned, app, skipChange: true });
 		});
 	}
 
 	private saveTabs(): void {
-		if (this.options.getOption('tabs-reopen-on-start')) {
-			this.store.set('tabs', this.getTabsJSON());
-			this.store.set('tab-current', this.currentTabId);
-			this.store.set('tabs-pinned', this.pinnedMap);
-			this.store.set('tab-apps', this.tabAppMap);
-		}
+		this.persistence.save({
+			tabs: this.getTabsJSON(),
+			currentTabId: this.currentTabId,
+			pinned: this.pinnedMap,
+			apps: this.tabAppMap,
+		});
 	}
 
 	public getTabIcon(tabId: string): string | undefined {

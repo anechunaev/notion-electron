@@ -12,7 +12,7 @@ import {
 import type EventEmitter from 'node:events';
 import { shortcutMap } from '../lib/shortcuts/index';
 import { resolveAsset } from '../lib/resources';
-import type TabsService from './tabs';
+import type { TabCommands, TabReader } from './tabs.types';
 
 interface PageContextMenuPayload {
 	sender: WebContents;
@@ -27,10 +27,10 @@ interface PageContextMenuPayload {
 
 class ContextMenuService {
 	private window: BaseWindow;
-	private tabService: TabsService;
+	private tabService: TabReader & TabCommands;
 	private mainBus: EventEmitter;
 
-	constructor(window: BaseWindow, tabService: TabsService, mainBus: EventEmitter) {
+	constructor(window: BaseWindow, tabService: TabReader & TabCommands, mainBus: EventEmitter) {
 		this.window = window;
 		this.tabService = tabService;
 		this.mainBus = mainBus;

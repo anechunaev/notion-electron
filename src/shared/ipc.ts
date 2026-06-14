@@ -50,6 +50,15 @@ export interface OptionsPayload {
 	options: Record<string, RendererOptionDefinition>;
 }
 
+// A changelog release prepared for display: raw data plus an OS-formatted date string
+// (formatting happens in the main process, which can shell out to `date`).
+export interface ChangelogItem {
+	version: string;
+	dateFormatted: string;
+	notes: string;
+	url: string;
+}
+
 export interface UpdateStatus {
 	lastChecked: string;
 	lastCheckedFormatted: string;
@@ -105,5 +114,5 @@ export interface NotionOptionsAPI {
 	subscribeOnAppMetadata(callback: (data: AppMetadata) => void): void;
 	subscribeOnOptions(callback: (data: OptionsPayload) => void): void;
 	subscribeOnUpdateStatusChange(callback: (data: UpdateStatus) => void): void;
-	subscribeOnUpdateChangelog(callback: (html: string) => void): void;
+	subscribeOnUpdateChangelog(callback: (items: ChangelogItem[]) => void): void;
 }

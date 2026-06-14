@@ -1,7 +1,8 @@
 import type Store from 'electron-store';
 import type { Rectangle } from 'electron';
+import type { AppName } from '../shared/apps';
 
-export type AppName = 'notes' | 'calendar' | 'mail';
+export type { AppName };
 
 export type TabAppMap = Record<AppName, string[]>;
 
