@@ -1,6 +1,7 @@
 import { WebContentsView, ipcMain, app, type BaseWindow, type WebContents, type KeyboardInputEvent } from 'electron';
 import type EventEmitter from 'node:events';
 import { URL } from 'node:url';
+import { randomUUID } from 'node:crypto';
 import { convertIcon } from '../lib/image';
 import { detectShortcut, shortcutMap } from '../lib/shortcuts/index';
 import { resolvePreload, loadRendererPage } from '../lib/resources';
@@ -8,14 +9,16 @@ import { resolveWindowOpen } from '../lib/windowOpenPolicy';
 import { APP_DEFINITIONS, createAppMap, getAppFromUrl, getAppHomeUrl } from '../../shared/apps';
 import TabLayout from './tabLayout';
 import TabPersistence from './tabPersistence';
-import type { AppName, AppStore, OptionValues, TabAppMap } from '../types';
+import type { AppName, AppStore, OptionValues } from '../types';
 import type { TabCommands, TabReader, TabRequestOptions } from './tabs.types';
+import type { TabsStatePayload, TabState } from '../../shared/ipc';
 import type OptionsService from './options';
 import pkg from '../../../package.json';
 
 export type { TabRequestOptions } from './tabs.types';
 
 const HOME_PAGE = getAppHomeUrl('notes');
+const NEW_TAB_URL = 'https://www.notion.so';
 
 const PINNED_APP_OPTIONS: Partial<Record<AppName, keyof OptionValues>> = {
 	calendar: 'tabs-show-calendar',
@@ -44,10 +47,11 @@ function sendKey(
 
 class TabsService implements TabReader, TabCommands {
 	private tabViews: Record<string, WebContentsView> = {};
-	private tabAppMap: TabAppMap = createAppMap<string[]>(() => []);
+	private tabOrder: string[] = [];
+	private tabApp: Record<string, AppName> = {};
+	private pinnedMap: Record<string, boolean> = {};
 	private iconMap: Record<string, string> = {};
 	private titlesMap: Record<string, string> = {};
-	private pinnedMap: Record<string, boolean> = {};
 	private titleBarView: WebContentsView;
 	private window: BaseWindow;
 	private currentTabId: string | null = null;
@@ -84,20 +88,40 @@ class TabsService implements TabReader, TabCommands {
 		this.layout = new TabLayout(this.window, this.titleBarView);
 		this.currentTabId = this.persistence.getCurrentTabId();
 
-		ipcMain.on('add-tab', (event, options: TabRequestOptions) => {
-			this.addTab(options);
+		ipcMain.on('tab-add', (event, options: TabRequestOptions) => {
+			this.openTab({ url: options.url, app: options.app });
 		});
 
-		ipcMain.on('change-tab', (event, tabId: string) => {
-			this.onChangeTab(tabId);
+		ipcMain.on('tab-select', (event, tabId: string) => {
+			this.selectTab(tabId);
 		});
 
-		ipcMain.on('close-tab', (event, tabId: string) => {
-			this.onCloseTab(tabId);
+		ipcMain.on('tab-close', (event, tabId: string) => {
+			this.closeTab(tabId);
 		});
 
-		ipcMain.on('set-url', (event, tabId: string, url: string) => {
-			this.setTabUrl(tabId, url);
+		ipcMain.on('tab-close-current', () => {
+			this.closeCurrentTab();
+		});
+
+		ipcMain.on('tab-close-others', (event, tabId: string) => {
+			this.closeOthers(tabId);
+		});
+
+		ipcMain.on('tab-close-all', () => {
+			this.closeAll();
+		});
+
+		ipcMain.on('tab-next', () => {
+			this.nextTab();
+		});
+
+		ipcMain.on('tab-previous', () => {
+			this.previousTab();
+		});
+
+		ipcMain.on('tab-reorder', (event, pinnedIds: string[], normalIds: string[]) => {
+			this.reorderTabs(pinnedIds, normalIds);
 		});
 
 		ipcMain.on('history-changed', (event, title: string | null, icon: string | null) => {
@@ -110,10 +134,6 @@ class TabsService implements TabReader, TabCommands {
 
 		ipcMain.on('history-forward', () => {
 			this.currentView()?.webContents.goForward();
-		});
-
-		ipcMain.on('tab-pin-toggle', (event, tabId: string, isPinned: boolean) => {
-			this.togglePinTab(tabId, isPinned);
 		});
 
 		if (this.options.getOption('tabs-continue-sidebar')) {
@@ -155,7 +175,7 @@ class TabsService implements TabReader, TabCommands {
 		ipcMain.on('show-offline-screen', (event, { isLocal }: { isLocal: boolean }) => {
 			if (isLocal) return;
 
-			const tabId = this.getTabIds().find((id) => this.tabViews[id]?.webContents === event.sender);
+			const tabId = this.tabOrder.find((id) => this.tabViews[id]?.webContents === event.sender);
 
 			loadRendererPage(event.sender, 'offline', {
 				next: tabId ? (this.tabViews[tabId]?.webContents.getURL() ?? '') : '',
@@ -163,24 +183,7 @@ class TabsService implements TabReader, TabCommands {
 		});
 
 		ipcMain.on('titlebar-ready', () => {
-			if (this.options.getOption('debug-open-dev-tools')) {
-				this.titleBarView.webContents.openDevTools({ mode: 'detach' });
-			}
-
-			if (this.options.getOption('tabs-reopen-on-start')) {
-				this.reopenTabs(this.persistence.getSavedTabs());
-			} else {
-				this.requestTab({ url: HOME_PAGE, app: 'notes' });
-			}
-
-			APP_DEFINITIONS.filter((app) => app.isPinnedByDefault).forEach((app) => {
-				const optionId = PINNED_APP_OPTIONS[app.id];
-				if (optionId && this.options.getOption(optionId)) {
-					this.requestTab({ url: app.homeUrl, isPinned: true, app: app.id, skipChange: true });
-				}
-			});
-
-			this.setViewSize();
+			this.initTabs();
 		});
 
 		ipcMain.on('run-action', (event, actionName: string) => {
@@ -200,6 +203,37 @@ class TabsService implements TabReader, TabCommands {
 		});
 	}
 
+	private initTabs(): void {
+		if (this.options.getOption('debug-open-dev-tools')) {
+			this.titleBarView.webContents.openDevTools({ mode: 'detach' });
+		}
+
+		if (this.options.getOption('tabs-reopen-on-start')) {
+			this.reopenTabs(this.persistence.getSavedTabs());
+		} else {
+			this.openTab({ url: HOME_PAGE, app: 'notes' });
+		}
+
+		APP_DEFINITIONS.filter((definition) => definition.isPinnedByDefault).forEach((definition) => {
+			const optionId = PINNED_APP_OPTIONS[definition.id];
+			if (optionId && this.options.getOption(optionId)) {
+				this.openTab({ url: definition.homeUrl, isPinned: true, app: definition.id, skipChange: true });
+			}
+		});
+
+		if (this.currentTabId && this.tabViews[this.currentTabId]) {
+			this.setVisibleTabs(this.currentTabId);
+		} else {
+			const first = this.tabOrder[0];
+			if (first) {
+				this.setVisibleTabs(first);
+			}
+		}
+
+		this.setViewSize();
+		this.pushState();
+	}
+
 	private currentView(): WebContentsView | undefined {
 		return this.currentTabId ? this.tabViews[this.currentTabId] : undefined;
 	}
@@ -208,11 +242,23 @@ class TabsService implements TabReader, TabCommands {
 		this.layout.layout(Object.values(this.tabViews));
 	}
 
-	private closeTabsByApp(appName: AppName): void {
-		const tabIds = this.tabAppMap[appName] || [];
-		[...tabIds].forEach((tabId) => {
-			this.onCloseTab(tabId);
-		});
+	private pushState(): void {
+		const tabs: TabState[] = this.tabOrder.map((id) => ({
+			id,
+			app: this.tabApp[id] ?? 'notes',
+			url: this.tabViews[id]?.webContents.getURL(),
+			title: this.titlesMap[id] ?? null,
+			icon: this.iconMap[id] ?? null,
+			pinned: Boolean(this.pinnedMap[id]),
+		}));
+		const current = this.currentView();
+		const payload: TabsStatePayload = {
+			tabs,
+			currentTabId: this.currentTabId,
+			canGoBack: Boolean(current?.webContents?.navigationHistory.canGoBack()),
+			canGoForward: Boolean(current?.webContents?.navigationHistory.canGoForward()),
+		};
+		this.titleBarView.webContents.send('tabs-state', payload);
 	}
 
 	private setVisibleTabs(tabId: string): void {
@@ -228,8 +274,39 @@ class TabsService implements TabReader, TabCommands {
 		this.currentTabId = tabId;
 	}
 
-	private addTab({ tabId, url, isPinned = false, app }: TabRequestOptions): void {
-		if (!tabId) return;
+	private selectTab(tabId: string): void {
+		if (!this.tabViews[tabId]) return;
+		this.setVisibleTabs(tabId);
+		this.saveTabs();
+		this.pushState();
+	}
+
+	private revealTab(tabId: string, skipChange: boolean): void {
+		if (skipChange) this.pushState();
+		else this.selectTab(tabId);
+	}
+
+	private findExistingTarget(tabId: string | undefined, app: AppName | undefined): string | undefined {
+		if (tabId && this.tabViews[tabId]) return tabId;
+		if (!tabId && app) {
+			return this.tabOrder.find((id) => this.tabApp[id] === app && this.tabViews[id]);
+		}
+		return undefined;
+	}
+
+	private openTab({ tabId, url, app, isPinned = false, skipChange = false }: TabRequestOptions): void {
+		const existing = this.findExistingTarget(tabId, app);
+		if (existing) {
+			this.revealTab(existing, skipChange);
+			return;
+		}
+
+		const id = tabId ?? randomUUID();
+		this.createTabView(id, url, app, isPinned);
+		this.revealTab(id, skipChange);
+	}
+
+	private createTabView(tabId: string, url: string | undefined, app: AppName | undefined, isPinned: boolean): void {
 		const view = new WebContentsView({
 			webPreferences: {
 				preload: resolvePreload('docs.cjs'),
@@ -252,10 +329,10 @@ class TabsService implements TabReader, TabCommands {
 				if (this.currentTabId === tabId) {
 					this.setVisibleTabs(tabId);
 				}
+				this.pushState();
 			});
 		view.webContents.setWindowOpenHandler((event) => {
-			const { url, disposition } = event;
-			return resolveWindowOpen(url, disposition, (tabUrl) => this.requestTab({ url: tabUrl }));
+			return resolveWindowOpen(event.url, event.disposition, (tabUrl) => this.openTab({ url: tabUrl }));
 		});
 
 		view.webContents.on('before-input-event', (event, input) => {
@@ -277,35 +354,119 @@ class TabsService implements TabReader, TabCommands {
 
 		this.tabViews[tabId] = view;
 		this.pinnedMap[tabId] = isPinned;
-		this.tabAppMap[app ?? getAppFromUrl(url ?? HOME_PAGE)].push(tabId);
+		this.tabApp[tabId] = app ?? getAppFromUrl(url ?? HOME_PAGE);
+		this.tabOrder.push(tabId);
 	}
 
-	private onChangeTab(tabId: string): void {
-		const view = this.currentView();
-		this.titleBarView.webContents.send('tab-info', tabId, {
-			title: null,
-			icon: null,
-			documentUrl: view?.webContents?.getURL(),
-			canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
-			canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
-		});
-		this.setVisibleTabs(tabId);
-	}
-
-	private onCloseTab(tabId: string): void {
+	private destroyTab(tabId: string): void {
 		const view = this.tabViews[tabId];
 		if (view) {
 			view.webContents?.close();
-			delete this.tabViews[tabId];
-			delete this.iconMap[tabId];
-			delete this.titlesMap[tabId];
-			delete this.pinnedMap[tabId];
+		}
+		delete this.tabViews[tabId];
+		delete this.iconMap[tabId];
+		delete this.titlesMap[tabId];
+		delete this.pinnedMap[tabId];
+		delete this.tabApp[tabId];
+		this.tabOrder = this.tabOrder.filter((id) => id !== tabId);
+	}
 
-			(Object.entries(this.tabAppMap) as [AppName, string[]][]).forEach(([appName, tabIds]) => {
-				this.tabAppMap[appName] = tabIds.filter((id) => id !== tabId);
+	public closeTab(tabId: string): void {
+		if (!this.tabViews[tabId]) return;
+		if (this.tabOrder.length === 1) {
+			this.setTabUrl(tabId, '/login');
+			return;
+		}
+		const index = this.tabOrder.indexOf(tabId);
+		this.destroyTab(tabId);
+		const nextIndex = index - 1 < 0 ? 0 : index - 1;
+		const nextId = this.tabOrder[nextIndex];
+		if (nextId) {
+			this.selectTab(nextId);
+		} else {
+			this.saveTabs();
+			this.pushState();
+		}
+	}
+
+	private closeCurrentTab(): void {
+		if (this.currentTabId) {
+			this.closeTab(this.currentTabId);
+		}
+	}
+
+	public closeOthers(tabId: string): void {
+		this.tabOrder
+			.filter((id) => id !== tabId && !this.pinnedMap[id])
+			.forEach((id) => {
+				this.destroyTab(id);
 			});
+		this.selectTab(tabId);
+	}
+
+	public closeAll(): void {
+		if (this.tabOrder.length === 1) {
+			const only = this.tabOrder[0];
+			if (only) this.closeTab(only);
+			return;
+		}
+
+		this.tabOrder
+			.filter((id) => !this.pinnedMap[id])
+			.forEach((id) => {
+				this.destroyTab(id);
+			});
+
+		const first = this.tabOrder[0];
+		if (!first) {
+			this.openTab({ url: NEW_TAB_URL, app: 'notes' });
+		} else {
+			this.selectTab(first);
+		}
+	}
+
+	private closeTabsByApp(appName: AppName): void {
+		this.tabOrder
+			.filter((id) => this.tabApp[id] === appName)
+			.forEach((id) => {
+				this.destroyTab(id);
+			});
+		if (this.currentTabId && !this.tabViews[this.currentTabId]) {
+			const fallback = this.tabOrder[this.tabOrder.length - 1];
+			this.currentTabId = fallback ?? null;
+			if (fallback) this.setVisibleTabs(fallback);
 		}
 		this.saveTabs();
+		this.pushState();
+	}
+
+	private nextTab(): void {
+		if (!this.currentTabId) return;
+		const index = this.tabOrder.indexOf(this.currentTabId);
+		if (index < 0) return;
+		const nextIndex = index + 1 >= this.tabOrder.length ? 0 : index + 1;
+		const nextId = this.tabOrder[nextIndex];
+		if (nextId) this.selectTab(nextId);
+	}
+
+	private previousTab(): void {
+		if (!this.currentTabId) return;
+		const index = this.tabOrder.indexOf(this.currentTabId);
+		if (index < 0) return;
+		const prevIndex = index - 1 < 0 ? this.tabOrder.length - 1 : index - 1;
+		const prevId = this.tabOrder[prevIndex];
+		if (prevId) this.selectTab(prevId);
+	}
+
+	private reorderTabs(pinnedIds: string[], normalIds: string[]): void {
+		const ordered = [...pinnedIds, ...normalIds].filter((id) => this.tabViews[id]);
+		const pinnedSet = new Set(pinnedIds);
+		this.tabOrder = ordered;
+		ordered.forEach((id) => {
+			this.pinnedMap[id] = pinnedSet.has(id);
+		});
+		this.saveTabs();
+		this.pushState();
 	}
 
 	private setTabUrl(tabId: string, url: string): void {
@@ -317,36 +478,35 @@ class TabsService implements TabReader, TabCommands {
 	}
 
 	private onHistoryChanged(sender: WebContents, title: string | null, icon: string | null): void {
-		const tabId = Object.keys(this.tabViews).find((id) => this.tabViews[id]?.webContents === sender);
+		const tabId = this.tabOrder.find((id) => this.tabViews[id]?.webContents === sender);
+		if (!tabId) return;
 
-		if (tabId) {
-			const view = this.tabViews[tabId];
-			if (!view) return;
+		const view = this.tabViews[tabId];
+		if (!view) return;
 
-			if (icon) {
-				convertIcon(icon).then((convertedIcon) => {
-					if (!convertedIcon) return;
-					this.titleBarView.webContents.send('tab-info', tabId, {
-						title: null,
-						icon: convertedIcon,
-						documentUrl: view.webContents?.getURL(),
-						canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
-						canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
-					});
-					this.iconMap[tabId] = convertedIcon;
-				});
-			}
-			if (title) {
-				this.titleBarView.webContents.send('tab-info', tabId, {
-					title,
-					icon: null,
-					documentUrl: view.webContents?.getURL(),
-					canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
-					canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
-				});
-				this.titlesMap[tabId] = title;
-			}
+		if (icon) {
+			convertIcon(icon).then((convertedIcon) => {
+				if (!convertedIcon) return;
+				this.iconMap[tabId] = convertedIcon;
+				this.sendTabInfo(tabId, { title: null, icon: convertedIcon });
+			});
 		}
+		if (title) {
+			this.titlesMap[tabId] = title;
+			this.sendTabInfo(tabId, { title, icon: null });
+		}
+	}
+
+	private sendTabInfo(tabId: string, { title, icon }: { title: string | null; icon: string | null }): void {
+		const view = this.tabViews[tabId];
+		if (!view) return;
+		this.titleBarView.webContents.send('tab-info', tabId, {
+			title,
+			icon,
+			documentUrl: view.webContents?.getURL(),
+			canGoBack: Boolean(view.webContents?.navigationHistory.canGoBack()),
+			canGoForward: Boolean(view.webContents?.navigationHistory.canGoForward()),
+		});
 	}
 
 	public getTabView(tabId: string): WebContentsView | undefined {
@@ -358,23 +518,20 @@ class TabsService implements TabReader, TabCommands {
 	}
 
 	public getTabIds(): string[] {
-		return Object.keys(this.tabViews);
+		return [...this.tabOrder];
 	}
 
 	public duplicateTab(tabId: string): void {
-		this.titleBarView.webContents.send('tab-request', {
-			url: this.tabViews[tabId]?.webContents.getURL(),
-		});
+		this.openTab({ url: this.tabViews[tabId]?.webContents.getURL() });
 	}
 
 	public requestTab(options: TabRequestOptions): void {
-		this.titleBarView.webContents.send('tab-request', options);
+		this.openTab(options);
 	}
 
-	public getTabsJSON(): Record<string, string> {
-		return Object.keys(this.tabViews).reduce<Record<string, string>>((acc, tabId) => {
-			const view = this.tabViews[tabId];
-			const url = view?.webContents?.getURL();
+	private getTabsJSON(): Record<string, string> {
+		return this.tabOrder.reduce<Record<string, string>>((acc, tabId) => {
+			const url = this.tabViews[tabId]?.webContents?.getURL();
 			if (url) {
 				acc[tabId] = url;
 			}
@@ -386,16 +543,21 @@ class TabsService implements TabReader, TabCommands {
 		Object.entries(tabs).forEach(([tabId, url]) => {
 			const isPinned = this.persistence.isPinned(tabId);
 			const app = this.persistence.getAppForTab(tabId);
-			this.requestTab({ url, tabId, isPinned, app, skipChange: true });
+			this.openTab({ url, tabId, isPinned, app, skipChange: true });
 		});
 	}
 
 	private saveTabs(): void {
+		const appMap = createAppMap<string[]>(() => []);
+		this.tabOrder.forEach((id) => {
+			appMap[this.tabApp[id] ?? 'notes'].push(id);
+		});
+
 		this.persistence.save({
 			tabs: this.getTabsJSON(),
 			currentTabId: this.currentTabId,
 			pinned: this.pinnedMap,
-			apps: this.tabAppMap,
+			apps: appMap,
 		});
 	}
 
@@ -412,8 +574,12 @@ class TabsService implements TabReader, TabCommands {
 	}
 
 	public togglePinTab(tabId: string, isPinned: boolean): void {
+		if (!this.tabViews[tabId]) return;
 		this.pinnedMap[tabId] = isPinned;
+		this.tabOrder = this.tabOrder.filter((id) => id !== tabId);
+		this.tabOrder.push(tabId);
 		this.saveTabs();
+		this.pushState();
 	}
 
 	public isPinned(tabId: string): boolean {

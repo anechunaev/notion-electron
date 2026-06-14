@@ -105,7 +105,6 @@ class OptionsService {
 	public setOption(optionId: string, value: unknown): void {
 		this.store.set(optionId, value);
 
-		// Broadcast the change (if you added the event emitter from earlier)
 		if (this.mainBus) {
 			this.mainBus.emit('option-changed', optionId, value);
 		}

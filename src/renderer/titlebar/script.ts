@@ -1,21 +1,14 @@
 import Sortable from 'sortablejs';
-import { APP_NAMES, getAppFromUrl } from '../../shared/apps';
-import type { TabInfo, TabRequest } from '../../shared/ipc';
+import type { TabInfo, TabsStatePayload } from '../../shared/ipc';
+
+const NEW_TAB_URL = 'https://www.notion.so';
 
 document.addEventListener('DOMContentLoaded', () => {
 	const tabMap: Record<string, HTMLElement> = {};
-	const tabMapDisconnect: Record<string, (e: Event) => void> = {};
-	const tabMapSelect: Record<string, () => void> = {};
-	const tabStack: string[] = [];
-	const tabAppMap: Record<string, Set<string>> = Object.fromEntries(
-		APP_NAMES.map((app): [string, Set<string>] => [app, new Set<string>()]),
-	);
-	let initialTabId: string | null = null;
 	let currentTabId: string | null = null;
+	let currentApp = 'notes';
 	let sidebarBaseWidth = 240;
-	const zoomFactorMap: Record<string, number> = Object.fromEntries(
-		APP_NAMES.map((app): [string, number] => [app, 1]),
-	);
+	const zoomFactorMap: Record<string, number> = {};
 
 	const addTabButton = document.querySelector<HTMLButtonElement>('.control[data-action="add"]');
 	const historyBackButton = document.querySelector<HTMLButtonElement>('.control[data-action="history-back"]');
@@ -31,12 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const allTabsButton = document.querySelector<HTMLButtonElement>('.tab-all .control');
 
 	function getCurrentApp(): string {
-		for (const [app, tabIds] of Object.entries(tabAppMap)) {
-			if (currentTabId && tabIds.has(currentTabId)) {
-				return app;
-			}
-		}
-		return 'notes';
+		return currentApp;
 	}
 
 	function createTabElement(title: string, iconUrl?: string, documentUrl?: string, tabId?: string): HTMLElement {
@@ -48,147 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		const tabIcon = tab.querySelector<HTMLImageElement>('.tab-icon');
 		if (tabIcon) tabIcon.src = iconUrl ?? '../icons/dark/document.svg';
 		tab.dataset.tabId = tabId ?? crypto.randomUUID();
-		tab.dataset.documentUrl = documentUrl ?? 'https://www.notion.so';
+		tab.dataset.documentUrl = documentUrl ?? NEW_TAB_URL;
 
 		return tab;
-	}
-
-	function findReusableTabId(app: string): string | undefined {
-		const appSet = tabAppMap[app];
-		return appSet ? Array.from(appSet).find((id) => tabMap[id]) : undefined;
-	}
-
-	function attachCloseHandler(tab: HTMLElement, tabId: string): void {
-		const closeButton = tab.querySelector('.tab-close');
-		if (!closeButton) return;
-		tabMapDisconnect[tabId] = (e: Event) => {
-			e.stopPropagation();
-			onCloseTab(tabId);
-		};
-		closeButton.addEventListener('click', tabMapDisconnect[tabId]);
-	}
-
-	function placeTab(tab: HTMLElement, isPinned: boolean): void {
-		if (isPinned) {
-			tabgroupPinned.appendChild(tab);
-			return;
-		}
-		tabgroup.appendChild(tab);
-		setTimeout(() => {
-			const boundingBox = tab.getBoundingClientRect();
-			tabgroup.scrollLeft = boundingBox.left + boundingBox.width - tabgroup.clientWidth;
-		}, 0);
-	}
-
-	function registerTab(
-		tab: HTMLElement,
-		tabId: string,
-		url: string | undefined,
-		app: string | undefined,
-		isPinned: boolean,
-	): void {
-		tabMap[tabId] = tab;
-		tabMapSelect[tabId] = () => onSelectTab(tabId);
-		tabStack.push(tabId);
-		tabAppMap[app ?? getAppFromUrl(url ?? 'https://www.notion.so')]?.add(tabId);
-		tab.addEventListener('click', tabMapSelect[tabId]);
-		attachCloseHandler(tab, tabId);
-		placeTab(tab, isPinned);
-	}
-
-	function onSelectTab(tabId: string | undefined, skipChange = false): void {
-		Object.values(tabMap).forEach((tab) => {
-			const selected = tab.dataset.tabId === tabId;
-			if (skipChange) {
-				tab.classList.toggle('selected', tab.dataset.tabId === initialTabId);
-			} else {
-				tab.classList.toggle('selected', selected);
-
-				if (selected && tabId) {
-					window.notionElectronAPI.changeTab(tabId);
-					currentTabId = tabId;
-				}
-			}
-		});
-		scrollToSelectedTab();
-	}
-
-	function onSidebarStateChange(collapsed: boolean, width: string, isZoomed = false): void {
-		const widthNumber = parseInt(width.replace('calc(', ''), 10);
-		if (!isZoomed) {
-			sidebarBaseWidth = widthNumber;
-		}
-		const zoom = zoomFactorMap[getCurrentApp()] || 1;
-		const w = width === '0px' ? '36px' : widthNumber * zoom + 'px';
-		titlebarSidebar.classList.toggle('collapsed', collapsed);
-		titlebarSidebar.style.width = w;
-		titlebarSidebar.style.flex = `0 0 ${w}`;
-	}
-
-	function onAddTab({ url, tabId: tabIdRequested, isPinned = false, app, skipChange = false }: TabRequest): void {
-		if (tabIdRequested && tabMap[tabIdRequested]) {
-			onSelectTab(tabIdRequested);
-			return;
-		}
-
-		const reusableId = !tabIdRequested && app ? findReusableTabId(app) : undefined;
-		if (reusableId) {
-			onSelectTab(reusableId, skipChange);
-			return;
-		}
-
-		const tab = createTabElement('New tab', undefined, url, tabIdRequested);
-		const tabId = tab.dataset.tabId;
-		if (!tabId) return;
-
-		registerTab(tab, tabId, url, app, isPinned);
-
-		window.notionElectronAPI.addTab({ tabId, url, isPinned, app }).then(() => {
-			onSelectTab(tabId, skipChange);
-		});
-	}
-
-	function onHistoryBack(): void {
-		window.notionElectronAPI.historyBack();
-	}
-
-	function onHistoryForward(): void {
-		window.notionElectronAPI.historyForward();
-	}
-
-	function onCloseTab(tabId: string): void {
-		if (Object.values(tabMap).length === 1) {
-			window.notionElectronAPI.setUrl(tabId, '/login');
-			return;
-		}
-
-		window.notionElectronAPI.closeTab(tabId).then(() => {
-			const tab = tabMap[tabId];
-
-			if (!tab) return;
-
-			const closeButton = tab.querySelector('.tab-close');
-			const disconnect = tabMapDisconnect[tabId];
-
-			if (closeButton && disconnect) {
-				closeButton.removeEventListener('click', disconnect);
-			}
-
-			const select = tabMapSelect[tabId];
-			if (select) tab.removeEventListener('click', select);
-
-			const currentIndex = tabStack.indexOf(tabId);
-			const nextIndex = currentIndex - 1 < 0 ? 0 : currentIndex - 1;
-
-			tabStack.splice(currentIndex, 1);
-
-			onSelectTab(tabStack[nextIndex]);
-
-			tab.remove();
-			delete tabMap[tabId];
-			delete tabMapDisconnect[tabId];
-			delete tabMapSelect[tabId];
-		});
 	}
 
 	function applyTabTitle(tab: HTMLElement, title: string): void {
@@ -203,19 +53,15 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (tabIconSource) tabIconSource.srcset = icon;
 	}
 
-	function onTabInfo(tabId: string, { title, icon, documentUrl, canGoBack, canGoForward }: TabInfo): void {
-		const tab = tabMap[tabId];
-		if (tab) {
-			if (title) {
-				tab.title = title;
-				applyTabTitle(tab, title);
-			}
-			if (icon) applyTabIcon(tab, icon);
-			if (documentUrl) tab.dataset.documentUrl = documentUrl;
-		}
-
-		if (historyBackButton) historyBackButton.disabled = !tab || !canGoBack;
-		if (historyForwardButton) historyForwardButton.disabled = !tab || !canGoForward;
+	function attachHandlers(tab: HTMLElement, tabId: string): void {
+		tab.addEventListener('click', () => {
+			window.notionElectronAPI.selectTab(tabId);
+		});
+		const closeButton = tab.querySelector('.tab-close');
+		closeButton?.addEventListener('click', (e) => {
+			e.stopPropagation();
+			window.notionElectronAPI.closeTab(tabId);
+		});
 	}
 
 	function scrollToSelectedTab(): void {
@@ -235,17 +81,89 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
+	// Reconcile the tab bar DOM to match the authoritative state pushed by the main process.
+	function renderTabs(state: TabsStatePayload): void {
+		const seen = new Set<string>();
+		state.tabs.forEach((tab) => {
+			seen.add(tab.id);
+			let el = tabMap[tab.id];
+			if (!el) {
+				el = createTabElement(tab.title ?? 'New tab', tab.icon ?? undefined, tab.url, tab.id);
+				tabMap[tab.id] = el;
+				attachHandlers(el, tab.id);
+			}
+			if (tab.title) {
+				el.title = tab.title;
+				applyTabTitle(el, tab.title);
+			}
+			if (tab.icon) applyTabIcon(el, tab.icon);
+			if (tab.url) el.dataset.documentUrl = tab.url;
+			el.classList.toggle('selected', tab.id === state.currentTabId);
+			(tab.pinned ? tabgroupPinned : tabgroup).appendChild(el);
+			if (tab.id === state.currentTabId) currentApp = tab.app;
+		});
+
+		Object.keys(tabMap).forEach((id) => {
+			if (!seen.has(id)) {
+				tabMap[id]?.remove();
+				delete tabMap[id];
+			}
+		});
+
+		currentTabId = state.currentTabId;
+		if (historyBackButton) historyBackButton.disabled = !state.canGoBack;
+		if (historyForwardButton) historyForwardButton.disabled = !state.canGoForward;
+		scrollToSelectedTab();
+	}
+
+	function onTabInfo(tabId: string, { title, icon, documentUrl, canGoBack, canGoForward }: TabInfo): void {
+		const tab = tabMap[tabId];
+		if (tab) {
+			if (title) {
+				tab.title = title;
+				applyTabTitle(tab, title);
+			}
+			if (icon) applyTabIcon(tab, icon);
+			if (documentUrl) tab.dataset.documentUrl = documentUrl;
+		}
+
+		if (tabId === currentTabId) {
+			if (historyBackButton) historyBackButton.disabled = !tab || !canGoBack;
+			if (historyForwardButton) historyForwardButton.disabled = !tab || !canGoForward;
+		}
+	}
+
+	function onSidebarStateChange(collapsed: boolean, width: string, isZoomed = false): void {
+		const widthNumber = parseInt(width.replace('calc(', ''), 10);
+		if (!isZoomed) {
+			sidebarBaseWidth = widthNumber;
+		}
+		const zoom = zoomFactorMap[getCurrentApp()] || 1;
+		const w = width === '0px' ? '36px' : widthNumber * zoom + 'px';
+		titlebarSidebar.classList.toggle('collapsed', collapsed);
+		titlebarSidebar.style.width = w;
+		titlebarSidebar.style.flex = `0 0 ${w}`;
+	}
+
+	function sendReorder(): void {
+		const ids = (group: HTMLElement) =>
+			Array.from(group.querySelectorAll<HTMLElement>('.tab'))
+				.map((el) => el.dataset.tabId ?? '')
+				.filter(Boolean);
+		window.notionElectronAPI.reorderTabs(ids(tabgroupPinned), ids(tabgroup));
+	}
+
 	if (window.notionElectronAPI) {
 		if (addTabButton) {
-			addTabButton.addEventListener('click', () => onAddTab({ url: 'https://www.notion.so' }));
+			addTabButton.addEventListener('click', () => window.notionElectronAPI.addTab({ url: NEW_TAB_URL }));
 		}
 
 		if (historyBackButton) {
-			historyBackButton.addEventListener('click', onHistoryBack);
+			historyBackButton.addEventListener('click', () => window.notionElectronAPI.historyBack());
 		}
 
 		if (historyForwardButton) {
-			historyForwardButton.addEventListener('click', onHistoryForward);
+			historyForwardButton.addEventListener('click', () => window.notionElectronAPI.historyForward());
 		}
 
 		if (tabgroup) {
@@ -288,51 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		window.notionElectronAPI.requestGlobalOptions();
 
+		window.notionElectronAPI.subscribeOnTabsState(renderTabs);
 		window.notionElectronAPI.subscribeOnTabInfo(onTabInfo);
-		window.notionElectronAPI.subscribeOnTabRequest(onAddTab);
-		window.notionElectronAPI.subscribeOnContextMenu((command) => {
-			switch (command.id) {
-				case 'pin': {
-					const tab = command.tabId ? tabMap[command.tabId] : undefined;
-					if (tab) {
-						const isPinned = tab.parentElement === tabgroupPinned;
-						if (isPinned) {
-							tabgroup.appendChild(tab);
-						} else {
-							tabgroupPinned.appendChild(tab);
-						}
-					}
-					break;
-				}
-				case 'close':
-					if (command.tabId) onCloseTab(command.tabId);
-					break;
-				case 'closeAll': {
-					const tabIds = Object.keys(tabMap);
-					if (tabIds.length === 1 && tabIds[0]) {
-						onCloseTab(tabIds[0]);
-					} else {
-						Object.entries(tabMap).forEach(([id, tab]) => {
-							if (tab.parentElement !== tabgroupPinned) {
-								onCloseTab(id);
-							}
-						});
-						if (Object.keys(tabMap).length === 0) {
-							onAddTab({ url: 'https://www.notion.so' });
-						}
-					}
-					break;
-				}
-				case 'closeOther':
-					command.tabIds?.forEach(onCloseTab);
-					break;
-			}
-		});
 		window.notionElectronAPI.subscribeOnGlobalOptions((options) => {
-			if (options.initialTabId) {
-				initialTabId = options.initialTabId;
-			}
-
 			if (options.sidebarContinueToTitlebar) {
 				titlebarSidebar.classList.remove('hidden');
 				window.notionElectronAPI.subscribeOnSidebarChange(onSidebarStateChange);
@@ -375,26 +251,19 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		});
 		window.notionElectronAPI.subscribeOnAction((action) => {
-			const currentIndex = currentTabId ? tabStack.indexOf(currentTabId) : -1;
 			switch (action) {
 				case 'tab-add':
-					onAddTab({ url: 'https://www.notion.so' });
+					window.notionElectronAPI.addTab({ url: NEW_TAB_URL });
 					break;
 				case 'tab-close':
-					if (currentTabId) {
-						onCloseTab(currentTabId);
-					}
+					window.notionElectronAPI.closeCurrentTab();
 					break;
-				case 'tab-next': {
-					const nextIndex = currentIndex + 1 >= tabStack.length ? 0 : currentIndex + 1;
-					onSelectTab(tabStack[nextIndex]);
+				case 'tab-next':
+					window.notionElectronAPI.nextTab();
 					break;
-				}
-				case 'tab-previous': {
-					const prevIndex = currentIndex - 1 < 0 ? tabStack.length - 1 : currentIndex - 1;
-					onSelectTab(tabStack[prevIndex]);
+				case 'tab-previous':
+					window.notionElectronAPI.previousTab();
 					break;
-				}
 			}
 		});
 		window.addEventListener('contextmenu', (e) => {
@@ -414,23 +283,17 @@ document.addEventListener('DOMContentLoaded', () => {
 		animation: 100,
 		direction: 'horizontal',
 		setData: (dataTransfer, dragEl) => {
-			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? 'https://www.notion.so');
+			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? NEW_TAB_URL);
 		},
-		onEnd: ({ to, item }) => {
-			const isPinned = to === tabgroupPinned;
-			window.notionElectronAPI.togglePinTab(item.dataset.tabId ?? '', isPinned);
-		},
+		onEnd: sendReorder,
 	});
 	Sortable.create(tabgroupPinned, {
 		group: 'tabs',
 		animation: 100,
 		direction: 'horizontal',
 		setData: (dataTransfer, dragEl) => {
-			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? 'https://www.notion.so');
+			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? NEW_TAB_URL);
 		},
-		onEnd: ({ to, item }) => {
-			const isPinned = to === tabgroupPinned;
-			window.notionElectronAPI.togglePinTab(item.dataset.tabId ?? '', isPinned);
-		},
+		onEnd: sendReorder,
 	});
 });

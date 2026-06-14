@@ -16,10 +16,20 @@ export interface TabRequest {
 	skipChange?: boolean | undefined;
 }
 
-export interface ContextMenuCommand {
+export interface TabState {
 	id: string;
-	tabId?: string;
-	tabIds?: string[];
+	app: string;
+	url?: string | undefined;
+	title: string | null;
+	icon: string | null;
+	pinned: boolean;
+}
+
+export interface TabsStatePayload {
+	tabs: TabState[];
+	currentTabId: string | null;
+	canGoBack: boolean;
+	canGoForward: boolean;
 }
 
 export interface GlobalOptions {
@@ -50,8 +60,6 @@ export interface OptionsPayload {
 	options: Record<string, RendererOptionDefinition>;
 }
 
-// A changelog release prepared for display: raw data plus an OS-formatted date string
-// (formatting happens in the main process, which can shell out to `date`).
 export interface ChangelogItem {
 	version: string;
 	dateFormatted: string;
@@ -72,12 +80,16 @@ export interface UpdateStatus {
 	error: Error | null;
 }
 
-// API exposed by tab-preload onto the titlebar window.
 export interface NotionTitlebarAPI {
-	changeTab(tabId: string): void;
-	addTab(options: TabRequest): Promise<void>;
-	closeTab(tabId: string): Promise<void>;
-	setUrl(tabId: string, url: string): void;
+	selectTab(tabId: string): void;
+	addTab(options: TabRequest): void;
+	closeTab(tabId: string): void;
+	closeCurrentTab(): void;
+	closeOtherTabs(tabId: string): void;
+	closeAllTabs(): void;
+	nextTab(): void;
+	previousTab(): void;
+	reorderTabs(pinnedIds: string[], normalIds: string[]): void;
 	historyBack(): void;
 	historyForward(): void;
 	foldSidebar(collapsed: boolean): void;
@@ -86,19 +98,16 @@ export interface NotionTitlebarAPI {
 	requestGlobalOptions(): void;
 	requestSidebarData(): void;
 	showAllTabsMenu(): void;
-	togglePinTab(tabId: string, isPinned: boolean): void;
 	notifyReady(): void;
+	subscribeOnTabsState(callback: (state: TabsStatePayload) => void): void;
 	subscribeOnTabInfo(callback: (tabId: string, info: TabInfo) => void): void;
 	subscribeOnSidebarChange(callback: (collapsed: boolean, width: string) => void): void;
 	subscribeOnSidebarFoldingStop(callback: () => void): void;
-	subscribeOnTabRequest(callback: (options: TabRequest) => void): void;
-	subscribeOnContextMenu(callback: (command: ContextMenuCommand) => void): void;
 	subscribeOnGlobalOptions(callback: (info: GlobalOptions) => void): void;
 	subscribeOnZoomFactor(callback: (zoomFactor: number) => void): void;
 	subscribeOnAction(callback: (action: string, data: unknown) => void): void;
 }
 
-// API exposed by options-preload onto the options window.
 export interface NotionOptionsAPI {
 	restartApp(): void;
 	closeWindow(): void;

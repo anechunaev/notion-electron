@@ -2,21 +2,32 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { NotionTitlebarAPI } from '../shared/ipc';
 
 const api: NotionTitlebarAPI = {
-	changeTab: (tabId) => {
-		ipcRenderer.send('change-tab', tabId);
+	selectTab: (tabId) => {
+		ipcRenderer.send('tab-select', tabId);
 	},
-	addTab: (options) =>
-		new Promise((resolve) => {
-			ipcRenderer.send('add-tab', options);
-			setTimeout(resolve, 0);
-		}),
-	closeTab: (tabId) =>
-		new Promise((resolve) => {
-			ipcRenderer.send('close-tab', tabId);
-			setTimeout(resolve, 0);
-		}),
-	setUrl: (tabId, url) => {
-		ipcRenderer.send('set-url', tabId, url);
+	addTab: (options) => {
+		ipcRenderer.send('tab-add', options);
+	},
+	closeTab: (tabId) => {
+		ipcRenderer.send('tab-close', tabId);
+	},
+	closeCurrentTab: () => {
+		ipcRenderer.send('tab-close-current');
+	},
+	closeOtherTabs: (tabId) => {
+		ipcRenderer.send('tab-close-others', tabId);
+	},
+	closeAllTabs: () => {
+		ipcRenderer.send('tab-close-all');
+	},
+	nextTab: () => {
+		ipcRenderer.send('tab-next');
+	},
+	previousTab: () => {
+		ipcRenderer.send('tab-previous');
+	},
+	reorderTabs: (pinnedIds, normalIds) => {
+		ipcRenderer.send('tab-reorder', pinnedIds, normalIds);
 	},
 	historyBack: () => {
 		ipcRenderer.send('history-back');
@@ -42,13 +53,15 @@ const api: NotionTitlebarAPI = {
 	showAllTabsMenu: () => {
 		ipcRenderer.send('show-all-tabs-menu');
 	},
-	togglePinTab: (tabId, isPinned) => {
-		ipcRenderer.send('tab-pin-toggle', tabId, isPinned);
-	},
 	notifyReady: () => {
 		ipcRenderer.send('titlebar-ready');
 	},
 
+	subscribeOnTabsState: (callback) => {
+		ipcRenderer.on('tabs-state', (event, state) => {
+			callback(state);
+		});
+	},
 	subscribeOnTabInfo: (callback) => {
 		ipcRenderer.on('tab-info', (event, tabId, info) => {
 			callback(tabId, info);
@@ -62,16 +75,6 @@ const api: NotionTitlebarAPI = {
 	subscribeOnSidebarFoldingStop: (callback) => {
 		ipcRenderer.on('sidebar-folding-stop', () => {
 			callback();
-		});
-	},
-	subscribeOnTabRequest: (callback) => {
-		ipcRenderer.on('tab-request', (event, options) => {
-			callback(options);
-		});
-	},
-	subscribeOnContextMenu: (callback) => {
-		ipcRenderer.on('context-menu-command', (event, command) => {
-			callback(command);
 		});
 	},
 	subscribeOnGlobalOptions: (callback) => {

@@ -94,6 +94,9 @@ reasoning):
   data layer. It must not contain application logic.
 - **Services never import each other.** They collaborate via **dependency injection** (instances
   passed into constructors) and the **`mainBus`** `EventEmitter` for decoupled events.
+- **Domain logic lives in services and libraries.** Services hold state; `src/main/lib/` holds
+  stateless functions. Put logic in a library function when it needs no service state, and in a
+  service when it reads or mutates state.
 - **Persisted state goes through `store`** from a **main-process service** — never write to the
   store from a renderer.
 - **User-facing settings go in `options.json`**, then are read via `OptionsService.getOption(id)`.
@@ -116,6 +119,11 @@ Beyond formatting, two conventions are enforced by review:
   number, or to document the public API of an internal library. Keep necessary comments short.
 - **Use the `private` / `public` keywords** for class members — don't mark private methods or
   properties with the `#` symbol.
+- **Don't extract a class method that's only called once** — inline it. The single exception is
+  when inlining would push the caller's **cognitive complexity over 10** (the `complexity` ESLint
+  threshold, `max: 10`); then a `private` helper is warranted. Relatedly, a public method that
+  never uses `this` is a stateless helper and belongs in `src/main/lib/`, not on a class — this is
+  enforced by the custom `publicMethods/public-class-methods-use-this` rule.
 
 Linting is driven by **custom Node scripts in `dev/scripts/`**, not by calling `eslint`/`prettier`
 directly:

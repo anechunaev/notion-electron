@@ -13,8 +13,8 @@ import UpdateService from './services/update';
 import ChangelogService from './services/changelog';
 import NotificationService from './services/notifications';
 import ThemeService from './services/theme';
-import MainWindowService from './services/mainWindow';
 import { createMonitorBus } from './lib/dbus';
+import { registerMainWindowLifecycle, registerOptionsWindowLifecycle } from './lib/windowLifecycle';
 import { resolveAsset, resolvePreload, loadRendererPage } from './lib/resources';
 import type { OptionsConfig, StoreSchema } from './types';
 
@@ -82,9 +82,11 @@ if (!app.requestSingleInstanceLock()) {
 				windowPositionService.subscribeToPositionChange(mainWindow);
 
 				const tabService = new TabService(mainWindow, optionsService, store, mainBus);
-				const mainWindowService = new MainWindowService(mainWindow, optionsService, () =>
-					dBusMonitorDisconnect(),
-				);
+				registerMainWindowLifecycle(mainWindow, {
+					shouldHideToTray: () => optionsService.getOption('hide-to-tray'),
+					shouldHideOnClose: () => optionsService.getOption('hide-window-on-close'),
+					onBeforeQuit: () => dBusMonitorDisconnect(),
+				});
 
 				setTimeout(function initApp() {
 					if (!mainWindow) return;
@@ -104,7 +106,7 @@ if (!app.requestSingleInstanceLock()) {
 						backgroundColor: bgColor,
 					});
 					loadRendererPage(optionsWindow, 'options');
-					mainWindowService.manageOptionsWindow(optionsWindow);
+					registerOptionsWindowLifecycle(optionsWindow);
 
 					const notificationService = new NotificationService();
 					const changelogService = new ChangelogService(pkg.repository.owner, pkg.repository.name);

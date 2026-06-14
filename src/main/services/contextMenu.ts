@@ -56,16 +56,11 @@ class ContextMenuService {
 	private templateTabContextMenu(tabId: string): MenuItemConstructorOptions[] {
 		const view = this.tabService.getTabView(tabId);
 		const isPinned = this.tabService.isPinned(tabId);
-		const titlebar = this.tabService.getTitleBarView();
 		return [
 			{
 				label: isPinned ? 'Unpin Tab' : 'Pin Tab',
 				click: () => {
 					this.tabService.togglePinTab(tabId, !isPinned);
-					titlebar.webContents.send('context-menu-command', {
-						id: 'pin',
-						tabId,
-					});
 				},
 			},
 			{ type: 'separator' },
@@ -73,27 +68,19 @@ class ContextMenuService {
 				label: 'Close Tab',
 				accelerator: shortcutMap.tabClose.accelerator,
 				click: () => {
-					titlebar.webContents.send('context-menu-command', {
-						id: 'close',
-						tabId,
-					});
+					this.tabService.closeTab(tabId);
 				},
 			},
 			{
 				label: 'Close Other Tabs',
 				click: () => {
-					titlebar.webContents.send('context-menu-command', {
-						id: 'closeOther',
-						tabIds: this.tabService
-							.getTabIds()
-							.filter((id) => id !== tabId && !this.tabService.isPinned(id)),
-					});
+					this.tabService.closeOthers(tabId);
 				},
 			},
 			{
 				label: 'Close All Tabs',
 				click: () => {
-					titlebar.webContents.send('context-menu-command', { id: 'closeAll' });
+					this.tabService.closeAll();
 				},
 			},
 			{ type: 'separator' },

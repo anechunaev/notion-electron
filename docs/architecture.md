@@ -53,7 +53,9 @@ in mind whenever you decide where a piece of code belongs.
 - **View layer** — draws the UI and handles user input. It is _only_ the preload scripts
   and the HTML GUI pages, and it runs in the web (renderer) context.
 - **Domain layer** — the main application logic, including all Electron integration. It is
-  the services plus the index controller, and it runs in the Electron main process.
+  the services plus the index controller, and it runs in the Electron main process. Domain
+  logic is split by statefulness: **services hold state**, while the **stateless functions
+  live in libraries** (`src/main/lib/`).
 - **Data layer** — stores, reads, and updates application data.
 
 The rules that hold these layers together:
@@ -66,6 +68,9 @@ The rules that hold these layers together:
 - **Services never import each other's classes or functions.** They collaborate via
   **Dependency Injection** (instances passed into constructors) and the **`mainBus`** event
   bus for reactive, decoupled data exchange — see [the integration layer](#integration-layer-store-and-mainbus).
+- **Domain logic lives in services and libraries.** Services hold state; `src/main/lib/`
+  holds stateless functions. Put a piece of logic in a library function when it needs no
+  service state, and in a service when it reads or mutates state.
 - **Data flow runs upward** (Data → Domain → View); **control flow runs downward**.
 - **Every unit of code** — module, component, library — **obeys SOLID.**
 
@@ -106,21 +111,25 @@ reading top-to-bottom; the sequence matters.
 1. **Single-instance lock** — `app.requestSingleInstanceLock()`. A second launch quits
    itself and fires `second-instance`, which restores/focuses the already-running window.
 2. **Shared state created at module top level** — the `store` (`electron-store`) and
-   `mainBus` (`EventEmitter`) are created _before_ the lock branch, and
-   `OptionsService` is instantiated immediately so CLI flags and stored options are
-   available during startup.
-3. **D-Bus theme query** — `createMonitorBus()` connects to the session bus and issues a
+   `mainBus` (`EventEmitter`) are created _before_ the lock branch, and `OptionsService`
+   and `ThemeService` are instantiated immediately so CLI flags, stored options, and the
+   theme decision are available during startup.
+3. **D-Bus theme query** — `createMonitorBus()` connects to the session bus; the actual
    `Read` on `org.freedesktop.portal.Settings` for `org.freedesktop.appearance` /
-   `color-scheme`. This drives the initial background color.
+   `color-scheme` lives in **`ThemeService.queryColorScheme()`**. Parsing the reply and
+   choosing the background color are `ThemeService` concerns, not the controller's.
 4. **Synchronization gate** — `Promise.all([themeProxyPromise, app.whenReady()])` waits
-   for _both_ the theme query and Electron readiness before creating the main window. This
-   is what prevents a wrong-theme background flash on first paint.
-5. **Services constructed and wired by hand** — `TabService` and `WindowPositionService`
-   are created against the main window; then a deferred `setTimeout(initApp, 1)` creates
-   the options `BrowserWindow` and the services that depend on it (`UpdateService`,
-   `TrayService`, `ContextMenuService`, `NotificationService`, `ChangelogService`). The
-   1 ms defer guarantees the main window's internal state is fully initialized before
-   dependent services reference it.
+   for _both_ the theme query and Electron readiness before creating the main window;
+   `ThemeService.resolveBackgroundColor()` then computes the color. This is what prevents
+   a wrong-theme background flash on first paint.
+5. **Services constructed and wired by hand** — `TabService`, `WindowPositionService`, and
+   `MainWindowService` are created against the main window; then a deferred
+   `setTimeout(initApp, 1)` creates the options `BrowserWindow` and the services that
+   depend on it (`UpdateService`, `TrayService`, `ContextMenuService`,
+   `NotificationService`, `ChangelogService`). The 1 ms defer guarantees the main window's
+   internal state is fully initialized before dependent services reference it. The
+   controller itself holds **no behaviour** — theme resolution lives in `ThemeService`,
+   window-lifecycle handling (minimize/close/quit) in `MainWindowService`.
 6. **D-Bus desktop actions** — `onDBusSignal('Options' | 'Updates' | 'About', …)` wires
    `.desktop` file Actions to show the corresponding tab in the options window.
 
@@ -143,28 +152,45 @@ Each file is one class owning one concern, constructed in `src/main/index.ts`:
 
 | Service                 | File                                   | Responsibility                                                                  |
 | ----------------------- | -------------------------------------- | ------------------------------------------------------------------------------- |
-| `TabService`            | `src/main/services/tabs.ts`            | Core. `WebContentsView` tabs, pinned apps, titlebar IPC, shortcuts, persistence |
+| `TabService`            | `src/main/services/tabs.ts`            | Core. Source of truth for tabs (`WebContentsView`s, order, app, selection)      |
 | `OptionsService`        | `src/main/services/options.ts`         | Reads `options.json`, layers option sources, serves the options window          |
 | `UpdateService`         | `src/main/services/update.ts`          | Wraps `electron-updater`; AppImage vs. package-manager update paths             |
+| `ThemeService`          | `src/main/services/theme.ts`           | D-Bus color-scheme query + initial background-color decision                    |
+| `MainWindowService`     | `src/main/services/mainWindow.ts`      | Main/options window lifecycle (hide-to-tray, hide-on-close, quit)               |
 | `TrayService`           | `src/main/services/tray.ts`            | System tray icon and menu                                                       |
 | `ContextMenuService`    | `src/main/services/contextMenu.ts`     | Right-click context menus                                                       |
 | `NotificationService`   | `src/main/services/notifications.ts`   | Native OS notifications                                                         |
-| `ChangelogService`      | `src/main/services/changelog.ts`       | Fetches GitHub release notes                                                    |
+| `ChangelogService`      | `src/main/services/changelog.ts`       | Gateway: fetches GitHub release notes (markup is built in the options view)     |
 | `WindowPositionService` | `src/main/services/windowPosition.ts`  | Persists and restores window geometry                                           |
+
+`TabService` delegates two concerns to collaborators: **`TabLayout`** (`tabLayout.ts`,
+view geometry) and **`TabPersistence`** (`tabPersistence.ts`, the `electron-store` tab
+schema). `ContextMenuService` depends on the narrow `TabReader` / `TabCommands` interfaces
+(`tabs.types.ts`), not the concrete `TabService`.
 
 Things to know when touching these:
 
-- **`tabs.ts` is the largest and most central file.** The base Notion app is internally
-  the `notes` app (`HOME_PAGE = https://www.notion.com/login`); the two optional pinned
-  apps are `calendar` (`calendar.notion.so`) and `mail` (`mail.notion.so`). Tab → app
-  classification is URL/host based (see `#getAppForUrl`-style logic and `AUTH_HOSTS`).
+- **`tabs.ts` is the largest and most central file, and the single source of truth for
+  tabs.** It owns tab identity (it generates ids), order, app classification, pinned state,
+  and selection; it pushes the whole picture to the titlebar as a `tabs-state` payload and
+  acts on intents the titlebar sends back (see _Preloads & IPC_). The wrapped apps —
+  `notes` (base, `HOME_PAGE`), `calendar`, `mail` — are defined once as data in
+  **`src/shared/apps.ts`** (`APP_DEFINITIONS`, `getAppFromUrl`), imported by both the main
+  process and the titlebar renderer so classification never drifts. The auth-popup host
+  list lives in `lib/windowOpenPolicy.ts`.
 - **`options.ts` layers four sources.** Effective value precedence, lowest to highest:
   `options.json` default **<** desktop-environment preset (`#DE_PRESETS`, e.g. GNOME) **<**
   stored value **<** CLI override. `getOption()` returns CLI overrides directly; everything
   else flows through `getPersistentOption()` → `store.get(id, fallback)`.
 - **`update.ts` splits by package format.** AppImage gets in-app download/install; other
   formats (rpm/deb/Flatpak/Snap) defer to the package manager. It honors the
-  `--disable-update-functionality` flag / `disable-update-functionality` option.
+  `--disable-update-functionality` flag / `disable-update-functionality` option. Pure
+  helpers live in `lib/` (`semver.ts`, `bytes.ts`); quit/relaunch go through `lib/quit.ts`
+  (`quitApp` / `relaunchApp`), the single place that sets `app.isQuiting`.
+- **Changelog rendering is split by layer.** `ChangelogService.fetch()` is a pure data
+  gateway (raw GitHub releases); `UpdateService` forwards a `ChangelogItem[]` view-model
+  (with the OS-formatted date — formatting shells out via `date`, so it stays in main) and
+  the options renderer builds the HTML markup.
 
 ## Preloads & IPC (`src/preload/`)
 
@@ -172,11 +198,19 @@ There are two different security postures here — match the one already used by
 you are touching:
 
 - **`tab-preload.ts`** exposes `window.notionElectronAPI` via `contextBridge` — the full
-  IPC surface between the titlebar UI and the main process. It is split into **commands**
-  (`addTab`, `closeTab`, `changeTab`, `setUrl`, `historyBack/Forward`, `foldSidebar`,
-  `toggleSidebar`, `togglePinTab`, `showContextMenu`, `requestGlobalOptions`,
-  `notifyReady`, …) and **subscriptions** (`subscribeOnTabInfo`,
-  `subscribeOnSidebarChange`, `subscribeOnGlobalOptions`, `subscribeOnAction`, …).
+  IPC surface between the titlebar UI and the main process. Because the main process is the
+  source of truth for tabs, the surface is **intents up, state down**:
+    - **Commands** (user intents) — `selectTab`, `addTab`, `closeTab`, `closeCurrentTab`,
+      `closeOtherTabs`, `closeAllTabs`, `nextTab`, `previousTab`, `reorderTabs`,
+      `historyBack/Forward`, `foldSidebar`, `toggleSidebar`, `showContextMenu`,
+      `requestGlobalOptions`, `notifyReady`, … The titlebar never mutates tab state itself;
+      it asks, and re-renders from what it gets back.
+    - **Subscriptions** (pushed state) — `subscribeOnTabsState` (the authoritative ordered
+      tab list + current selection + nav availability, which the titlebar reconciles its
+      DOM against), `subscribeOnTabInfo` (incremental title/icon/nav updates),
+      `subscribeOnSidebarChange`, `subscribeOnGlobalOptions`, `subscribeOnAction`, …
+    - Tab context-menu actions are handled in the main process (`ContextMenuService` calls
+      `TabService` directly); there is no render-side command round-trip.
 - **`docs-preload.ts`** is injected into Notion pages. It uses `ipcRenderer` **directly**,
   without a `contextBridge` wrapper — acceptable because Notion URLs are trusted
   first-party content, not arbitrary user input. It detects offline state and observes the

@@ -44,6 +44,7 @@ Linting is driven by custom Node scripts in `dev/scripts/`, **not** by calling `
 
 - **Self-explanatory code over comments.** Write code that explains itself and avoid comments. Only comment when it's necessary — to explain a hack, an unorthodox approach, or a magic number, or to document the public API of an internal library. Keep necessary comments short.
 - **Use the `private` / `public` keywords** for class members. Do not mark private methods or properties with the `#` symbol.
+- **Don't extract a class method that's only called once** — inline it. The single exception is when inlining would push the caller's **cognitive complexity over 10** (the `complexity` ESLint threshold, `max: 10`); then a `private` helper is warranted. Relatedly, a public method that never uses `this` is a stateless helper and belongs in `src/main/lib/`, not on a class (enforced by `publicMethods/public-class-methods-use-this`).
 
 ## Architecture
 
@@ -78,7 +79,7 @@ The bridge API shapes and IPC payload types are defined in `src/shared/ipc.ts` a
 Note: the main `BaseWindow` uses `contextIsolation: false`; tab/options windows isolate via `contextBridge` preloads. Match the existing pattern when touching a given window.
 
 ### `src/main/lib/`
-Reusable helpers, notably a **hand-rolled D-Bus client** (`lib/dbus.ts` + `lib/dbus/`) built on `d-bus-message-protocol` / `d-bus-type-system`. It both monitors the freedesktop appearance portal for live theme changes and registers the D-Bus name `io.github.anechunaev.NotionElectron` so `.desktop` actions (Options/Updates/About, dispatched via `dbus-send`) reach the running app. `lib/shortcuts/` defines the keyboard accelerator map; `lib/image.ts` converts favicons (uses `sharp`/`jimp`); `lib/resources.ts` resolves assets/preloads/renderer pages for dev vs. packaged builds.
+Domain logic is split by statefulness: **services hold state, libraries hold stateless functions.** Put a piece of logic in a `lib/` function when it needs no service state, and in a service when it reads or mutates state. Reusable helpers, notably a **hand-rolled D-Bus client** (`lib/dbus.ts` + `lib/dbus/`) built on `d-bus-message-protocol` / `d-bus-type-system`. It both monitors the freedesktop appearance portal for live theme changes and registers the D-Bus name `io.github.anechunaev.NotionElectron` so `.desktop` actions (Options/Updates/About, dispatched via `dbus-send`) reach the running app. `lib/shortcuts/` defines the keyboard accelerator map; `lib/image.ts` converts favicons (uses `sharp`/`jimp`); `lib/resources.ts` resolves assets/preloads/renderer pages for dev vs. packaged builds.
 
 ### Config files
 - `options.json` — declarative options schema (types, defaults, groups) that drives the options UI and `OptionsService`. Add new user-facing settings here (and the matching type in `OptionValues`), not in code.
