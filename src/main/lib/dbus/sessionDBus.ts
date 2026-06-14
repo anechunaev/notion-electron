@@ -7,26 +7,26 @@ import MessageParser from './messageParser';
 type ConnectionState = ['disconnected'] | ['connecting'] | ['failed'] | ['connected', Socket];
 
 class SessionDBus extends DBus {
-	#state: ConnectionState = [`disconnected`];
+	private sessionState: ConnectionState = [`disconnected`];
 
-	get state(): ConnectionState[0] {
-		return this.#state[0];
+	public get state(): ConnectionState[0] {
+		return this.sessionState[0];
 	}
 
-	send(message: Message): void {
-		const state = this.#state;
+	public send(message: Message): void {
+		const state = this.sessionState;
 		if (state[0] !== `connected`) {
 			throw new Error(`Not connected.`);
 		}
 		state[1].write(new Uint8Array(serializeMessage(message)));
 	}
 
-	async connectAsExternal(): Promise<void> {
-		if (this.#state[0] !== `disconnected`) {
+	public async connectAsExternal(): Promise<void> {
+		if (this.sessionState[0] !== `disconnected`) {
 			throw new Error(`Already connected.`);
 		}
 
-		this.#state = [`connecting`];
+		this.sessionState = [`connecting`];
 
 		return new Promise<void>((resolve, reject) => {
 			const address = process.env.DBUS_SESSION_BUS_ADDRESS || `unix:path=/run/user/1000/bus`;
@@ -38,12 +38,12 @@ class SessionDBus extends DBus {
 			const socket = createConnection(address.slice(10));
 
 			socket.once(`error`, (error) => {
-				const state = this.#state;
+				const state = this.sessionState;
 				if (state[0] === `connecting`) {
-					this.#state = [`failed`];
+					this.sessionState = [`failed`];
 					reject(error);
 				} else if (state[0] === `connected` && state[1] === socket) {
-					this.#state = [`failed`];
+					this.sessionState = [`failed`];
 					this.emitError(error);
 				}
 			});
@@ -51,14 +51,14 @@ class SessionDBus extends DBus {
 			const messageParser = new MessageParser();
 
 			socket.on(`data`, (data: Buffer) => {
-				const state = this.#state;
+				const state = this.sessionState;
 				if (state[0] === `connecting`) {
 					if (data.toString().startsWith(`OK`)) {
-						this.#state = [`connected`, socket];
+						this.sessionState = [`connected`, socket];
 						socket.write(`BEGIN\r\n`);
 						resolve();
 					} else {
-						this.#state = [`failed`];
+						this.sessionState = [`failed`];
 						reject(new Error(`External authentication failed.`));
 					}
 				} else if (state[0] === `connected` && state[1] === socket) {
@@ -73,13 +73,14 @@ class SessionDBus extends DBus {
 			socket.write(`AUTH EXTERNAL ${id}\r\n`);
 		});
 	}
-	disconnect(): void {
-		const state = this.#state;
+
+	public disconnect(): void {
+		const state = this.sessionState;
 		if (state[0] !== `connected`) {
 			throw new Error(`Not connected.`);
 		}
 		state[1].destroy();
-		this.#state = [`disconnected`];
+		this.sessionState = [`disconnected`];
 	}
 }
 

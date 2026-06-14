@@ -1,14 +1,10 @@
 import type Store from 'electron-store';
 import type { Rectangle } from 'electron';
 
-// Which "app" a tab belongs to.
 export type AppName = 'notes' | 'calendar' | 'mail';
 
 export type TabAppMap = Record<AppName, string[]>;
 
-// Persisted state managed via electron-store. Option values (keyed by their
-// dynamic option id) are not listed here — electron-store's string-key overload
-// covers them and OptionsService types them via OptionValues.
 export interface StoreSchema {
 	'tab-current'?: string | null;
 	'tabs'?: Record<string, string>;
@@ -22,8 +18,6 @@ export interface StoreSchema {
 
 export type AppStore = Store<StoreSchema>;
 
-// Typed values for every option declared in options.json, so getOption returns
-// a precise type at each call site.
 export interface OptionValues {
 	'debug-open-dev-tools': boolean;
 	'general-theme': 'system' | 'light' | 'dark';
@@ -42,7 +36,6 @@ export interface OptionValues {
 	'hide-window-on-close': boolean;
 }
 
-// Shape of options.json.
 export interface OptionDefinition {
 	name: string;
 	group?: string;
@@ -58,10 +51,8 @@ export interface OptionsConfig {
 	groups: Record<string, string>;
 }
 
-// The app sets a custom `isQuiting` flag to distinguish a real quit from a
-// hide-to-tray close.
 declare global {
-	// eslint-disable-next-line @typescript-eslint/no-namespace -- required to augment the Electron namespace
+	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace Electron {
 		interface App {
 			isQuiting?: boolean;

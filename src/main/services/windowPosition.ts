@@ -2,13 +2,13 @@ import { screen, type BaseWindow, type Rectangle } from 'electron';
 import type { AppStore } from '../types';
 
 class WindowPositionService {
-	#store: AppStore;
+	private store: AppStore;
 
 	constructor(store: AppStore) {
-		this.#store = store;
+		this.store = store;
 	}
 
-	subscribeToPositionChange(win: BaseWindow) {
+	public subscribeToPositionChange(win: BaseWindow) {
 		const callback = () => {
 			this.savePosition(win);
 		};
@@ -20,9 +20,9 @@ class WindowPositionService {
 		win.on('resize', callback);
 	}
 
-	getPosition() {
-		const savedBounds = this.#store.get('bounds');
-		const isMaximized = this.#store.get('maximized', false);
+	public getPosition() {
+		const savedBounds = this.store.get('bounds');
+		const isMaximized = this.store.get('maximized', false);
 
 		const bounds: Rectangle = { x: 0, y: 0, width: 600, height: 400 };
 
@@ -48,9 +48,9 @@ class WindowPositionService {
 		return { bounds, isMaximized };
 	}
 
-	restorePosition(win: BaseWindow) {
-		const savedBounds = this.#store.get('bounds');
-		const isMaximized = this.#store.get('maximized', false);
+	public restorePosition(win: BaseWindow) {
+		const savedBounds = this.store.get('bounds');
+		const isMaximized = this.store.get('maximized', false);
 
 		if (isMaximized) {
 			win.maximize();
@@ -77,11 +77,11 @@ class WindowPositionService {
 		}
 	}
 
-	savePosition(win: BaseWindow) {
+	public savePosition(win: BaseWindow) {
 		const isMaximized = win.isMaximized();
-		this.#store.set('maximized', isMaximized);
+		this.store.set('maximized', isMaximized);
 		if (!isMaximized) {
-			this.#store.set('bounds', win.getContentBounds());
+			this.store.set('bounds', win.getContentBounds());
 		}
 	}
 }

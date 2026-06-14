@@ -40,6 +40,11 @@ Linting is driven by custom Node scripts in `dev/scripts/`, **not** by calling `
 - The ESLint config is **flat config written in TypeScript** (`eslint.config.ts`), so it must be invoked with `-c ./eslint.config.ts`.
 - Husky installs a `pre-commit` hook (committed at `.husky/pre-commit`) running `npm run typecheck` then `npm run lint`. CI (`.github/workflows/ci.yml`) runs typecheck + lint:all + build on push/PR.
 
+## Code style
+
+- **Self-explanatory code over comments.** Write code that explains itself and avoid comments. Only comment when it's necessary — to explain a hack, an unorthodox approach, or a magic number, or to document the public API of an internal library. Keep necessary comments short.
+- **Use the `private` / `public` keywords** for class members. Do not mark private methods or properties with the `#` symbol.
+
 ## Architecture
 
 All application logic runs in the **Electron main process** (ESM). There is no renderer framework; renderer UI is plain HTML in `src/renderer/` (each page has a sibling `.ts` entry) bundled by electron-vite and driven by preload scripts.

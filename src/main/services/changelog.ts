@@ -15,22 +15,22 @@ export interface ChangelogEntry {
 }
 
 class ChangelogService {
-	#apiUrl: string;
-	#lastFetched: string | null = null;
+	private apiUrl: string;
+	private lastFetched: string | null = null;
 
 	constructor(repoOwner: string, repoName: string) {
-		this.#apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/releases`;
+		this.apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/releases`;
 	}
 
-	async fetch(): Promise<ChangelogEntry[]> {
+	public async fetch(): Promise<ChangelogEntry[]> {
 		try {
-			const response = await fetch(this.#apiUrl);
+			const response = await fetch(this.apiUrl);
 			if (!response.ok) {
 				throw new Error(`Failed to fetch changelog: ${response.statusText}`);
 			}
 
 			const releases = (await response.json()) as GithubRelease[];
-			this.#lastFetched = new Date().toISOString();
+			this.lastFetched = new Date().toISOString();
 			return releases.map((release) => ({
 				version: release.tag_name,
 				date: release.published_at,
@@ -43,7 +43,7 @@ class ChangelogService {
 		}
 	}
 
-	async html(data: ChangelogEntry[]): Promise<string> {
+	public async html(data: ChangelogEntry[]): Promise<string> {
 		if (!data || !data.length) {
 			return '<p>No changelog available.</p>';
 		}
@@ -61,7 +61,7 @@ class ChangelogService {
 			)
 			.join('');
 
-		return `<dl data-lastfetched="${this.#lastFetched}">${changelogHtml}</dl>`;
+		return `<dl data-lastfetched="${this.lastFetched}">${changelogHtml}</dl>`;
 	}
 }
 

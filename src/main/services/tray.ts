@@ -2,31 +2,31 @@ import { app, Tray, Menu, nativeTheme, type BaseWindow, type BrowserWindow } fro
 import { resolveAsset } from '../lib/resources';
 
 class TrayService {
-	#tray: Tray;
-	#window: BaseWindow;
-	#options: BrowserWindow;
-	#indicator = false;
-	#menu: Menu;
+	private tray: Tray;
+	private window: BaseWindow;
+	private options: BrowserWindow;
+	private indicator = false;
+	private menu: Menu;
 
 	constructor(mainWindow: BaseWindow, optionsWindow: BrowserWindow) {
 		const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
-		this.#window = mainWindow;
-		this.#options = optionsWindow;
-		this.#tray = new Tray(resolveAsset(`icons/${theme}/tray.png`));
+		this.window = mainWindow;
+		this.options = optionsWindow;
+		this.tray = new Tray(resolveAsset(`icons/${theme}/tray.png`));
 
-		this.#menu = this.#menuTemplate();
+		this.menu = this.menuTemplate();
 
-		this.#tray.setToolTip('Notion');
-		this.#tray.setContextMenu(this.#menu);
+		this.tray.setToolTip('Notion');
+		this.tray.setContextMenu(this.menu);
 
-		this.#tray.on('click', () => {
-			if (this.#window?.isVisible()) {
-				this.#window.hide();
+		this.tray.on('click', () => {
+			if (this.window?.isVisible()) {
+				this.window.hide();
 			} else {
-				if (this.#window?.isMinimized()) {
-					this.#window.restore();
+				if (this.window?.isMinimized()) {
+					this.window.restore();
 				}
-				this.#window?.show();
+				this.window?.show();
 			}
 		});
 
@@ -34,44 +34,44 @@ class TrayService {
 		this.onUpdateNotAvailable = this.onUpdateNotAvailable.bind(this);
 	}
 
-	#menuTemplate() {
+	private menuTemplate() {
 		return Menu.buildFromTemplate([
 			{
 				label: 'Show App',
 				click: () => {
-					this.#window.show();
+					this.window.show();
 				},
 			},
 			{ type: 'separator' },
 			{
 				label: 'Options',
 				click: () => {
-					this.#options.webContents.send('show-tab', 'options');
-					this.#options.show();
+					this.options.webContents.send('show-tab', 'options');
+					this.options.show();
 				},
 			},
 			{
 				label: 'Updates',
-				visible: !this.#indicator,
+				visible: !this.indicator,
 				click: () => {
-					this.#options.webContents.send('show-tab', 'updates');
-					this.#options.show();
+					this.options.webContents.send('show-tab', 'updates');
+					this.options.show();
 				},
 			},
 			{
 				label: 'New Update Available',
-				visible: this.#indicator,
+				visible: this.indicator,
 				icon: resolveAsset('icons/indicator.png'),
 				click: () => {
-					this.#options.webContents.send('show-tab', 'updates');
-					this.#options.show();
+					this.options.webContents.send('show-tab', 'updates');
+					this.options.show();
 				},
 			},
 			{
 				label: 'About',
 				click: () => {
-					this.#options.webContents.send('show-tab', 'about');
-					this.#options.show();
+					this.options.webContents.send('show-tab', 'about');
+					this.options.show();
 				},
 			},
 			{ type: 'separator' },
@@ -85,20 +85,20 @@ class TrayService {
 		]);
 	}
 
-	onUpdateAvailable() {
-		this.#indicator = true;
+	public onUpdateAvailable() {
+		this.indicator = true;
 		const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
-		this.#tray.setImage(resolveAsset(`icons/${theme}/tray-indicator.png`));
-		this.#menu = this.#menuTemplate();
-		this.#tray.setContextMenu(this.#menu);
+		this.tray.setImage(resolveAsset(`icons/${theme}/tray-indicator.png`));
+		this.menu = this.menuTemplate();
+		this.tray.setContextMenu(this.menu);
 	}
 
-	onUpdateNotAvailable() {
-		this.#indicator = false;
+	public onUpdateNotAvailable() {
+		this.indicator = false;
 		const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
-		this.#tray.setImage(resolveAsset(`icons/${theme}/tray.png`));
-		this.#menu = this.#menuTemplate();
-		this.#tray.setContextMenu(this.#menu);
+		this.tray.setImage(resolveAsset(`icons/${theme}/tray.png`));
+		this.menu = this.menuTemplate();
+		this.tray.setContextMenu(this.menu);
 	}
 }
 

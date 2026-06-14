@@ -3,7 +3,7 @@ import { Notification } from 'electron';
 class NotificationService {
 	// TODO: Either turn into library or full service
 	// eslint-disable-next-line publicMethods/public-class-methods-use-this
-	notify({ title, body, icon }: { title?: string; body?: string; icon?: string }): void {
+	public notify({ title, body, icon }: { title?: string; body?: string; icon?: string }): void {
 		if (Notification.isSupported()) {
 			const notification = new Notification({
 				title: title || 'Notification',

@@ -17,7 +17,6 @@ import { createMonitorBus } from './lib/dbus';
 import { resolveAsset, resolvePreload, loadRendererPage } from './lib/resources';
 import type { OptionsConfig, StoreSchema } from './types';
 
-// Shape of the freedesktop appearance portal `Read` reply we navigate into.
 type DBusReadReply = { args?: ReadonlyArray<ReadonlyArray<ReadonlyArray<unknown>>> };
 
 const TITLEBAR_HEIGHT = 40;

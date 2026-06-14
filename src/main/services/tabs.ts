@@ -52,103 +52,103 @@ function sendKey(
 }
 
 class TabsService {
-	#tabViews: Record<string, WebContentsView> = {};
-	#tabAppMap: TabAppMap = {
+	private tabViews: Record<string, WebContentsView> = {};
+	private tabAppMap: TabAppMap = {
 		notes: [],
 		calendar: [],
 		mail: [],
 	};
-	#iconMap: Record<string, string> = {};
-	#titlesMap: Record<string, string> = {};
-	#pinnedMap: Record<string, boolean> = {};
-	#titleBarView: WebContentsView;
-	#window: BaseWindow;
-	#currentTabId: string | null = null;
-	#options: OptionsService;
-	#store: AppStore;
-	#mainBus: EventEmitter;
+	private iconMap: Record<string, string> = {};
+	private titlesMap: Record<string, string> = {};
+	private pinnedMap: Record<string, boolean> = {};
+	private titleBarView: WebContentsView;
+	private window: BaseWindow;
+	private currentTabId: string | null = null;
+	private options: OptionsService;
+	private store: AppStore;
+	private mainBus: EventEmitter;
 
 	constructor(window: BaseWindow, optionsService: OptionsService, store: AppStore, mainBus: EventEmitter) {
-		this.#window = window;
-		this.#options = optionsService;
-		this.#store = store;
-		this.#mainBus = mainBus;
+		this.window = window;
+		this.options = optionsService;
+		this.store = store;
+		this.mainBus = mainBus;
 
-		this.#mainBus.on('option-changed', (optionId: string, value: unknown) => {
+		this.mainBus.on('option-changed', (optionId: string, value: unknown) => {
 			if (optionId === 'tabs-show-calendar' && value === false) {
-				this.#closeTabsByApp('calendar');
+				this.closeTabsByApp('calendar');
 			}
 			if (optionId === 'tabs-show-mail' && value === false) {
-				this.#closeTabsByApp('mail');
+				this.closeTabsByApp('mail');
 			}
 		});
 
-		this.#titleBarView = new WebContentsView({
+		this.titleBarView = new WebContentsView({
 			webPreferences: {
 				preload: resolvePreload('tab.cjs'),
 			},
 		});
-		loadRendererPage(this.#titleBarView.webContents, 'titlebar');
-		this.#titleBarView.webContents.on('before-input-event', (event, input) => {
-			detectShortcut(input, event, this.#currentView()?.webContents, this.#titleBarView.webContents);
+		loadRendererPage(this.titleBarView.webContents, 'titlebar');
+		this.titleBarView.webContents.on('before-input-event', (event, input) => {
+			detectShortcut(input, event, this.currentView()?.webContents, this.titleBarView.webContents);
 		});
-		this.#window.contentView.addChildView(this.#titleBarView);
-		this.#currentTabId = this.#store.get('tab-current', null);
+		this.window.contentView.addChildView(this.titleBarView);
+		this.currentTabId = this.store.get('tab-current', null);
 
 		ipcMain.on('add-tab', (event, options: TabRequestOptions) => {
-			this.#addTab(options);
+			this.addTab(options);
 		});
 
 		ipcMain.on('change-tab', (event, tabId: string) => {
-			this.#onChangeTab(tabId);
+			this.onChangeTab(tabId);
 		});
 
 		ipcMain.on('close-tab', (event, tabId: string) => {
-			this.#onCloseTab(tabId);
+			this.onCloseTab(tabId);
 		});
 
 		ipcMain.on('set-url', (event, tabId: string, url: string) => {
-			this.#setTabUrl(tabId, url);
+			this.setTabUrl(tabId, url);
 		});
 
 		ipcMain.on('history-changed', (event, title: string | null, icon: string | null) => {
-			this.#onHistoryChanged(event.sender, title, icon);
+			this.onHistoryChanged(event.sender, title, icon);
 		});
 
 		ipcMain.on('history-back', () => {
-			this.#currentView()?.webContents.goBack();
+			this.currentView()?.webContents.goBack();
 		});
 
 		ipcMain.on('history-forward', () => {
-			this.#currentView()?.webContents.goForward();
+			this.currentView()?.webContents.goForward();
 		});
 
 		ipcMain.on('tab-pin-toggle', (event, tabId: string, isPinned: boolean) => {
 			this.togglePinTab(tabId, isPinned);
 		});
 
-		if (this.#options.getOption('tabs-continue-sidebar')) {
+		if (this.options.getOption('tabs-continue-sidebar')) {
 			ipcMain.on('sidebar-changed', (event, collapsed: boolean, width: string) => {
-				this.#titleBarView.webContents.send('sidebar-changed', collapsed, width);
+				this.titleBarView.webContents.send('sidebar-changed', collapsed, width);
 			});
 
 			ipcMain.on('sidebar-fold', (event, collapsed: boolean) => {
-				const currentViewWebContents = this.#currentView()?.webContents;
+				const currentViewWebContents = this.currentView()?.webContents;
 				if (currentViewWebContents) {
 					currentViewWebContents.send('sidebar-fold', collapsed);
 				}
 			});
 
 			ipcMain.on('sidebar-folding-stop', () => {
-				this.#titleBarView.webContents.send('sidebar-folding-stop');
+				this.titleBarView.webContents.send('sidebar-folding-stop');
 			});
 
 			ipcMain.on('toggle-sidebar', () => {
-				sendKey({ keyCode: '\\', modifiers: ['Ctrl'] }, 50, this.#currentView());
+				sendKey({ keyCode: '\\', modifiers: ['Ctrl'] }, 50, this.currentView());
 			});
 
 			ipcMain.on('request-sidebar-data', () => {
-				const currentViewWebContents = this.#currentView()?.webContents;
+				const currentViewWebContents = this.currentView()?.webContents;
 				if (currentViewWebContents) {
 					currentViewWebContents.send('request-sidebar-data');
 				}
@@ -157,8 +157,8 @@ class TabsService {
 
 		ipcMain.on('request-options', (event) => {
 			const options = {
-				initialTabId: this.#currentTabId,
-				sidebarContinueToTitlebar: this.#options.getOption('tabs-continue-sidebar'),
+				initialTabId: this.currentTabId,
+				sidebarContinueToTitlebar: this.options.getOption('tabs-continue-sidebar'),
 			};
 			event.sender.send('global-options', options);
 		});
@@ -166,25 +166,25 @@ class TabsService {
 		ipcMain.on('show-offline-screen', (event, { isLocal }: { isLocal: boolean }) => {
 			if (isLocal) return;
 
-			const tabId = this.getTabIds().find((id) => this.#tabViews[id]?.webContents === event.sender);
+			const tabId = this.getTabIds().find((id) => this.tabViews[id]?.webContents === event.sender);
 
 			loadRendererPage(event.sender, 'offline', {
-				next: tabId ? (this.#tabViews[tabId]?.webContents.getURL() ?? '') : '',
+				next: tabId ? (this.tabViews[tabId]?.webContents.getURL() ?? '') : '',
 			});
 		});
 
 		ipcMain.on('titlebar-ready', () => {
-			if (this.#options.getOption('debug-open-dev-tools')) {
-				this.#titleBarView.webContents.openDevTools({ mode: 'detach' });
+			if (this.options.getOption('debug-open-dev-tools')) {
+				this.titleBarView.webContents.openDevTools({ mode: 'detach' });
 			}
 
-			if (this.#options.getOption('tabs-reopen-on-start')) {
-				this.#reopenTabs(this.#store.get('tabs', {}));
+			if (this.options.getOption('tabs-reopen-on-start')) {
+				this.reopenTabs(this.store.get('tabs', {}));
 			} else {
 				this.requestTab({ url: HOME_PAGE, app: 'notes' });
 			}
 
-			if (this.#options.getOption('tabs-show-calendar')) {
+			if (this.options.getOption('tabs-show-calendar')) {
 				this.requestTab({
 					url: CALENDAR_PAGE,
 					isPinned: true,
@@ -193,7 +193,7 @@ class TabsService {
 				});
 			}
 
-			if (this.#options.getOption('tabs-show-mail')) {
+			if (this.options.getOption('tabs-show-mail')) {
 				this.requestTab({
 					url: MAIL_PAGE,
 					isPinned: true,
@@ -202,31 +202,31 @@ class TabsService {
 				});
 			}
 
-			this.#setViewSize();
+			this.setViewSize();
 		});
 
 		ipcMain.on('run-action', (event, actionName: string) => {
 			this.runAction(actionName);
 		});
 
-		this.#window.on('closed', () => {
-			Object.values(this.#tabViews).forEach((view) => {
+		this.window.on('closed', () => {
+			Object.values(this.tabViews).forEach((view) => {
 				view.webContents.close();
 			});
 		});
 
-		this.#window.on('resize', this.#setViewSize.bind(this));
+		this.window.on('resize', this.setViewSize.bind(this));
 
 		app.on('before-quit', () => {
-			this.#saveTabs();
+			this.saveTabs();
 		});
 	}
 
-	#currentView(): WebContentsView | undefined {
-		return this.#currentTabId ? this.#tabViews[this.#currentTabId] : undefined;
+	private currentView(): WebContentsView | undefined {
+		return this.currentTabId ? this.tabViews[this.currentTabId] : undefined;
 	}
 
-	#getAppFromUrl(url: string): AppName {
+	private getAppFromUrl(url: string): AppName {
 		const u = new URL(url);
 		if (u.pathname.startsWith('/calendarAuth')) {
 			return 'calendar';
@@ -241,15 +241,15 @@ class TabsService {
 		}
 	}
 
-	#setViewSize(): void {
-		const bounds = this.#window.getContentBounds();
-		this.#titleBarView.setBounds({
+	private setViewSize(): void {
+		const bounds = this.window.getContentBounds();
+		this.titleBarView.setBounds({
 			x: 0,
 			y: 0,
 			width: bounds.width,
 			height: TITLEBAR_HEIGHT,
 		});
-		Object.values(this.#tabViews).forEach((view) => {
+		Object.values(this.tabViews).forEach((view) => {
 			view.setBounds({
 				x: 0,
 				y: TITLEBAR_HEIGHT,
@@ -259,41 +259,40 @@ class TabsService {
 		});
 	}
 
-	#closeTabsByApp(appName: AppName): void {
-		const tabIds = this.#tabAppMap[appName] || [];
-		// Clone the array with [...] because #onCloseTab mutates the original array
+	private closeTabsByApp(appName: AppName): void {
+		const tabIds = this.tabAppMap[appName] || [];
 		[...tabIds].forEach((tabId) => {
-			this.#onCloseTab(tabId);
+			this.onCloseTab(tabId);
 		});
 	}
 
-	#setVisibleTabs(tabId: string): void {
-		Object.entries(this.#tabViews).forEach(([viewId, view]) => {
+	private setVisibleTabs(tabId: string): void {
+		Object.entries(this.tabViews).forEach(([viewId, view]) => {
 			const visible = viewId === tabId;
 			if (visible && view) {
-				this.#window.contentView.addChildView(view);
+				this.window.contentView.addChildView(view);
 			} else {
-				this.#window.contentView.removeChildView(view);
+				this.window.contentView.removeChildView(view);
 			}
 		});
 
-		this.#currentTabId = tabId;
+		this.currentTabId = tabId;
 	}
 
-	#addTab({ tabId, url, isPinned = false, app }: TabRequestOptions): void {
+	private addTab({ tabId, url, isPinned = false, app }: TabRequestOptions): void {
 		if (!tabId) return;
 		const view = new WebContentsView({
 			webPreferences: {
 				preload: resolvePreload('docs.cjs'),
-				spellcheck: this.#options.getOption('general-enable-spellcheck'),
+				spellcheck: this.options.getOption('general-enable-spellcheck'),
 			},
 		});
 
-		if (this.#options.getOption('debug-open-dev-tools')) {
+		if (this.options.getOption('debug-open-dev-tools')) {
 			view.webContents.openDevTools({ mode: 'detach' });
 		}
 
-		const bounds = this.#window.getContentBounds();
+		const bounds = this.window.getContentBounds();
 		view.setBounds({
 			x: 0,
 			y: TITLEBAR_HEIGHT,
@@ -306,22 +305,22 @@ class TabsService {
 				userAgent: USER_AGENT,
 			})
 			.then(() => {
-				this.#saveTabs();
-				if (this.#currentTabId === tabId) {
-					this.#setVisibleTabs(tabId);
+				this.saveTabs();
+				if (this.currentTabId === tabId) {
+					this.setVisibleTabs(tabId);
 				}
 			});
 		view.webContents.setWindowOpenHandler((event) => {
 			const { url, disposition } = event;
-			return this.#tabOpenWindowHandler(url, disposition);
+			return this.tabOpenWindowHandler(url, disposition);
 		});
 
 		view.webContents.on('before-input-event', (event, input) => {
-			detectShortcut(input, event, view.webContents, this.#titleBarView.webContents);
+			detectShortcut(input, event, view.webContents, this.titleBarView.webContents);
 		});
 
 		view.webContents.on('context-menu', (event, params) => {
-			this.#mainBus.emit('show-page-context-menu', {
+			this.mainBus.emit('show-page-context-menu', {
 				sender: view.webContents,
 				isLink: Boolean(params.linkURL),
 				isImage: params.mediaType === 'image' && Boolean(params.srcURL),
@@ -333,12 +332,12 @@ class TabsService {
 			});
 		});
 
-		this.#tabViews[tabId] = view;
-		this.#pinnedMap[tabId] = isPinned;
-		this.#tabAppMap[app ?? this.#getAppFromUrl(url ?? HOME_PAGE)].push(tabId);
+		this.tabViews[tabId] = view;
+		this.pinnedMap[tabId] = isPinned;
+		this.tabAppMap[app ?? this.getAppFromUrl(url ?? HOME_PAGE)].push(tabId);
 	}
 
-	#tabOpenWindowHandler(url: string, disposition: string): WindowOpenHandlerResponse {
+	private tabOpenWindowHandler(url: string, disposition: string): WindowOpenHandlerResponse {
 		const u = new URL(url);
 
 		const isAuthHost = AUTH_HOSTS.some((host) => u.hostname.includes(host));
@@ -362,7 +361,7 @@ class TabsService {
 
 		if (u.hostname.includes('notion.com') || u.hostname.includes('notion.so')) {
 			if (disposition === 'new-window' || disposition === 'foreground-tab' || disposition === 'background-tab') {
-				this.#titleBarView.webContents.send('tab-request', {
+				this.titleBarView.webContents.send('tab-request', {
 					url: u.toString(),
 				});
 				return { action: 'deny' };
@@ -374,100 +373,100 @@ class TabsService {
 		return { action: 'deny' };
 	}
 
-	#onChangeTab(tabId: string): void {
-		const view = this.#currentView();
-		this.#titleBarView.webContents.send('tab-info', tabId, {
+	private onChangeTab(tabId: string): void {
+		const view = this.currentView();
+		this.titleBarView.webContents.send('tab-info', tabId, {
 			title: null,
 			icon: null,
 			documentUrl: view?.webContents?.getURL(),
 			canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 			canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 		});
-		this.#setVisibleTabs(tabId);
+		this.setVisibleTabs(tabId);
 	}
 
-	#onCloseTab(tabId: string): void {
-		const view = this.#tabViews[tabId];
+	private onCloseTab(tabId: string): void {
+		const view = this.tabViews[tabId];
 		if (view) {
 			view.webContents?.close();
-			delete this.#tabViews[tabId];
-			delete this.#iconMap[tabId];
-			delete this.#titlesMap[tabId];
-			delete this.#pinnedMap[tabId];
+			delete this.tabViews[tabId];
+			delete this.iconMap[tabId];
+			delete this.titlesMap[tabId];
+			delete this.pinnedMap[tabId];
 
-			(Object.entries(this.#tabAppMap) as [AppName, string[]][]).forEach(([appName, tabIds]) => {
-				this.#tabAppMap[appName] = tabIds.filter((id) => id !== tabId);
+			(Object.entries(this.tabAppMap) as [AppName, string[]][]).forEach(([appName, tabIds]) => {
+				this.tabAppMap[appName] = tabIds.filter((id) => id !== tabId);
 			});
 		}
-		this.#saveTabs();
+		this.saveTabs();
 	}
 
-	#setTabUrl(tabId: string, url: string): void {
-		const view = this.#tabViews[tabId];
+	private setTabUrl(tabId: string, url: string): void {
+		const view = this.tabViews[tabId];
 		if (view) {
 			const fullUrl = new URL(url, view.webContents.getURL()).toString();
 			view.webContents.loadURL(fullUrl.toString());
 		}
 	}
 
-	#onHistoryChanged(sender: WebContents, title: string | null, icon: string | null): void {
-		const tabId = Object.keys(this.#tabViews).find((id) => this.#tabViews[id]?.webContents === sender);
+	private onHistoryChanged(sender: WebContents, title: string | null, icon: string | null): void {
+		const tabId = Object.keys(this.tabViews).find((id) => this.tabViews[id]?.webContents === sender);
 
 		if (tabId) {
-			const view = this.#tabViews[tabId];
+			const view = this.tabViews[tabId];
 			if (!view) return;
 
 			if (icon) {
 				convertIcon(icon).then((convertedIcon) => {
 					if (!convertedIcon) return;
-					this.#titleBarView.webContents.send('tab-info', tabId, {
+					this.titleBarView.webContents.send('tab-info', tabId, {
 						title: null,
 						icon: convertedIcon,
 						documentUrl: view.webContents?.getURL(),
 						canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 						canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 					});
-					this.#iconMap[tabId] = convertedIcon;
+					this.iconMap[tabId] = convertedIcon;
 				});
 			}
 			if (title) {
-				this.#titleBarView.webContents.send('tab-info', tabId, {
+				this.titleBarView.webContents.send('tab-info', tabId, {
 					title,
 					icon: null,
 					documentUrl: view.webContents?.getURL(),
 					canGoBack: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 					canGoForward: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 				});
-				this.#titlesMap[tabId] = title;
+				this.titlesMap[tabId] = title;
 			}
 		}
 	}
 
-	getTabView(tabId: string): WebContentsView | undefined {
-		return this.#tabViews[tabId];
+	public getTabView(tabId: string): WebContentsView | undefined {
+		return this.tabViews[tabId];
 	}
 
-	getTitleBarView(): WebContentsView {
-		return this.#titleBarView;
+	public getTitleBarView(): WebContentsView {
+		return this.titleBarView;
 	}
 
-	getTabIds(): string[] {
-		return Object.keys(this.#tabViews);
+	public getTabIds(): string[] {
+		return Object.keys(this.tabViews);
 	}
 
-	duplicateTab(tabId: string): void {
-		this.#titleBarView.webContents.send('tab-request', {
-			url: this.#tabViews[tabId]?.webContents.getURL(),
+	public duplicateTab(tabId: string): void {
+		this.titleBarView.webContents.send('tab-request', {
+			url: this.tabViews[tabId]?.webContents.getURL(),
 		});
 	}
 
-	requestTab(options: TabRequestOptions): void {
-		this.#titleBarView.webContents.send('tab-request', options);
+	public requestTab(options: TabRequestOptions): void {
+		this.titleBarView.webContents.send('tab-request', options);
 	}
 
-	getTabsJSON(): Record<string, string> {
-		return Object.keys(this.#tabViews).reduce<Record<string, string>>((acc, tabId) => {
-			const view = this.#tabViews[tabId];
+	public getTabsJSON(): Record<string, string> {
+		return Object.keys(this.tabViews).reduce<Record<string, string>>((acc, tabId) => {
+			const view = this.tabViews[tabId];
 			const url = view?.webContents?.getURL();
 			if (url) {
 				acc[tabId] = url;
@@ -476,10 +475,10 @@ class TabsService {
 		}, {});
 	}
 
-	#reopenTabs(tabs: Record<string, string>): void {
+	private reopenTabs(tabs: Record<string, string>): void {
 		Object.entries(tabs).forEach(([tabId, url]) => {
-			const isPinned = this.#store.get('tabs-pinned', {})[tabId] ?? false;
-			const apps = this.#store.get('tab-apps', {
+			const isPinned = this.store.get('tabs-pinned', {})[tabId] ?? false;
+			const apps = this.store.get('tab-apps', {
 				notes: [],
 				calendar: [],
 				mail: [],
@@ -494,42 +493,42 @@ class TabsService {
 		});
 	}
 
-	#saveTabs(): void {
-		if (this.#options.getOption('tabs-reopen-on-start')) {
-			this.#store.set('tabs', this.getTabsJSON());
-			this.#store.set('tab-current', this.#currentTabId);
-			this.#store.set('tabs-pinned', this.#pinnedMap);
-			this.#store.set('tab-apps', this.#tabAppMap);
+	private saveTabs(): void {
+		if (this.options.getOption('tabs-reopen-on-start')) {
+			this.store.set('tabs', this.getTabsJSON());
+			this.store.set('tab-current', this.currentTabId);
+			this.store.set('tabs-pinned', this.pinnedMap);
+			this.store.set('tab-apps', this.tabAppMap);
 		}
 	}
 
-	getTabIcon(tabId: string): string | undefined {
-		return this.#iconMap[tabId];
+	public getTabIcon(tabId: string): string | undefined {
+		return this.iconMap[tabId];
 	}
 
-	getTabTitle(tabId: string): string | undefined {
-		return this.#titlesMap[tabId];
+	public getTabTitle(tabId: string): string | undefined {
+		return this.titlesMap[tabId];
 	}
 
-	getCurrentTabId(): string | null {
-		return this.#currentTabId;
+	public getCurrentTabId(): string | null {
+		return this.currentTabId;
 	}
 
-	togglePinTab(tabId: string, isPinned: boolean): void {
-		this.#pinnedMap[tabId] = isPinned;
-		this.#saveTabs();
+	public togglePinTab(tabId: string, isPinned: boolean): void {
+		this.pinnedMap[tabId] = isPinned;
+		this.saveTabs();
 	}
 
-	isPinned(tabId: string): boolean {
-		return Boolean(this.#pinnedMap[tabId]);
+	public isPinned(tabId: string): boolean {
+		return Boolean(this.pinnedMap[tabId]);
 	}
 
-	runAction(actionName: string): void {
+	public runAction(actionName: string): void {
 		const shortcut = shortcutMap[actionName as keyof typeof shortcutMap];
 		if (shortcut) {
 			shortcut.action({
-				pageWebContents: this.#currentView()?.webContents,
-				titlebarWebContents: this.#titleBarView.webContents,
+				pageWebContents: this.currentView()?.webContents,
+				titlebarWebContents: this.titleBarView.webContents,
 			});
 		}
 	}

@@ -109,6 +109,14 @@ Formatting is handled entirely by tooling — **don't hand-format**. The settled
 (`.editorconfig`, `prettier.config.js`) are tabs at width 4, a 120-column print width, single
 quotes, semicolons, and trailing commas.
 
+Beyond formatting, two conventions are enforced by review:
+
+- **Self-explanatory code over comments.** Write code that explains itself and avoid comments.
+  Only comment when it's necessary — to explain a hack, an unorthodox approach, or a magic
+  number, or to document the public API of an internal library. Keep necessary comments short.
+- **Use the `private` / `public` keywords** for class members — don't mark private methods or
+  properties with the `#` symbol.
+
 Linting is driven by **custom Node scripts in `dev/scripts/`**, not by calling `eslint`/`prettier`
 directly:
 

@@ -209,8 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 
-	// Updates the tab's child elements (queried locals); the tab's own properties
-	// are set by the caller where `tab` is a local, to satisfy no-param-reassign.
 	function applyTabTitle(tab: HTMLElement, title: string): void {
 		const tabTitle = tab.querySelector('.tab-title');
 		if (tabTitle) tabTitle.textContent = title;

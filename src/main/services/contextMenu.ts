@@ -26,42 +26,42 @@ interface PageContextMenuPayload {
 }
 
 class ContextMenuService {
-	#window: BaseWindow;
-	#tabService: TabsService;
-	#mainBus: EventEmitter;
+	private window: BaseWindow;
+	private tabService: TabsService;
+	private mainBus: EventEmitter;
 
 	constructor(window: BaseWindow, tabService: TabsService, mainBus: EventEmitter) {
-		this.#window = window;
-		this.#tabService = tabService;
-		this.#mainBus = mainBus;
+		this.window = window;
+		this.tabService = tabService;
+		this.mainBus = mainBus;
 
 		ipcMain.on('show-tab-context-menu', (event, tabId: string) => {
-			const menu = Menu.buildFromTemplate(this.#templateTabContextMenu(tabId));
-			menu.popup({ window: this.#window });
+			const menu = Menu.buildFromTemplate(this.templateTabContextMenu(tabId));
+			menu.popup({ window: this.window });
 		});
 
-		this.#mainBus.on('show-page-context-menu', (payload: PageContextMenuPayload) => {
+		this.mainBus.on('show-page-context-menu', (payload: PageContextMenuPayload) => {
 			const wc = payload.sender;
-			const menu = Menu.buildFromTemplate(this.#templatePageContextMenu(wc, payload));
-			menu.popup({ window: this.#window });
+			const menu = Menu.buildFromTemplate(this.templatePageContextMenu(wc, payload));
+			menu.popup({ window: this.window });
 		});
 
 		ipcMain.on('show-all-tabs-menu', () => {
-			const tabIds = this.#tabService.getTabIds();
-			const menu = Menu.buildFromTemplate(this.#templateAllTabsContextMenu(tabIds));
-			menu.popup({ window: this.#window });
+			const tabIds = this.tabService.getTabIds();
+			const menu = Menu.buildFromTemplate(this.templateAllTabsContextMenu(tabIds));
+			menu.popup({ window: this.window });
 		});
 	}
 
-	#templateTabContextMenu(tabId: string): MenuItemConstructorOptions[] {
-		const view = this.#tabService.getTabView(tabId);
-		const isPinned = this.#tabService.isPinned(tabId);
-		const titlebar = this.#tabService.getTitleBarView();
+	private templateTabContextMenu(tabId: string): MenuItemConstructorOptions[] {
+		const view = this.tabService.getTabView(tabId);
+		const isPinned = this.tabService.isPinned(tabId);
+		const titlebar = this.tabService.getTitleBarView();
 		return [
 			{
 				label: isPinned ? 'Unpin Tab' : 'Pin Tab',
 				click: () => {
-					this.#tabService.togglePinTab(tabId, !isPinned);
+					this.tabService.togglePinTab(tabId, !isPinned);
 					titlebar.webContents.send('context-menu-command', {
 						id: 'pin',
 						tabId,
@@ -84,9 +84,9 @@ class ContextMenuService {
 				click: () => {
 					titlebar.webContents.send('context-menu-command', {
 						id: 'closeOther',
-						tabIds: this.#tabService
+						tabIds: this.tabService
 							.getTabIds()
-							.filter((id) => id !== tabId && !this.#tabService.isPinned(id)),
+							.filter((id) => id !== tabId && !this.tabService.isPinned(id)),
 					});
 				},
 			},
@@ -100,7 +100,7 @@ class ContextMenuService {
 			{
 				label: 'Duplicate Current Tab',
 				click: () => {
-					this.#tabService.duplicateTab(tabId);
+					this.tabService.duplicateTab(tabId);
 				},
 				enabled: Boolean(view),
 			},
@@ -108,34 +108,34 @@ class ContextMenuService {
 			{
 				label: 'Zoom In',
 				accelerator: shortcutMap.zoomIn.accelerator,
-				click: () => this.#tabService.runAction('zoomIn'),
+				click: () => this.tabService.runAction('zoomIn'),
 			},
 			{
 				label: 'Zoom Out',
 				accelerator: shortcutMap.zoomOut.accelerator,
-				click: () => this.#tabService.runAction('zoomOut'),
+				click: () => this.tabService.runAction('zoomOut'),
 			},
 			{
 				label: 'Reset Zoom',
 				accelerator: shortcutMap.zoomReset.accelerator,
-				click: () => this.#tabService.runAction('zoomReset'),
+				click: () => this.tabService.runAction('zoomReset'),
 			},
 			{ type: 'separator' },
 			{
 				label: 'Reload',
 				accelerator: shortcutMap.pageReload.accelerator,
-				click: () => this.#tabService.runAction('pageReload'),
+				click: () => this.tabService.runAction('pageReload'),
 			},
 			{
 				label: 'Back',
 				accelerator: shortcutMap.historyBack.accelerator,
-				click: () => this.#tabService.runAction('historyBack'),
+				click: () => this.tabService.runAction('historyBack'),
 				enabled: Boolean(view?.webContents?.navigationHistory.canGoBack()),
 			},
 			{
 				label: 'Forward',
 				accelerator: shortcutMap.historyForward.accelerator,
-				click: () => this.#tabService.runAction('historyForward'),
+				click: () => this.tabService.runAction('historyForward'),
 				enabled: Boolean(view?.webContents?.navigationHistory.canGoForward()),
 			},
 			{ type: 'separator' },
@@ -155,7 +155,7 @@ class ContextMenuService {
 		];
 	}
 
-	#templatePageContextMenu(
+	private templatePageContextMenu(
 		wc: WebContents,
 		{
 			isLink,
@@ -196,7 +196,7 @@ class ContextMenuService {
 			{
 				label: 'Open Link in New Tab',
 				click: () => {
-					this.#tabService.requestTab({ url: linkUrl });
+					this.tabService.requestTab({ url: linkUrl });
 				},
 				visible: isLink,
 				enabled: linkUrl?.startsWith('https://notion') || linkUrl?.startsWith('https://www.notion'),
@@ -254,24 +254,24 @@ class ContextMenuService {
 		return template;
 	}
 
-	#templateAllTabsContextMenu(tabs: string[]): MenuItemConstructorOptions[] {
+	private templateAllTabsContextMenu(tabs: string[]): MenuItemConstructorOptions[] {
 		const dir = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
 		const defaultIcon = nativeImage
 			.createFromPath(resolveAsset(`icons/${dir}/document.png`))
 			.resize({ width: 16, height: 16 });
 		return tabs.map((id): MenuItemConstructorOptions => {
-			const storedIcon = this.#tabService.getTabIcon(id);
+			const storedIcon = this.tabService.getTabIcon(id);
 			const icon =
 				storedIcon && !storedIcon.includes('favicon.ico')
 					? nativeImage.createFromDataURL(storedIcon).resize({ width: 16, height: 16 })
 					: defaultIcon;
 			return {
-				label: (this.#tabService.getTabTitle(id) ?? 'New Tab') + (this.#tabService.isPinned(id) ? ' 📌' : ''),
+				label: (this.tabService.getTabTitle(id) ?? 'New Tab') + (this.tabService.isPinned(id) ? ' 📌' : ''),
 				click: () => {
-					this.#tabService.requestTab({ tabId: id });
+					this.tabService.requestTab({ tabId: id });
 				},
 				type: 'radio',
-				checked: id === this.#tabService.getCurrentTabId(),
+				checked: id === this.tabService.getCurrentTabId(),
 				icon,
 			};
 		});
