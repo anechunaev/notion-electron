@@ -1,11 +1,29 @@
+import { readFileSync } from 'node:fs';
+import { builtinModules } from 'node:module';
 import { resolve } from 'node:path';
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
+
+const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
+	dependencies?: Record<string, string>;
+};
+
+// `electron` and Node builtins must stay external in every Electron-process
+// bundle: the `electron` npm package is a wrapper that resolves the binary path
+// using `__dirname` (invalid in this ESM output) and returns a string, not the
+// real API. Bundling it crashes the main process at load and leaves preloads
+// without `contextBridge`/`ipcRenderer`.
+const electronAndBuiltins = ['electron', /^electron\/.+/, ...builtinModules.flatMap((name) => [name, `node:${name}`])];
+
+// Main additionally externalizes every runtime dependency so they load from
+// node_modules at runtime (native modules like `sharp` can't be bundled).
+const mainExternals = [...electronAndBuiltins, ...Object.keys(pkg.dependencies ?? {})];
 
 export default defineConfig({
 	main: {
 		plugins: [externalizeDepsPlugin()],
 		build: {
 			rollupOptions: {
+				external: mainExternals,
 				input: { index: resolve('src/main/index.ts') },
 			},
 		},
@@ -14,6 +32,7 @@ export default defineConfig({
 		plugins: [externalizeDepsPlugin()],
 		build: {
 			rollupOptions: {
+				external: electronAndBuiltins,
 				input: {
 					tab: resolve('src/preload/tab.ts'),
 					docs: resolve('src/preload/docs.ts'),
