@@ -62,7 +62,7 @@
     "decode-ico": "^0.4.1",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.8.9",
-    "sharp": "^0.34.4",
+    "sharp": "^0.35.1",
     "sortablejs": "^1.15.7"
   },
   "dbus": {
