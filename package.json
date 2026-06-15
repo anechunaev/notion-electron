@@ -1,140 +1,140 @@
 {
-  "name": "notion-electron",
-  "version": "2.1.0",
-  "main": "out/main/index.js",
-  "type": "module",
-  "desktopName": "notion-electron.desktop",
-  "scripts": {
-    "postinstall": "electron-builder install-app-deps",
-    "start": "APPIMAGE=/ electron-vite -c ./config/electron.vite.config.ts dev",
-    "build": "electron-vite -c ./config/electron.vite.config.ts build",
-    "preview": "electron-vite -c ./config/electron.vite.config.ts preview",
-    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.preload.json && tsc --noEmit -p tsconfig.web.json",
-    "make": "electron-vite -c ./config/electron.vite.config.ts build && electron-packager . notion-electron --platform=linux --arch=x64 --out=dist/ --icon=./notion-electron.png --overwrite && chmod -R 777 ./dist/notion-electron-linux-x64/",
-    "pack": "electron-vite -c ./config/electron.vite.config.ts build && electron-builder --linux",
-    "install-desktop-file": "desktop-file-install --dir=$HOME/.local/share/applications ./notion-electron.desktop",
-    "dev:server": "node ./dev/release-server.mjs",
-    "flatpak-lint": "./dev/flatpak/lint.sh",
-    "flatpak-build": "./dev/flatpak/build.sh",
-    "flatpak-test": "./dev/flatpak/test.sh",
-    "flatpak-clean": "./dev/flatpak/clean.sh",
-    "snap-build": "./dev/snap/build.sh",
-    "snap-upload": "snapcraft upload --release=stable \"$(find dist -maxdepth 1 -type f -name '*.snap')\"",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "node ./dev/scripts/lint.mjs && node ./dev/scripts/prettify.mjs",
-    "lint:deep": "node ./dev/scripts/deep.mjs && node ./dev/scripts/prettify.mjs",
-    "lint:all": "node ./dev/scripts/lint.mjs -- --all-files && node ./dev/scripts/prettify.mjs",
-    "prepare": "node ./dev/scripts/hooks/install.mjs"
-  },
-  "keywords": [],
-  "author": "Artem Nechunaev <artem@nechunaev.com>",
-  "license": "MIT",
-  "description": "Unofficial Notion desktop client made with Electron for Linux",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/anechunaev/notion-electron",
-    "owner": "anechunaev",
-    "name": "notion-electron",
-    "project": "notion-electron"
-  },
-  "publish": {
-    "provider": "github",
-    "releaseType": "release"
-  },
-  "devDependencies": {
-    "@electron/packager": "^20.0.1",
-    "@eslint/js": "^10.0.1",
-    "@eslint/json": "^2.0.0",
-    "@eslint/markdown": "^8.0.2",
-    "@types/node": "^25.9.3",
-    "@types/sortablejs": "^1.15.9",
-    "electron": "^42.3.3",
-    "electron-builder": "^26.15.2",
-    "electron-vite": "^5.0.0",
-    "eslint": "^10.4.1",
-    "eslint-plugin-prettier": "^5.5.6",
-    "globals": "^17.6.0",
-    "husky": "^9.1.7",
-    "prettier": "^3.8.4",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.61.0",
-    "vite": "^7.3.5"
-  },
-  "dependencies": {
-    "@clebert/node-d-bus": "^1.0.0",
-    "@jimp/core": "^1.6.1",
-    "@jimp/js-png": "^1.6.1",
-    "@jimp/plugin-resize": "^1.6.1",
-    "d-bus-message-protocol": "^1.0.0",
-    "d-bus-type-system": "^1.0.0",
-    "decode-ico": "^0.4.1",
-    "electron-store": "^11.0.2",
-    "electron-updater": "^6.8.3",
-    "sharp": "^0.34.4",
-    "sortablejs": "^1.15.7"
-  },
-  "dbus": {
-    "name": "io.github.anechunaev.NotionElectron",
-    "path": "/io/github/anechunaev/NotionElectron",
-    "interface": "io.github.anechunaev.NotionElectron"
-  },
-  "build": {
-    "appId": "io.github.anechunaev.NotionElectron",
-    "productName": "Notion Electron",
-    "executableName": "notion-electron",
-    "linux": {
-      "target": [
-        "rpm",
-        "deb",
-        "AppImage"
-      ],
-      "icon": "./assets/icons/desktop.png",
-      "desktop": {
-        "entry": {
-          "Name": "Notion Electron",
-          "Icon": "notion-electron",
-          "Terminal": "false",
-          "Type": "Application",
-          "Categories": "Utility;Office;",
-          "Actions": "Options;Updates;About;"
-        },
-        "desktopActions": {
-          "Options": {
-            "Name": "Options",
-            "Exec": "dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.Options"
-          },
-          "Updates": {
-            "Name": "Updates",
-            "Exec": "dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.Updates"
-          },
-          "About": {
-            "Name": "About",
-            "Exec": "dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.About"
-          }
-        }
-      },
-      "category": "Utility;Office;"
-    },
-    "snap": {
-      "base": "core24",
-      "grade": "stable"
-    },
-    "artifactName": "Notion_Electron-${version}-${arch}.${ext}",
-    "icon": "./assets/icons/desktop.png",
-    "files": [
-      "out/**/*",
-      "options.json"
-    ],
-    "extraResources": [
-      {
-        "from": "assets",
-        "to": "assets"
-      }
-    ],
-    "asar": true,
-    "asarUnpack": [
-      "**/node_modules/sharp/**",
-      "**/node_modules/@img/**/*"
-    ]
-  }
+	"name": "notion-electron",
+	"version": "2.2.0",
+	"main": "out/main/index.js",
+	"type": "module",
+	"desktopName": "notion-electron.desktop",
+	"scripts": {
+		"postinstall": "electron-builder install-app-deps",
+		"start": "APPIMAGE=/ electron-vite -c ./config/electron.vite.config.ts dev",
+		"build": "electron-vite -c ./config/electron.vite.config.ts build",
+		"preview": "electron-vite -c ./config/electron.vite.config.ts preview",
+		"typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.preload.json && tsc --noEmit -p tsconfig.web.json",
+		"make": "electron-vite -c ./config/electron.vite.config.ts build && electron-packager . notion-electron --platform=linux --arch=x64 --out=dist/ --icon=./notion-electron.png --overwrite && chmod -R 777 ./dist/notion-electron-linux-x64/",
+		"pack": "electron-vite -c ./config/electron.vite.config.ts build && electron-builder --linux",
+		"install-desktop-file": "desktop-file-install --dir=$HOME/.local/share/applications ./notion-electron.desktop",
+		"dev:server": "node ./dev/release-server.mjs",
+		"flatpak-lint": "./dev/flatpak/lint.sh",
+		"flatpak-build": "./dev/flatpak/build.sh",
+		"flatpak-test": "./dev/flatpak/test.sh",
+		"flatpak-clean": "./dev/flatpak/clean.sh",
+		"snap-build": "./dev/snap/build.sh",
+		"snap-upload": "snapcraft upload --release=stable \"$(find dist -maxdepth 1 -type f -name '*.snap')\"",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"lint": "node ./dev/scripts/lint.mjs && node ./dev/scripts/prettify.mjs",
+		"lint:deep": "node ./dev/scripts/deep.mjs && node ./dev/scripts/prettify.mjs",
+		"lint:all": "node ./dev/scripts/lint.mjs -- --all-files && node ./dev/scripts/prettify.mjs",
+		"prepare": "node ./dev/scripts/hooks/install.mjs"
+	},
+	"keywords": [],
+	"author": "Artem Nechunaev <artem@nechunaev.com>",
+	"license": "MIT",
+	"description": "Unofficial Notion desktop client made with Electron for Linux",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/anechunaev/notion-electron",
+		"owner": "anechunaev",
+		"name": "notion-electron",
+		"project": "notion-electron"
+	},
+	"publish": {
+		"provider": "github",
+		"releaseType": "release"
+	},
+	"devDependencies": {
+		"@electron/packager": "^20.0.1",
+		"@eslint/js": "^10.0.1",
+		"@eslint/json": "^2.0.0",
+		"@eslint/markdown": "^8.0.2",
+		"@types/node": "^25.9.3",
+		"@types/sortablejs": "^1.15.9",
+		"electron": "^42.4.0",
+		"electron-builder": "^26.15.3",
+		"electron-vite": "^5.0.0",
+		"eslint": "^10.5.0",
+		"eslint-plugin-prettier": "^5.5.6",
+		"globals": "^17.6.0",
+		"husky": "^9.1.7",
+		"prettier": "^3.8.4",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.61.0",
+		"vite": "^8.0.16"
+	},
+	"dependencies": {
+		"@clebert/node-d-bus": "^1.0.0",
+		"@jimp/core": "^1.6.1",
+		"@jimp/js-png": "^1.6.1",
+		"@jimp/plugin-resize": "^1.6.1",
+		"d-bus-message-protocol": "^1.0.0",
+		"d-bus-type-system": "^1.0.0",
+		"decode-ico": "^0.4.1",
+		"electron-store": "^11.0.2",
+		"electron-updater": "^6.8.9",
+		"sharp": "^0.35.1",
+		"sortablejs": "^1.15.7"
+	},
+	"dbus": {
+		"name": "io.github.anechunaev.NotionElectron",
+		"path": "/io/github/anechunaev/NotionElectron",
+		"interface": "io.github.anechunaev.NotionElectron"
+	},
+	"build": {
+		"appId": "io.github.anechunaev.NotionElectron",
+		"productName": "Notion Electron",
+		"executableName": "notion-electron",
+		"linux": {
+			"target": [
+				"rpm",
+				"deb",
+				"AppImage"
+			],
+			"icon": "./assets/icons/desktop.png",
+			"desktop": {
+				"entry": {
+					"Name": "Notion Electron",
+					"Icon": "notion-electron",
+					"Terminal": "false",
+					"Type": "Application",
+					"Categories": "Utility;Office;",
+					"Actions": "Options;Updates;About;"
+				},
+				"desktopActions": {
+					"Options": {
+						"Name": "Options",
+						"Exec": "dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.Options"
+					},
+					"Updates": {
+						"Name": "Updates",
+						"Exec": "dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.Updates"
+					},
+					"About": {
+						"Name": "About",
+						"Exec": "dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.About"
+					}
+				}
+			},
+			"category": "Utility;Office;"
+		},
+		"snap": {
+			"base": "core24",
+			"grade": "stable"
+		},
+		"artifactName": "Notion_Electron-${version}-${arch}.${ext}",
+		"icon": "./assets/icons/desktop.png",
+		"files": [
+			"out/**/*",
+			"options.json"
+		],
+		"extraResources": [
+			{
+				"from": "assets",
+				"to": "assets"
+			}
+		],
+		"asar": true,
+		"asarUnpack": [
+			"**/node_modules/sharp/**",
+			"**/node_modules/@img/**/*"
+		]
+	}
 }
