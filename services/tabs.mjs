@@ -1,4 +1,4 @@
-import { WebContentsView, ipcMain, shell, app } from 'electron';
+import { WebContentsView, ipcMain, shell, app, screen } from 'electron';
 import { URL, fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { convertIcon } from '../lib/image.mjs';
@@ -45,12 +45,17 @@ class TabsService {
 	#options = null;
 	#store = null;
 	#mainBus = null;
+	#isMaximized = false;
 
 	constructor(window, optionsService, store, mainBus) {
 		this.#window = window;
 		this.#options = optionsService;
 		this.#store = store;
 		this.#mainBus = mainBus;
+		// Source of truth for maximized state: the stored flag at startup, then the
+		// window's maximize/unmaximize events. window.isMaximized() is unreliable on
+		// Linux during the asynchronous WM-driven maximize transition.
+		this.#isMaximized = this.#store.get('maximized', false);
 
 		this.#mainBus.on('option-changed', (optionId, value) => {
 			if (optionId === 'tabs-show-calendar' && value === false) {
@@ -202,6 +207,16 @@ class TabsService {
 
 		this.#window.on('resize', this.#setViewSize.bind(this));
 
+		this.#window.on('maximize', () => {
+			this.#isMaximized = true;
+			this.#setViewSize();
+		});
+
+		this.#window.on('unmaximize', () => {
+			this.#isMaximized = false;
+			this.#setViewSize();
+		});
+
 		app.on('before-quit', () => {
 			this.#saveTabs();
 		});
@@ -222,8 +237,17 @@ class TabsService {
 		}
 	}
 
-	#setViewSize() {
+	#getContentSize() {
+		if (this.#isMaximized) {
+			const { workAreaSize } = screen.getDisplayMatching(this.#window.getBounds());
+			return { width: workAreaSize.width, height: workAreaSize.height };
+		}
 		const bounds = this.#window.getContentBounds();
+		return { width: bounds.width, height: bounds.height };
+	}
+
+	#setViewSize() {
+		const bounds = this.#getContentSize();
 		this.#titleBarView.setBounds({
 			x: 0,
 			y: 0,
@@ -273,7 +297,7 @@ class TabsService {
 			view.webContents.openDevTools({ mode: 'detach' });
 		}
 
-		const bounds = this.#window.getContentBounds();
+		const bounds = this.#getContentSize();
 		view.setBounds({
 			x: 0,
 			y: TITLEBAR_HEIGHT,
