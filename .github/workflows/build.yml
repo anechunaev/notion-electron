@@ -38,6 +38,16 @@ jobs:
 
     - name: Initialize LXD
       run: |
+        # GitHub runners ship LXD pre-installed, but its socket is owned by the `lxd`
+        # group, which the runner user isn't in — and `usermod -aG lxd` won't apply within
+        # the same job (no new login shell). Point the LXD daemon at `adm`, a group the
+        # runner user is already in, so snapcraft can reach the socket.
+        # (Same mechanism as canonical/setup-lxd.)
+        sudo snap set lxd daemon.group=adm
+        # Wait for the lxd snap to apply the reconfiguration.
+        while [ -n "$(snap changes lxd 2>/dev/null | awk '/^[0-9]+/ { if ($2 != "Done") print $2 }')" ]; do
+          echo "Waiting for snap changes on LXD to finish"; sleep 1
+        done
         sudo lxd waitready --timeout 60
         sudo lxd init --auto || true
 
