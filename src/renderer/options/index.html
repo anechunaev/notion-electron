@@ -81,6 +81,13 @@
 					<button class="align-end" role="button" id="update-download">Download and Install</button>
 				</div>
 
+				<div class="update-stage stage-manual hidden">
+					<p class="stage-label">New version is available!</p>
+					<p>Automatic installation is not available for deb/rpm packages. Download the new package
+						and install it with your package manager:</p>
+					<a class="align-end" id="update-manual-link" href="#" target="_blank">Open download page</a>
+				</div>
+
 				<div class="update-stage stage-downloading hidden">
 					<p class="stage-label">Downloading update...</p>
 					<progress class="stage-progress" id="update-progress" value="0" max="100"></progress>

@@ -422,7 +422,8 @@ button:disabled {
 	background-image: url('/icons/dark/status_waiting.svg');
 }
 
-.stage-available::before {
+.stage-available::before,
+.stage-manual::before {
 	background-image: url('/icons/dark/status_important.svg');
 }
 
@@ -434,7 +435,8 @@ button:disabled {
 	background-image: url('/icons/dark/status_error.svg');
 }
 
-.stage-available {
+.stage-available,
+.stage-manual {
 	border-color: var(--status-important-border);
 	background-color: var(--status-important);
 }
@@ -598,7 +600,8 @@ button:disabled {
 		background-image: url('/icons/light/status_waiting.svg');
 	}
 
-	.stage-available::before {
+	.stage-available::before,
+	.stage-manual::before {
 		background-image: url('/icons/light/status_important.svg');
 	}
 

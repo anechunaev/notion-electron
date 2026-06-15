@@ -72,6 +72,8 @@ export interface UpdateStatus {
 	lastCheckedFormatted: string;
 	availableVersion: string;
 	localVersion: string;
+	canAutoUpdate: boolean;
+	releaseUrl: string;
 	stage: string;
 	percentage: number;
 	downloaded: string;

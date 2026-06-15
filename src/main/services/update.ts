@@ -157,6 +157,10 @@ class UpdateService extends EventEmitter {
 		ipcMain.on('request-changelog', this.fetchChangelog.bind(this));
 	}
 
+	private get releaseUrl(): string {
+		return `https://github.com/anechunaev/notion-electron/releases/tag/v${this.availableVersion}`;
+	}
+
 	private sendStatus() {
 		if (!this.optionsWindow || !this.optionsWindow.webContents) return;
 		this.optionsWindow.webContents.send('update-status', {
@@ -164,6 +168,8 @@ class UpdateService extends EventEmitter {
 			lastCheckedFormatted: getSystemFormattedDate(this.lastChecked),
 			availableVersion: this.availableVersion,
 			localVersion: this.localVersion,
+			canAutoUpdate: Boolean(process.env.APPIMAGE),
+			releaseUrl: this.releaseUrl,
 			stage: this.stage,
 			percentage: this.percentage,
 			downloaded: this.downloaded,
@@ -197,7 +203,7 @@ class UpdateService extends EventEmitter {
 
 	private downloadUpdate() {
 		if (!process.env.APPIMAGE) {
-			shell.openExternal(`https://github.com/anechunaev/notion-electron/releases/tag/v${this.availableVersion}`);
+			shell.openExternal(this.releaseUrl);
 			return;
 		}
 

@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const stageLatest = document.querySelector('.stage-latest') as HTMLElement;
 	const stageChecking = document.querySelector('.stage-checking') as HTMLElement;
 	const stageAvailable = document.querySelector('.stage-available') as HTMLElement;
+	const stageManual = document.querySelector('.stage-manual') as HTMLElement;
 	const stageDownloading = document.querySelector('.stage-downloading') as HTMLElement;
 	const stageReady = document.querySelector('.stage-ready') as HTMLElement;
 	const stageInstalling = document.querySelector('.stage-installing') as HTMLElement;
@@ -114,10 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
 	const updateSpeed = document.getElementById('update-speed') as HTMLElement;
 	const updateInstall = document.getElementById('update-install') as HTMLButtonElement;
 	const updateError = document.getElementById('update-error') as HTMLElement;
+	const updateManualLink = document.getElementById('update-manual-link') as HTMLAnchorElement;
 	const updateStages = [
 		stageLatest,
 		stageChecking,
 		stageAvailable,
+		stageManual,
 		stageDownloading,
 		stageReady,
 		stageInstalling,
@@ -262,6 +265,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			lastCheckedFormatted,
 			availableVersion,
 			localVersion,
+			canAutoUpdate,
+			releaseUrl,
 		} = data;
 		updateStages.forEach((s) => {
 			s.classList.add('hidden');
@@ -276,7 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
 				break;
 			case 'available':
 				toggleIndicator('updates', true);
-				stageAvailable.classList.remove('hidden');
+				if (canAutoUpdate) {
+					stageAvailable.classList.remove('hidden');
+				} else {
+					updateManualLink.setAttribute('href', releaseUrl);
+					updateManualLink.textContent = `Download version ${availableVersion}`;
+					stageManual.classList.remove('hidden');
+				}
 				break;
 			case 'downloading':
 				stageDownloading.classList.remove('hidden');

@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function readConfig() {
-	return fs.readFileSync(path.join(__dirname, './re"always", lease-server-config.json'));
+	return fs.readFileSync(path.join(__dirname, './release-server-config.json'));
 }
 
 function emulateStream() {
