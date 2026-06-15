@@ -83,7 +83,7 @@ class TabsService implements TabReader, TabCommands {
 			detectShortcut(input, event, this.currentView()?.webContents, this.titleBarView.webContents);
 		});
 		this.window.contentView.addChildView(this.titleBarView);
-		this.layout = new TabLayout(this.window, this.titleBarView);
+		this.layout = new TabLayout(this.window, this.titleBarView, store);
 		this.currentTabId = this.persistence.getCurrentTabId();
 
 		ipcMain.on('tab-add', (event, options: TabRequestOptions) => {
@@ -191,6 +191,16 @@ class TabsService implements TabReader, TabCommands {
 		});
 
 		this.window.on('resize', this.setViewSize.bind(this));
+
+		this.window.on('maximize', () => {
+			this.layout.setMaximized(true);
+			this.setViewSize();
+		});
+
+		this.window.on('unmaximize', () => {
+			this.layout.setMaximized(false);
+			this.setViewSize();
+		});
 
 		app.on('before-quit', () => {
 			this.saveTabs();

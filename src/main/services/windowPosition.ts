@@ -4,21 +4,28 @@ import type { AppStore } from '../types';
 
 class WindowPositionService {
 	private store: AppStore;
+	private isMaximized: boolean;
 
 	constructor(store: AppStore) {
 		this.store = store;
+		this.isMaximized = store.get('maximized', false);
 	}
 
 	public subscribeToPositionChange(win: BaseWindow) {
-		const callback = () => {
-			this.savePosition(win);
-		};
+		win.on('maximize', () => {
+			this.isMaximized = true;
+			this.store.set('maximized', true);
+		});
 
-		win.on('close', callback);
-		win.on('maximize', callback);
-		win.on('unmaximize', callback);
-		win.on('move', callback);
-		win.on('resize', callback);
+		win.on('unmaximize', () => {
+			this.isMaximized = false;
+			this.store.set('maximized', false);
+			this.savePosition(win);
+		});
+
+		win.on('close', () => this.savePosition(win));
+		win.on('move', () => this.savePosition(win));
+		win.on('resize', () => this.savePosition(win));
 	}
 
 	public getPosition() {
@@ -79,11 +86,16 @@ class WindowPositionService {
 	}
 
 	public savePosition(win: BaseWindow) {
-		const isMaximized = win.isMaximized();
-		this.store.set('maximized', isMaximized);
-		if (!isMaximized) {
-			this.store.set('bounds', win.getContentBounds());
+		if (this.isMaximized || this.looksMaximized(win)) {
+			return;
 		}
+		this.store.set('bounds', win.getContentBounds());
+	}
+
+	private looksMaximized(win: BaseWindow): boolean {
+		const { workArea } = screen.getDisplayMatching(win.getBounds());
+		const bounds = win.getContentBounds();
+		return bounds.width >= workArea.width && bounds.height >= workArea.height;
 	}
 }
 
