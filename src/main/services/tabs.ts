@@ -18,7 +18,6 @@ import pkg from '../../../package.json';
 export type { TabRequestOptions } from './tabs.types';
 
 const HOME_PAGE = getAppHomeUrl('notes');
-const NEW_TAB_URL = 'https://www.notion.so';
 
 const PINNED_APP_OPTIONS: Partial<Record<AppName, keyof OptionValues>> = {
 	calendar: 'tabs-show-calendar',
@@ -26,23 +25,22 @@ const PINNED_APP_OPTIONS: Partial<Record<AppName, keyof OptionValues>> = {
 };
 const USER_AGENT = `Mozilla/5.0 (${process.env.XDG_SESSION_TYPE ?? 'X11'}; Linux ${process.arch}) Notion_Еlectron/${pkg.version} Chrome/${process.versions.chrome}`;
 
-function sendKey(
+async function sendKey(
 	entry: { keyCode: string; modifiers?: string[] },
 	delay: number,
 	view: WebContentsView | undefined,
-): void {
+): Promise<void> {
 	if (!view) return;
-	(['keyDown', 'char', 'keyUp'] as const).forEach(async (type) => {
-		const keyEntry = {
-			...entry,
-			type,
-		};
-		view.webContents.sendInputEvent(keyEntry as KeyboardInputEvent);
-
-		await new Promise<void>((resolve) => {
-			setTimeout(resolve, delay);
-		});
-	});
+	await (['keyDown', 'char', 'keyUp'] as const).reduce(
+		(chain, keyType) =>
+			chain.then(async () => {
+				view.webContents.sendInputEvent({ ...entry, type: keyType } as KeyboardInputEvent);
+				await new Promise<void>((resolve) => {
+					setTimeout(resolve, delay);
+				});
+			}),
+		Promise.resolve(),
+	);
 }
 
 class TabsService implements TabReader, TabCommands {
@@ -432,7 +430,7 @@ class TabsService implements TabReader, TabCommands {
 
 		const first = this.tabOrder[0];
 		if (!first) {
-			this.openTab({ url: NEW_TAB_URL, app: 'notes' });
+			this.openTab({ url: HOME_PAGE, app: 'notes' });
 		} else {
 			this.selectTab(first);
 		}

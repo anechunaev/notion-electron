@@ -1,12 +1,16 @@
 import type { Keymap } from './types';
 
+const ZOOM_STEP = 0.1;
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 5;
+
 export const actionKeymap = {
 	zoomIn: {
 		accelerator: 'CmdOrCtrl+=',
 		action: ({ pageWebContents, titlebarWebContents }) => {
 			if (!pageWebContents) return;
 			const currentZoom = pageWebContents.getZoomFactor();
-			const zoom = currentZoom + 0.1 > 5 ? 5 : currentZoom + 0.1;
+			const zoom = currentZoom + ZOOM_STEP > MAX_ZOOM ? MAX_ZOOM : currentZoom + ZOOM_STEP;
 			pageWebContents.setZoomFactor(zoom);
 			titlebarWebContents.send('zoom-factor', zoom);
 		},
@@ -16,7 +20,7 @@ export const actionKeymap = {
 		action: ({ pageWebContents, titlebarWebContents }) => {
 			if (!pageWebContents) return;
 			const currentZoom = pageWebContents.getZoomFactor();
-			const zoom = currentZoom - 0.1 < 0.25 ? 0.25 : currentZoom - 0.1;
+			const zoom = currentZoom - ZOOM_STEP < MIN_ZOOM ? MIN_ZOOM : currentZoom - ZOOM_STEP;
 			pageWebContents.setZoomFactor(zoom);
 			titlebarWebContents.send('zoom-factor', zoom);
 		},
@@ -57,7 +61,6 @@ export const actionKeymap = {
 	tabNew: {
 		accelerator: 'CmdOrCtrl+T',
 		action: ({ titlebarWebContents }) => {
-			// titlebarWebContents.send('tab-request', { url: 'https://www.notion.so' });
 			titlebarWebContents.send('action', 'tab-add');
 		},
 	},

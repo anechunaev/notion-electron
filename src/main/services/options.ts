@@ -10,7 +10,7 @@ class OptionsService {
 	private store: AppStore;
 	private cliOverrides: Partial<OptionValues> = {};
 	private envDefaults: Partial<OptionValues> = {};
-	private mainBus: EventEmitter | null = null;
+	private mainBus: EventEmitter;
 
 	private static DE_PRESETS: Record<string, Partial<OptionValues>> = {
 		gnome: {

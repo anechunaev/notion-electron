@@ -1,7 +1,6 @@
 import Sortable from 'sortablejs';
 import type { TabInfo, TabsStatePayload } from '../../shared/ipc';
-
-const NEW_TAB_URL = 'https://www.notion.so';
+import { NOTION_NOTES_HOST } from '../../shared/constants';
 
 document.addEventListener('DOMContentLoaded', () => {
 	const tabMap: Record<string, HTMLElement> = {};
@@ -36,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const tabIcon = tab.querySelector<HTMLImageElement>('.tab-icon');
 		if (tabIcon) tabIcon.src = iconUrl ?? '../icons/dark/document.svg';
 		tab.dataset.tabId = tabId ?? crypto.randomUUID();
-		tab.dataset.documentUrl = documentUrl ?? NEW_TAB_URL;
+		tab.dataset.documentUrl = documentUrl ?? NOTION_NOTES_HOST;
 
 		return tab;
 	}
@@ -81,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
-	// Reconcile the tab bar DOM to match the authoritative state pushed by the main process.
 	function renderTabs(state: TabsStatePayload): void {
 		const seen = new Set<string>();
 		state.tabs.forEach((tab) => {
@@ -155,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	if (window.notionElectronAPI) {
 		if (addTabButton) {
-			addTabButton.addEventListener('click', () => window.notionElectronAPI.addTab({ url: NEW_TAB_URL }));
+			addTabButton.addEventListener('click', () => window.notionElectronAPI.addTab({ url: NOTION_NOTES_HOST }));
 		}
 
 		if (historyBackButton) {
@@ -253,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		window.notionElectronAPI.subscribeOnAction((action) => {
 			switch (action) {
 				case 'tab-add':
-					window.notionElectronAPI.addTab({ url: NEW_TAB_URL });
+					window.notionElectronAPI.addTab({ url: NOTION_NOTES_HOST });
 					break;
 				case 'tab-close':
 					window.notionElectronAPI.closeCurrentTab();
@@ -283,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		animation: 100,
 		direction: 'horizontal',
 		setData: (dataTransfer, dragEl) => {
-			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? NEW_TAB_URL);
+			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? NOTION_NOTES_HOST);
 		},
 		onEnd: sendReorder,
 	});
@@ -292,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		animation: 100,
 		direction: 'horizontal',
 		setData: (dataTransfer, dragEl) => {
-			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? NEW_TAB_URL);
+			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? NOTION_NOTES_HOST);
 		},
 		onEnd: sendReorder,
 	});

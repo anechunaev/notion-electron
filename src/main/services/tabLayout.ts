@@ -1,9 +1,6 @@
 import type { BaseWindow, Rectangle, WebContentsView } from 'electron';
+import { TITLEBAR_HEIGHT } from '../../shared/constants';
 
-export const TITLEBAR_HEIGHT = 40;
-
-// Owns the geometry of the layered views: the titlebar across the top and each tab view
-// filling the area beneath it.
 class TabLayout {
 	private window: BaseWindow;
 	private titleBarView: WebContentsView;

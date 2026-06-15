@@ -1,5 +1,4 @@
-// Single source of truth for the wrapped Notion apps. Imported by both the main process
-// (tab classification, pinned-app setup) and the titlebar renderer so the two never drift.
+import { NOTION_CALENDAR_HOST, NOTION_MAIL_HOST, NOTION_NOTES_HOST } from './constants';
 
 export type AppName = 'notes' | 'calendar' | 'mail';
 
@@ -15,19 +14,19 @@ export interface AppDefinition {
 export const APP_DEFINITIONS: readonly AppDefinition[] = [
 	{
 		id: 'calendar',
-		homeUrl: 'https://calendar.notion.so',
+		homeUrl: NOTION_CALENDAR_HOST,
 		isPinnedByDefault: true,
 		matches: (url) => url.pathname.startsWith('/calendarAuth') || url.hostname === 'calendar.notion.so',
 	},
 	{
 		id: 'mail',
-		homeUrl: 'https://mail.notion.com',
+		homeUrl: NOTION_MAIL_HOST,
 		isPinnedByDefault: true,
-		matches: (url) => url.hostname === 'mail.notion.so',
+		matches: (url) => url.hostname === 'mail.notion.com',
 	},
 	{
 		id: 'notes',
-		homeUrl: 'https://www.notion.com/login',
+		homeUrl: NOTION_NOTES_HOST,
 		isPinnedByDefault: false,
 		matches: () => true,
 	},

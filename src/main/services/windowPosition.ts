@@ -1,4 +1,5 @@
 import { screen, type BaseWindow, type Rectangle } from 'electron';
+import { DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH } from '../../shared/constants';
 import type { AppStore } from '../types';
 
 class WindowPositionService {
@@ -24,7 +25,7 @@ class WindowPositionService {
 		const savedBounds = this.store.get('bounds');
 		const isMaximized = this.store.get('maximized', false);
 
-		const bounds: Rectangle = { x: 0, y: 0, width: 600, height: 400 };
+		const bounds: Rectangle = { x: 0, y: 0, width: DEFAULT_WINDOW_WIDTH, height: DEFAULT_WINDOW_HEIGHT };
 
 		if (savedBounds !== undefined) {
 			const screenArea = screen.getDisplayMatching(savedBounds).workArea;

@@ -1,5 +1,18 @@
 import type { ChangelogItem, OptionsPayload, RendererOptionDefinition } from '../../shared/ipc';
 
+function escapeHtml(value: string): string {
+	return value
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
+function safeUrl(url: string): string {
+	return /^https?:\/\//i.test(url) ? url : '#';
+}
+
 function renderChangelog(items: ChangelogItem[]): string {
 	if (!items.length) {
 		return '<p>No changelog available.</p>';
@@ -9,11 +22,11 @@ function renderChangelog(items: ChangelogItem[]): string {
 		.map(
 			(item) => `
 			<dt>
-				<a href="${item.url}" target="_blank">${item.version}</a>
+				<a href="${escapeHtml(safeUrl(item.url))}" target="_blank">${escapeHtml(item.version)}</a>
 				<br />
-				<small>${item.dateFormatted}</small>
+				<small>${escapeHtml(item.dateFormatted)}</small>
 			</dt>
-			<dd>${item.notes.replace(/\n/g, '<br />')}</dd>
+			<dd>${escapeHtml(item.notes).replace(/\n/g, '<br />')}</dd>
 		`,
 		)
 		.join('');
@@ -40,7 +53,6 @@ function populateSelect(select: HTMLSelectElement, options: Record<string, strin
 	});
 }
 
-// Build a single option row (label + input) from the matching template.
 function buildOptionClone(option: RenderableOption, templates: OptionTemplates): DocumentFragment | null {
 	const template = templates[option.value.type as keyof OptionTemplates];
 	if (!template) return null;

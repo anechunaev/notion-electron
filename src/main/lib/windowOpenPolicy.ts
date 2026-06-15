@@ -3,8 +3,6 @@ import { URL } from 'node:url';
 
 const AUTH_HOSTS = ['notion.so', 'notion.com', 'google.com', 'live.com', 'microsoft.com', 'apple.com'];
 
-// Decides what happens when a Notion page tries to open a new window/tab: auth flows open
-// a small popup, in-app Notion links become new tabs, everything else opens in the browser.
 export function resolveWindowOpen(
 	url: string,
 	disposition: string,

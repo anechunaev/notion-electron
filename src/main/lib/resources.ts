@@ -2,7 +2,7 @@ import { app } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export function resolveAsset(relativePath: string): string {
 	const base = app.isPackaged ? path.join(process.resourcesPath, 'assets') : path.join(app.getAppPath(), 'assets');
@@ -10,7 +10,7 @@ export function resolveAsset(relativePath: string): string {
 }
 
 export function resolvePreload(name: string): string {
-	return path.join(__dirname, '../preload', name);
+	return path.join(dirname, '../preload', name);
 }
 
 interface RendererLoadable {
@@ -28,6 +28,6 @@ export function loadRendererPage(
 		const search = query ? `?${new URLSearchParams(query)}` : '';
 		return target.loadURL(`${devUrl}/${page}/index.html${search}`);
 	}
-	const file = path.join(__dirname, `../renderer/${page}/index.html`);
+	const file = path.join(dirname, `../renderer/${page}/index.html`);
 	return query ? target.loadFile(file, { query }) : target.loadFile(file);
 }

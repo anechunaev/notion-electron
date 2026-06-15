@@ -16,9 +16,8 @@ import ThemeService from './services/theme';
 import { createMonitorBus } from './lib/dbus';
 import { registerMainWindowLifecycle, registerOptionsWindowLifecycle } from './lib/windowLifecycle';
 import { resolveAsset, resolvePreload, loadRendererPage } from './lib/resources';
+import { TITLEBAR_HEIGHT, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT } from '../shared/constants';
 import type { OptionsConfig, StoreSchema } from './types';
-
-const TITLEBAR_HEIGHT = 40;
 
 let mainWindow: BaseWindow | null = null;
 const store = new Store<StoreSchema>();
@@ -65,8 +64,8 @@ if (!app.requestSingleInstanceLock()) {
 
 				mainWindow = new BaseWindow({
 					title: 'Notion Electron',
-					minWidth: 600,
-					minHeight: 400,
+					minWidth: DEFAULT_WINDOW_WIDTH,
+					minHeight: DEFAULT_WINDOW_HEIGHT,
 					width: savedPosition.bounds.width,
 					height: savedPosition.bounds.height,
 					titleBarStyle: 'hidden',
@@ -91,8 +90,8 @@ if (!app.requestSingleInstanceLock()) {
 				setTimeout(function initApp() {
 					if (!mainWindow) return;
 					const optionsWindow = new BrowserWindow({
-						minWidth: 600,
-						minHeight: 400,
+						minWidth: DEFAULT_WINDOW_WIDTH,
+						minHeight: DEFAULT_WINDOW_HEIGHT,
 						width: screen.getPrimaryDisplay().workAreaSize.width * 0.5,
 						height: screen.getPrimaryDisplay().workAreaSize.height * 0.5,
 						show: false,
