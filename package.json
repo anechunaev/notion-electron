@@ -115,9 +115,13 @@
 			},
 			"category": "Utility;Office;"
 		},
-		"snap": {
+		"snapcraft": {
 			"base": "core24",
-			"grade": "stable"
+			"core24": {
+				"useLXD": true,
+				"grade": "stable",
+				"confinement": "strict"
+			}
 		},
 		"artifactName": "Notion_Electron-${version}-${arch}.${ext}",
 		"icon": "./assets/icons/desktop.png",

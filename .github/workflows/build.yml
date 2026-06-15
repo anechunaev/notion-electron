@@ -36,6 +36,11 @@ jobs:
     - name: Install Snapcraft
       uses: samuelmeuli/action-snapcraft@v3
 
+    - name: Initialize LXD
+      run: |
+        sudo lxd waitready --timeout 60
+        sudo lxd init --auto || true
+
     - name: Electron Builder Action
       uses: anechunaev/action-electron-builder@6fd8ce62ffad14385ddbb3a43c17d3b52661f3ff # v1.8.0
       with:
