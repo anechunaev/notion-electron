@@ -1,6 +1,6 @@
 {
 	"name": "notion-electron",
-	"version": "2.2.2",
+	"version": "2.2.3",
 	"main": "out/main/index.js",
 	"type": "module",
 	"desktopName": "notion-electron.desktop",
@@ -121,7 +121,10 @@
 				"useLXD": true,
 				"grade": "stable",
 				"confinement": "strict",
-				"plugs": ["default", "browser-support"]
+				"plugs": [
+					"default",
+					"browser-support"
+				]
 			}
 		},
 		"artifactName": "Notion_Electron-${version}-${arch}.${ext}",
