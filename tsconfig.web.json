@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"lib": ["esnext", "dom", "dom.iterable"],
+		"types": [],
+		"resolveJsonModule": true,
+		"allowJs": false,
+		"checkJs": false,
+		"noEmit": true,
+		"sourceMap": true,
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+		"noImplicitOverride": true,
+		"verbatimModuleSyntax": true,
+		"isolatedModules": true,
+		"moduleDetection": "force",
+		"noUncheckedSideEffectImports": true,
+		"skipLibCheck": true
+	},
+	"include": ["src/renderer/**/*", "src/shared/**/*"]
+}

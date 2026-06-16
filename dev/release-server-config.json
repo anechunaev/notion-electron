@@ -1,6 +1,6 @@
 {
-	"tag": "v1.6.0",
-	"version": "1.6.0",
+	"tag": "v99.9.9",
+	"version": "99.9.9",
 	"files": [
 		{
 			"url": "notion-electron.x86_64.AppImage",
@@ -21,7 +21,7 @@
 	],
 	"path": "notion-electron.x86_64.AppImage",
 	"sha512": "qakqWY0cFeip0uDrqNB84r2IqE4SRnu3zeZ7spCIuTHRY8UwrFA70yfrH3Z7aSvGFug8Thc7PPAEpBnTmbNQ4A==",
-	"releaseDate": "2025-02-16T16:44:05.765Z",
-	"releaseName": "1.6.0",
+	"releaseDate": "2225-02-16T16:44:05.765Z",
+	"releaseName": "99.9.9",
 	"releaseNotes": "Hello world!"
 }

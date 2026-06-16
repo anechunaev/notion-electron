@@ -1,0 +1,80 @@
+:root {
+	--bg: #191919;
+	--bg-sidebar: #202020;
+	--bg-selected: rgba(255, 255, 255, 0.055);
+	--border-sidebar: rgba(255, 255, 255, 0.05);
+	--border-sidebar-hover: rgba(255, 255, 255, 0.1);
+
+	--color: #9b9b9b;
+	--color-hover: #fff;
+
+	--font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+	--font: 500 14px/22px var(--font-family);
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		--bg: #fff;
+		--bg-sidebar: #f8f8f7;
+		--bg-selected: #f2f2f1;
+		--border-sidebar: #f2f2f1;
+		--border-sidebar-hover: rgba(0, 0, 0, 0.1);
+
+		--color: #37352f;
+		--color-hover: #1d1b16;
+	}
+}
+
+html,
+body {
+	background-color: var(--bg);
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	padding: 50px;
+	color: var(--color);
+	font: var(--font);
+	gap: 10px;
+}
+
+h1,
+p,
+button {
+	padding: 0;
+	margin: 0;
+}
+
+h1 {
+	color: var(--color-hover);
+}
+
+img {
+	aspect-ratio: 1;
+	height: 23px;
+}
+
+p {
+	margin-left: 40px;
+}
+
+#retry {
+	display: block;
+	width: fit-content;
+	border: 1px solid var(--border-sidebar);
+	background-color: var(--bg-sidebar);
+	padding: 10px;
+	cursor: pointer;
+	color: currentColor;
+	margin: 20px 40px;
+}
+
+#retry:hover {
+	border-color: var(--border-sidebar-hover);
+	background-color: var(--bg-selected);
+}
+
+#loading {
+	display: none;
+}

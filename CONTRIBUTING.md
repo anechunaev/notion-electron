@@ -55,29 +55,34 @@ contributing with AI assistance.
     npm start
     ```
 
-    This runs `APPIMAGE=/ electron .` — the `APPIMAGE=/` env is what makes the updater behave as if
-    running in AppImage mode.
+    This runs `APPIMAGE=/ electron-vite dev` — electron-vite bundles the TypeScript sources and
+    serves the renderer with HMR. The `APPIMAGE=/` env makes the updater behave as if running in
+    AppImage mode. For a production-like run, use `npm run build && npm run preview`.
 
 3. To test the auto-updater against fake releases, start the local release server:
 
     ```sh
-    npm run dev
+    npm run dev:server
     ```
 
 ## Project layout
 
 Detail lives in [`docs/architecture.md`](docs/architecture.md); this is just a map of where things
-go:
+go. Sources are **TypeScript**, bundled with **electron-vite** into `out/`:
 
-| Path            | What lives there                                                     |
-| --------------- | -------------------------------------------------------------------- |
-| `index.mjs`     | Composition root — instantiates and wires every service. No logic.   |
-| `services/`     | One class per file, each owning a single concern (tabs, options, …). |
-| `render/`       | Preload scripts (the IPC surface for the titlebar, tabs, options).   |
-| `assets/pages/` | Plain HTML renderer UI (no framework, no bundler).                   |
-| `lib/`          | Reusable helpers — D-Bus client, shortcut map, image conversion.     |
-| `options.json`  | Declarative schema for all user-facing settings.                     |
-| `dev/`          | Build, lint, and packaging scripts (Flatpak/Snap helpers included).  |
+| Path                  | What lives there                                                          |
+| --------------------- | ------------------------------------------------------------------------- |
+| `src/main/index.ts`   | Composition root — instantiates and wires every service. No logic.        |
+| `src/main/services/`  | One class per file, each owning a single concern (tabs, options, …).      |
+| `src/main/lib/`       | Reusable helpers — D-Bus client, shortcut map, image conversion, paths.   |
+| `src/preload/`        | Preload scripts (the IPC surface for the titlebar, tabs, options).        |
+| `src/renderer/`       | Renderer HTML pages + their `.ts` entry scripts (no framework).           |
+| `src/shared/`         | Types shared between preload and renderer (the IPC bridge surface).       |
+| `assets/`             | Static runtime assets (icons, logos), shipped via `extraResources`.       |
+| `options.json`        | Declarative schema for all user-facing settings.                          |
+| `electron.vite.config.ts` | Build config for the main / preload / renderer targets.               |
+| `tsconfig*.json`      | Strict type-check configs (node / preload / web + root references).       |
+| `dev/`                | Build, lint, and packaging scripts (Flatpak/Snap helpers included).       |
 
 ## Architectural rules
 
@@ -85,10 +90,13 @@ These are non-negotiable conventions enforced by review (see `docs/architecture.
 reasoning):
 
 - **View and Domain communicate only through Electron IPC.** No other channel crosses that boundary.
-- **`index.mjs` only wires things up** — it instantiates services and connects them to the data
-  layer. It must not contain application logic.
+- **`src/main/index.ts` only wires things up** — it instantiates services and connects them to the
+  data layer. It must not contain application logic.
 - **Services never import each other.** They collaborate via **dependency injection** (instances
   passed into constructors) and the **`mainBus`** `EventEmitter` for decoupled events.
+- **Domain logic lives in services and libraries.** Services hold state; `src/main/lib/` holds
+  stateless functions. Put logic in a library function when it needs no service state, and in a
+  service when it reads or mutates state.
 - **Persisted state goes through `store`** from a **main-process service** — never write to the
   store from a renderer.
 - **User-facing settings go in `options.json`**, then are read via `OptionsService.getOption(id)`.
@@ -103,6 +111,19 @@ reasoning):
 Formatting is handled entirely by tooling — **don't hand-format**. The settled conventions
 (`.editorconfig`, `prettier.config.js`) are tabs at width 4, a 120-column print width, single
 quotes, semicolons, and trailing commas.
+
+Beyond formatting, two conventions are enforced by review:
+
+- **Self-explanatory code over comments.** Write code that explains itself and avoid comments.
+  Only comment when it's necessary — to explain a hack, an unorthodox approach, or a magic
+  number, or to document the public API of an internal library. Keep necessary comments short.
+- **Use the `private` / `public` keywords** for class members — don't mark private methods or
+  properties with the `#` symbol.
+- **Don't extract a class method that's only called once** — inline it. The single exception is
+  when inlining would push the caller's **cognitive complexity over 10** (the `complexity` ESLint
+  threshold, `max: 10`); then a `private` helper is warranted. Relatedly, a public method that
+  never uses `this` is a stateless helper and belongs in `src/main/lib/`, not on a class — this is
+  enforced by the custom `publicMethods/public-class-methods-use-this` rule.
 
 Linting is driven by **custom Node scripts in `dev/scripts/`**, not by calling `eslint`/`prettier`
 directly:
@@ -125,8 +146,8 @@ There is **no automated test suite** — `npm test` intentionally exits with an 
 not add references to running tests.
 
 Instead, **manually verify** your change on Linux: run `npm start` and exercise the area you touched
-(tabs, options window, tray, notifications, and the updater via `npm run dev`). Describe what you
-tested in your pull request.
+(tabs, options window, tray, notifications, and the updater via `npm run dev:server`). Describe what
+you tested in your pull request.
 
 ## Building and packaging
 
@@ -176,7 +197,7 @@ these reasons. Most map directly to the rules above.
 - **Not a priority.** A new feature that is neither parity with something the official Notion clients
   already ship, nor an integration with Linux and its desktop environments.
 - **Breaks the architecture.** Violates a rule in [`docs/architecture.md`](docs/architecture.md) —
-  e.g. logic in `index.mjs`, services importing each other, a renderer writing to `store`, or more
+  e.g. logic in `src/main/index.ts`, services importing each other, a renderer writing to `store`, or more
   than one class per file.
 - **Unfocused PR.** Bundles several unrelated changes instead of one concern.
 - **Unverified or non-conforming.** No description of what/why and how it was tested on Linux,

@@ -36,6 +36,9 @@ jobs:
     - name: Install Snapcraft
       uses: samuelmeuli/action-snapcraft@v3
 
+    - name: Set up LXD
+      uses: canonical/setup-lxd@8c6a87bfb56aa48f3fb9b830baa18562d8bfd4ee # v1
+
     - name: Electron Builder Action
       uses: anechunaev/action-electron-builder@6fd8ce62ffad14385ddbb3a43c17d3b52661f3ff # v1.8.0
       with:

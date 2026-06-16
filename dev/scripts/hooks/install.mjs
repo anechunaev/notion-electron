@@ -1,18 +1,17 @@
 #!/usr/bin/env node
 
-import cp from 'node:child_process';
-import fs from 'node:fs';
-import path from 'node:path';
+import { execSync } from 'node:child_process';
 
-async function run() {
-	if (process.env.CI) return;
-	await cp.exec('husky install');
-
-	if (fs.existsSync(path.resolve(process.cwd(), './.husky'))) return;
-	await cp.exec('npx husky add .husky/pre-commit "npm run lint"');
-	// await cp.exec('npx husky add .husky/pre-push "npm run lint:deep"');
+// husky v9: `husky` sets git's core.hooksPath to ./.husky. The hooks themselves
+// (e.g. .husky/pre-commit) are committed to the repo, so there is nothing to
+// generate here. Skip in CI, where hooks are not needed.
+if (process.env.CI) {
+	process.exit(0);
 }
 
-run()
-	.then(() => console.log(`✅ Git hooks installed`))
-	.catch((error) => console.error('❌ Error while installing hooks:\n', error));
+try {
+	execSync('husky', { stdio: 'inherit' });
+	console.log('✅ Git hooks installed');
+} catch (error) {
+	console.error('❌ Error while installing hooks:\n', error);
+}
