@@ -16,7 +16,6 @@ finish-args:
   - --socket=fallback-x11
   - --socket=pulseaudio
   - --share=network
-  - --talk-name=io.github.anechunaev.*
   - --env=XCURSOR_PATH=/run/host/user-share/icons:/run/host/share/icons
 
 build-options:
@@ -34,7 +33,7 @@ modules:
     build-commands:
       - npm install --offline
       - ../flatpak-node/electron-builder-arch-args.sh
-      - jq '.build.linux.target="dir"' <<<$(<package.json) > package.json
+      - jq '.build.linux.target="dir" | .build.electronDist="/run/build/notion-electron/flatpak-node/cache/electron"' <<<$(<package.json) > package.json
       - npm run pack -- --dir
       - cp -a dist/linux*unpacked /app/main
 
@@ -48,30 +47,10 @@ modules:
     sources:
       - type: git
         url: https://github.com/anechunaev/notion-electron.git
-        commit: f705f2fbb30757315237786f78dc620b21b14945
+        tag: 'test/flatpak-1'
         dest: main
       - generated-sources.json
       - type: script
         dest-filename: run.sh
         commands:
-          - zypak-wrapper.sh /app/main/notion-electron "$@"
-
-      # For local build
-      # - type: file
-      #   path: ../../package.json
-      #   dest: main
-      # - type: file
-      #   path: ../../package-lock.json
-      #   dest: main
-      # - type: file
-      #   path: io.github.anechunaev.notion-electron.metainfo.xml
-      #   dest: main/dev/flatpak
-      # - type: file
-      #   path: io.github.anechunaev.notion-electron.desktop
-      #   dest: main/dev/flatpak
-      # - type: file
-      #   path: io.github.anechunaev.notion-electron.svg
-      #   dest: main/dev/flatpak
-      # - type: file
-      #   path: io.github.anechunaev.notion-electron.png
-      #   dest: main/dev/flatpak
+          - zypak-wrapper.sh /app/main/notion-electron --disable-update-functionality "$@"
