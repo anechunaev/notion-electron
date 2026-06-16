@@ -1,6 +1,6 @@
 {
 	"name": "notion-electron",
-	"version": "2.2.1",
+	"version": "2.2.2",
 	"main": "out/main/index.js",
 	"type": "module",
 	"desktopName": "notion-electron.desktop",
