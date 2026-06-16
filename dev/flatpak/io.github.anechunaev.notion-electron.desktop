@@ -15,9 +15,9 @@ Name=Options
 Exec=dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.Options
 
 [Desktop Action Updates]
-Name=Preferences
+Name=Updates
 Exec=dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.Updates
 
 [Desktop Action About]
-Name=Preferences
+Name=About
 Exec=dbus-send --session --type=signal --dest=io.github.anechunaev.NotionElectron /io/github/anechunaev/NotionElectron io.github.anechunaev.NotionElectron.About
