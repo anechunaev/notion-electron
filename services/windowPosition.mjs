@@ -61,7 +61,13 @@ class WindowPositionService {
 		const isMaximized = this.#store.get('maximized', false);
 
 		if (isMaximized) {
-			win.maximize();
+			if (win.isVisible()) {
+				win.maximize();
+			} else {
+				// Window was started hidden (Show Window on Application Start = off).
+				// Don't force it visible; maximize once the user actually shows it.
+				win.once('show', () => win.maximize());
+			}
 			return;
 		}
 
