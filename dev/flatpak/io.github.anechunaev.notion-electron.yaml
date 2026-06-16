@@ -16,6 +16,7 @@ finish-args:
   - --socket=fallback-x11
   - --socket=pulseaudio
   - --share=network
+  - --own-name=io.github.anechunaev.NotionElectron
   - --env=XCURSOR_PATH=/run/host/user-share/icons:/run/host/share/icons
 
 build-options:
