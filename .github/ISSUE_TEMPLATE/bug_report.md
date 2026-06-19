@@ -10,7 +10,7 @@ assignees: ''
 ### Environment
 - **OS:** (example: Fedora 43)
 - **Desktop Environment:** (example: KDE)
-- **Pakage format:** (DEB / RPM / AppImage / Flatpak / Snap)
+- **Package format:** (DEB / RPM / AppImage / Flatpak / Snap)
 - **Version:** (example: v2.2.2)
 
 ### What happened?
