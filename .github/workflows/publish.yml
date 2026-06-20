@@ -1,0 +1,234 @@
+# Required GitHub secrets:
+#   MAINTAINER_GPG_KEY         base64 of the maintainer private key (maintainer-key.b64)
+#   MAINTAINER_GPG_ID          maintainer@example.com
+#   MAINTAINER_GPG_PASSPHRASE  passphrase for the maintainer key (maintainer-key.passphrase)
+#   REPO_SSH_KEY               private SSH key for the publish user
+#   REPO_HOST                  repo.example.com
+#   REPO_USER                  the SFTP publish user (e.g. "publish")
+#   REPO_KNOWN_HOSTS           output of `ssh-keyscan repo.example.com`
+#   HOSTUP_API_TOKEN           hostup API token (scope: VPS read + actions); from cloud.hostup.se/api-management
+#   HOSTUP_VPS_ID              the vps_... id of the repo host (GET /api/v2/vps)
+#
+# Optional repository variable:
+#   HOSTUP_API_BASE            API base URL
+name: Sign and publish packages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      HOSTUP_API_BASE: ${{ secrets.HOSTUP_API_BASE || 'https://cloud.hostup.se/api/v2' }}
+      HOSTUP_API_TOKEN: ${{ secrets.HOSTUP_API_TOKEN }}
+      HOSTUP_VPS_ID: ${{ secrets.HOSTUP_VPS_ID }}
+      BUILD_CPU: "2"
+      BUILD_MEM: "2"
+      IDLE_CPU: "1"
+      IDLE_MEM: "1"
+      RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1) Get the already-built packages from the release assets
+      - name: Download release assets
+        uses: robinraju/release-downloader@v1
+        with:
+          tag: ${{ github.event.release.tag_name }}
+          fileName: "*"
+          out-file-path: dist
+
+      # 2) Import the MAINTAINER key (passphrase-protected, package signing identity)
+      - name: Import maintainer GPG key
+        env:
+          MAINTAINER_GPG_KEY: ${{ secrets.MAINTAINER_GPG_KEY }}
+        run: echo "$MAINTAINER_GPG_KEY" | base64 -d | gpg --batch --import
+
+      # 3) Detached signature per artifact
+      - name: Sign packages (detached, maintainer key)
+        env:
+          MAINTAINER_GPG_ID: ${{ secrets.MAINTAINER_GPG_ID }}
+          MAINTAINER_GPG_PASSPHRASE: ${{ secrets.MAINTAINER_GPG_PASSPHRASE }}
+        run: |
+          shopt -s nullglob
+          for f in dist/*.deb dist/*.rpm dist/*.flatpak; do
+            gpg --batch --yes --pinentry-mode loopback \
+                --passphrase "$MAINTAINER_GPG_PASSPHRASE" \
+                --local-user "$MAINTAINER_GPG_ID" \
+                --detach-sign --armor "$f"
+          done
+
+      # 4) Embedded rpm signature so dnf clients' gpgcheck=1 also verifies the
+      #    package (defence in depth). dpkg-sig is intentionally NOT used: apt
+      #    never checks per-package signatures, so it would be pure overhead.
+      - name: Add embedded rpm signature
+        env:
+          MAINTAINER_GPG_ID: ${{ secrets.MAINTAINER_GPG_ID }}
+          MAINTAINER_GPG_PASSPHRASE: ${{ secrets.MAINTAINER_GPG_PASSPHRASE }}
+        run: |
+          shopt -s nullglob
+          rpms=(dist/*.rpm); [ ${#rpms[@]} -eq 0 ] && exit 0
+          sudo apt-get update && sudo apt-get install -y rpm
+          printf '%s' "$MAINTAINER_GPG_PASSPHRASE" > "$HOME/.gpg-pass"
+          chmod 600 "$HOME/.gpg-pass"
+          cat > "$HOME/.rpmmacros" <<EOF
+          %_gpg_name ${MAINTAINER_GPG_ID}
+          %_gpg_sign_cmd_extra_args --pinentry-mode loopback --passphrase-file ${HOME}/.gpg-pass
+          EOF
+          for f in "${rpms[@]}"; do rpm --addsign "$f"; done
+
+      # 5) SSH key + pinned host key
+      - name: Set up SSH
+        env:
+          REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
+          REPO_KNOWN_HOSTS: ${{ secrets.REPO_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$REPO_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$REPO_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # 6) Tiny hostup API client (resize / restart / wait-until-running)
+      - name: Write hostup API helper
+        run: |
+          cat > "$RUNNER_TEMP/hostup.sh" <<'HELPER'
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+          : "${HOSTUP_API_BASE:?}" ; : "${HOSTUP_API_TOKEN:?}" ; : "${HOSTUP_VPS_ID:?}"
+
+          # _hostup METHOD PATH [JSON_BODY] -> prints response body; nonzero on non-2xx
+          _hostup() {
+            local method="$1" path="$2" body="${3:-}" out code
+            local args=(--silent --show-error --location --max-time 60
+              --retry 3 --retry-delay 5 --retry-connrefused
+              --request "$method"
+              --header "Authorization: Bearer ${HOSTUP_API_TOKEN}"
+              --header "Accept: application/json"
+              --write-out $'\n%{http_code}')
+            [ -n "$body" ] && args+=(--header 'Content-Type: application/json' --data "$body")
+            out="$(curl "${args[@]}" "${HOSTUP_API_BASE}/vps/${HOSTUP_VPS_ID}${path}")"
+            code="${out##*$'\n'}"; printf '%s' "${out%$'\n'*}"
+            case "$code" in 2*) return 0 ;; *) echo "hostup: $method $path -> HTTP $code" >&2; return 1 ;; esac
+          }
+
+          # hostup_resize CORES MEMGB — body mirrors the resources object returned
+          # by GET /api/v2/vps/{id}. Cloud VPS PAYG only; applies on next reboot.
+          hostup_resize() {
+            echo "hostup: resize -> ${1} vCPU / ${2} GB RAM"
+            _hostup POST /actions/resize "{\"resources\":{\"cpuCores\":${1},\"memoryGb\":${2}}}" >/dev/null
+          }
+
+          hostup_restart() {
+            echo "hostup: restart (apply new size)"
+            _hostup POST /actions/restart '' >/dev/null
+          }
+
+          # hostup_wait_running [TIMEOUT_S] — poll GET /status for powerState=running.
+          hostup_wait_running() {
+            local timeout="${1:-300}" waited=0 state
+            echo "hostup: waiting up to ${timeout}s for powerState=running"
+            while :; do
+              state="$(_hostup GET /status | jq -r '.powerState // empty' 2>/dev/null || true)"
+              echo "hostup: powerState=${state:-unknown} (${waited}s)"
+              [ "$state" = "running" ] && return 0
+              [ "$waited" -ge "$timeout" ] && { echo "hostup: timed out waiting for running" >&2; return 1; }
+              sleep 10; waited=$((waited + 10))
+            done
+          }
+
+          # sftp_ready [TIMEOUT_S] — wait until the SFTP service answers again.
+          sftp_ready() {
+            local timeout="${1:-300}" waited=0
+            echo "sftp: waiting up to ${timeout}s for ${REPO_USER}@${REPO_HOST}"
+            while :; do
+              if echo "pwd" | sftp -b - -i ~/.ssh/id_ed25519 \
+                   -o BatchMode=yes -o StrictHostKeyChecking=yes \
+                   -o ConnectTimeout=10 "${REPO_USER}@${REPO_HOST}" >/dev/null 2>&1; then
+                echo "sftp: reachable"; return 0
+              fi
+              [ "$waited" -ge "$timeout" ] && { echo "sftp: timed out" >&2; return 1; }
+              sleep 10; waited=$((waited + 10))
+            done
+          }
+          HELPER
+
+      # 7) Scale UP and reboot so the bigger size is live, then wait for the host
+      #    (powerState=running, then SFTP actually answering) before uploading.
+      - name: Scale up VPS and wait for it to come back
+        env:
+          REPO_USER: ${{ secrets.REPO_USER }}
+          REPO_HOST: ${{ secrets.REPO_HOST }}
+        run: |
+          source "$RUNNER_TEMP/hostup.sh"
+          hostup_resize "$BUILD_CPU" "$BUILD_MEM"
+          hostup_restart
+          sleep 20                 # let the box begin shutting down before we poll
+          hostup_wait_running 420
+          sftp_ready 420
+
+      # 8) Upload packages + *.asc into the SFTP chroot, THEN the trigger marker
+      #    (uploaded last so the server only publishes a complete set). The marker
+      #    carries this run's id so we can match the server's completion status.
+      #    The server's systemd path unit runs publish-all.sh on the marker.
+      - name: Upload signed packages and trigger publish
+        env:
+          REPO_USER: ${{ secrets.REPO_USER }}
+          REPO_HOST: ${{ secrets.REPO_HOST }}
+        run: |
+          printf '%s\n' "$RUN_ID" > ready
+          {
+            for f in dist/*.deb dist/*.deb.asc;         do [ -e "$f" ] && echo "put \"$f\" /deb/"; done
+            for f in dist/*.rpm dist/*.rpm.asc;         do [ -e "$f" ] && echo "put \"$f\" /rpm/"; done
+            for f in dist/*.flatpak dist/*.flatpak.asc; do [ -e "$f" ] && echo "put \"$f\" /flatpak/"; done
+            echo "put ready /trigger/ready"
+          } > sftp-batch
+          sftp -b sftp-batch -i ~/.ssh/id_ed25519 \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$REPO_USER@$REPO_HOST"
+
+      # 9) Wait for the server-side re-index to finish before we touch the VM
+      #    again. publish-all.sh writes `done <run-id>` (or `failed <run-id>`)
+      #    into /trigger/status; we poll it over SFTP. Rebooting to scale down
+      #    before this would interrupt aptly/createrepo_c mid-write.
+      - name: Wait for server-side publish to complete
+        env:
+          REPO_USER: ${{ secrets.REPO_USER }}
+          REPO_HOST: ${{ secrets.REPO_HOST }}
+        run: |
+          deadline=$(( SECONDS + 1800 ))   # 30 min ceiling
+          while :; do
+            rm -f status.tmp
+            echo "get /trigger/status status.tmp" | sftp -b - -i ~/.ssh/id_ed25519 \
+              -o BatchMode=yes -o StrictHostKeyChecking=yes \
+              -o ConnectTimeout=10 "$REPO_USER@$REPO_HOST" >/dev/null 2>&1 || true
+            line="$( [ -f status.tmp ] && head -n1 status.tmp || true )"
+            case "$line" in
+              "done $RUN_ID"*)   echo "publish complete: $line"; break ;;
+              "failed $RUN_ID"*) echo "::error::server-side publish failed: $line"; exit 1 ;;
+              *)                 echo "waiting for publish (last status: ${line:-none})" ;;
+            esac
+            [ "$SECONDS" -ge "$deadline" ] && { echo "::error::timed out waiting for publish"; exit 1; }
+            sleep 15
+          done
+
+      # 10) Scale back DOWN to the idle size and reboot to apply it. Runs even if
+      #     an earlier step failed so we never leave the VM scaled up (and billed)
+      #     after a failed publish. We confirm it comes back at the smaller size.
+      - name: Scale down VPS and reboot
+        if: always()
+        env:
+          REPO_USER: ${{ secrets.REPO_USER }}
+          REPO_HOST: ${{ secrets.REPO_HOST }}
+        run: |
+          source "$RUNNER_TEMP/hostup.sh"
+          hostup_resize "$IDLE_CPU" "$IDLE_MEM"
+          hostup_restart
+          sleep 20
+          hostup_wait_running 420 || echo "::warning::VM did not report running after scale-down reboot"
+          sftp_ready 300 || echo "::warning::SFTP not reachable yet after scale-down reboot"
