@@ -36,11 +36,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1) Get the already-built packages from the release assets
+      # 1) Get the already-built packages from the latest release assets
       - name: Download release assets
         uses: robinraju/release-downloader@v1
         with:
-          tag: ${{ github.event.release.tag_name }}
+          latest: true
           fileName: "*"
           out-file-path: dist
 
