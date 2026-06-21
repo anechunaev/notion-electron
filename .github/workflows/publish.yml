@@ -91,6 +91,14 @@ jobs:
       #    (uploaded last so the server only publishes a complete set). The marker
       #    carries this run's id so we can match the server's completion status.
       #    The server's systemd path unit runs publish-all.sh on the marker.
+      #
+      #    The marker is uploaded to a temp name and then atomically renamed into
+      #    place: a plain `put` CREATES the file empty and fills it over several
+      #    round-trips, so the server's path watcher can fire and publish-all.sh
+      #    can read an EMPTY run id before the bytes arrive. `rename` makes
+      #    /trigger/ready appear complete in a single atomic step (it also
+      #    atomically replaces any stale marker via posix-rename), so the watcher
+      #    only ever sees a fully-written marker.
       - name: Upload signed packages and trigger publish
         env:
           REPO_USER: ${{ secrets.REPO_USER }}
@@ -101,7 +109,8 @@ jobs:
             for f in dist/*.deb dist/*.deb.asc;         do [ -e "$f" ] && echo "put \"$f\" /deb/"; done
             for f in dist/*.rpm dist/*.rpm.asc;         do [ -e "$f" ] && echo "put \"$f\" /rpm/"; done
             for f in dist/*.flatpak dist/*.flatpak.asc; do [ -e "$f" ] && echo "put \"$f\" /flatpak/"; done
-            echo "put ready /trigger/ready"
+            echo "put ready /trigger/.ready.tmp"
+            echo "rename /trigger/.ready.tmp /trigger/ready"
           } > sftp-batch
           sftp -b sftp-batch -i ~/.ssh/id_ed25519 \
             -o BatchMode=yes -o StrictHostKeyChecking=yes \
