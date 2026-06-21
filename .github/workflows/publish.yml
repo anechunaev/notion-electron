@@ -38,23 +38,12 @@ jobs:
           MAINTAINER_GPG_KEY: ${{ secrets.MAINTAINER_GPG_KEY }}
         run: echo "$MAINTAINER_GPG_KEY" | base64 -d | gpg --batch --import
 
-      # 3) Detached signature per artifact
-      - name: Sign packages (detached, maintainer key)
-        env:
-          MAINTAINER_GPG_ID: ${{ secrets.MAINTAINER_GPG_ID }}
-          MAINTAINER_GPG_PASSPHRASE: ${{ secrets.MAINTAINER_GPG_PASSPHRASE }}
-        run: |
-          shopt -s nullglob
-          for f in dist/*.deb dist/*.rpm dist/*.flatpak; do
-            gpg --batch --yes --pinentry-mode loopback \
-                --passphrase "$MAINTAINER_GPG_PASSPHRASE" \
-                --local-user "$MAINTAINER_GPG_ID" \
-                --detach-sign --armor "$f"
-          done
-
-      # 4) Embedded rpm signature so dnf clients' gpgcheck=1 also verifies the
+      # 3) Embedded rpm signature so dnf clients' gpgcheck=1 also verifies the
       #    package (defence in depth). dpkg-sig is intentionally NOT used: apt
       #    never checks per-package signatures, so it would be pure overhead.
+      #    MUST run BEFORE the detached signatures below: `rpm --addsign` rewrites
+      #    the .rpm bytes, so a detached .asc taken earlier would no longer match
+      #    the uploaded file and the server's signature gate would reject it.
       - name: Add embedded rpm signature
         env:
           MAINTAINER_GPG_ID: ${{ secrets.MAINTAINER_GPG_ID }}
@@ -70,6 +59,22 @@ jobs:
           %_gpg_sign_cmd_extra_args --pinentry-mode loopback --passphrase-file ${HOME}/.gpg-pass
           EOF
           for f in "${rpms[@]}"; do rpm --addsign "$f"; done
+
+      # 4) Detached signature per artifact. For rpm this signs the FINAL bytes
+      #    (after the embedded signature above), so the detached .asc the server
+      #    verifies matches the exact file clients download.
+      - name: Sign packages (detached, maintainer key)
+        env:
+          MAINTAINER_GPG_ID: ${{ secrets.MAINTAINER_GPG_ID }}
+          MAINTAINER_GPG_PASSPHRASE: ${{ secrets.MAINTAINER_GPG_PASSPHRASE }}
+        run: |
+          shopt -s nullglob
+          for f in dist/*.deb dist/*.rpm dist/*.flatpak; do
+            gpg --batch --yes --pinentry-mode loopback \
+                --passphrase "$MAINTAINER_GPG_PASSPHRASE" \
+                --local-user "$MAINTAINER_GPG_ID" \
+                --detach-sign --armor "$f"
+          done
 
       # 5) SSH key + pinned host key
       - name: Set up SSH
