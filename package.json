@@ -16,6 +16,7 @@
 		"dev:server": "node ./dev/release-server.mjs",
 		"flatpak-lint": "./dev/flatpak/lint.sh",
 		"flatpak-build": "./dev/flatpak/build.sh",
+		"flatpak-bundle": "./dev/flatpak/bundle.sh",
 		"flatpak-test": "./dev/flatpak/test.sh",
 		"flatpak-clean": "./dev/flatpak/clean.sh",
 		"snap-build": "./dev/snap/build.sh",

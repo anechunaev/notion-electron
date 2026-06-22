@@ -1,0 +1,5 @@
+_repo/
+out/
+build/
+generated-sources.json
+*.local.yaml
