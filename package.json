@@ -59,7 +59,7 @@
 		"prettier": "^3.8.4",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.61.1",
-		"vite": "^7.3.5"
+		"vite": "^8.1.0"
 	},
 	"dependencies": {
 		"@clebert/node-d-bus": "^1.0.0",
