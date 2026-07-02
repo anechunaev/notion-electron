@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	if (window.notionElectronAPI) {
 		if (addTabButton) {
-			addTabButton.addEventListener('click', () => window.notionElectronAPI.addTab({ url: NOTION_NOTES_HOST }));
+			addTabButton.addEventListener('click', () => window.notionElectronAPI.addTab({}));
 		}
 
 		if (historyBackButton) {
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		window.notionElectronAPI.subscribeOnAction((action) => {
 			switch (action) {
 				case 'tab-add':
-					window.notionElectronAPI.addTab({ url: NOTION_NOTES_HOST });
+					window.notionElectronAPI.addTab({});
 					break;
 				case 'tab-close':
 					window.notionElectronAPI.closeCurrentTab();
