@@ -188,18 +188,24 @@ class TabsService implements TabReader, TabCommands {
 			Object.values(this.tabViews).forEach((view) => {
 				view.webContents.close();
 			});
+			this.layout.dispose();
 		});
 
-		this.window.on('resize', this.setViewSize.bind(this));
+		this.window.on('resize', () => {
+			this.setViewSize();
+			this.layout.scheduleSettle(() => Object.values(this.tabViews));
+		});
 
 		this.window.on('maximize', () => {
 			this.layout.setMaximized(true);
 			this.setViewSize();
+			this.layout.scheduleSettle(() => Object.values(this.tabViews));
 		});
 
 		this.window.on('unmaximize', () => {
 			this.layout.setMaximized(false);
 			this.setViewSize();
+			this.layout.scheduleSettle(() => Object.values(this.tabViews));
 		});
 
 		app.on('before-quit', () => {

@@ -2,9 +2,17 @@ import { screen, type BaseWindow, type Rectangle } from 'electron';
 import { DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH } from '../../shared/constants';
 import type { AppStore } from '../types';
 
+// Linux window managers can emit several transitional 'resize' events mid maximize/unmaximize,
+// before Electron's own 'maximize'/'unmaximize' event confirms the state change and before bounds
+// reach their final value. Saving on every raw event risks persisting one of those transitional
+// sizes as the window's real (non-maximized) bounds, which then poisons the next launch. Debouncing
+// on trailing resize/move events ensures we only persist once bounds have actually settled.
+const SAVE_DEBOUNCE_MS = 20; // A bit slower than 60Hz
+
 class WindowPositionService {
 	private store: AppStore;
 	private isMaximized: boolean;
+	private saveTimer: NodeJS.Timeout | null = null;
 
 	constructor(store: AppStore) {
 		this.store = store;
@@ -15,17 +23,36 @@ class WindowPositionService {
 		win.on('maximize', () => {
 			this.isMaximized = true;
 			this.store.set('maximized', true);
+			this.cancelPendingSave();
 		});
 
 		win.on('unmaximize', () => {
 			this.isMaximized = false;
 			this.store.set('maximized', false);
-			this.savePosition(win);
+			this.scheduleSave(win);
 		});
 
-		win.on('close', () => this.savePosition(win));
-		win.on('move', () => this.savePosition(win));
-		win.on('resize', () => this.savePosition(win));
+		win.on('close', () => {
+			this.cancelPendingSave();
+			this.savePosition(win);
+		});
+		win.on('move', () => this.scheduleSave(win));
+		win.on('resize', () => this.scheduleSave(win));
+	}
+
+	private scheduleSave(win: BaseWindow): void {
+		this.cancelPendingSave();
+		this.saveTimer = setTimeout(() => {
+			this.saveTimer = null;
+			this.savePosition(win);
+		}, SAVE_DEBOUNCE_MS);
+	}
+
+	private cancelPendingSave(): void {
+		if (this.saveTimer) {
+			clearTimeout(this.saveTimer);
+			this.saveTimer = null;
+		}
 	}
 
 	public getPosition() {
