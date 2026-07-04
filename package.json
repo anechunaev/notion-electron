@@ -116,6 +116,12 @@
 			},
 			"category": "Utility;Office;"
 		},
+		"rpm": {
+			"fpm": [
+				"--rpm-rpmbuild-define",
+				"_build_id_links none"
+			]
+		},
 		"snapcraft": {
 			"base": "core24",
 			"core24": {
