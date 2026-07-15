@@ -35,8 +35,8 @@ The recommended installation method is the AppImage. Alternatively, you can add 
     - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.3.0/Notion_Electron-2.3.0-x86_64.AppImage)
     - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.3.0/Notion_Electron-2.3.0-arm64.AppImage)
 - **Any Distribution `.flatpak`**
-    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/untagged-02e2eb161a23c8b02dda/notion-electron-x86_64.flatpak)
-    - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/untagged-02e2eb161a23c8b02dda/notion-electron-aarch64.flatpak)
+    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.3.0/notion-electron-x86_64.flatpak)
+    - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.3.0/notion-electron-aarch64.flatpak)
 - **Ubuntu / Debian `.deb` package**
     - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.3.0/Notion_Electron-2.3.0-amd64.deb)
     - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.3.0/Notion_Electron-2.3.0-arm64.deb)
@@ -76,9 +76,9 @@ Steps:
 
 Run program with this flags to enable features:
 
-- `--hide-on-startup` – This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
-- `--disable-spellcheck` – Disables OS-defined spellcheck.
-- `--disable-update-functionality` – Disables all update functionality (automatic checks, downloads, and installs). Recommended for sandboxed package formats like nix, where updates are managed by the package manager, regardless of the in-app setting.
+- `--hide-on-startup` — This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
+- `--disable-spellcheck` — Disables OS-defined spellcheck.
+- `--disable-update-functionality` — Disables all update functionality (automatic checks, downloads, and installs). Recommended for sandboxed package formats like nix, where updates are managed by the package manager, regardless of the in-app setting.
 
 ### Spellcheck dictionaries
 

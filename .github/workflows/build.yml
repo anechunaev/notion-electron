@@ -72,8 +72,12 @@ jobs:
     - name: Build flatpak bundle (${{ matrix.variant.arch }})
       run: |
         cd dev/flatpak
+        VERSION="$(jq -r .version ../../package.json)"
+        DATE="$(git show -s --format=%cs HEAD)"
         # Build the exact commit that triggered this run (the npm-version tag).
         sed -i "s|^\(\s*tag:\).*|\1 '${GITHUB_REF_NAME}'|" io.github.anechunaev.notion-electron.yaml
+        # Keep AppStream <releases> in sync so Discover sees this as an update, not a refresh.
+        node stamp-metainfo.mjs --version "$VERSION" --date "$DATE" io.github.anechunaev.notion-electron.metainfo.xml
         # generated-sources.json goes stale on dependency bumps; refresh it.
         flatpak-node-generator npm ../../package-lock.json
         flatpak-builder --user --install-deps-from=flathub --repo=_repo \
@@ -81,14 +85,14 @@ jobs:
           build io.github.anechunaev.notion-electron.yaml
         mkdir -p "$GITHUB_WORKSPACE/dist"
         flatpak build-bundle --arch="${{ matrix.variant.arch }}" _repo \
-          "$GITHUB_WORKSPACE/dist/notion-electron-${{ matrix.variant.arch }}.flatpak" \
+          "$GITHUB_WORKSPACE/dist/Notion_Electron-${VERSION}-${{ matrix.variant.arch }}.flatpak" \
           io.github.anechunaev.notion-electron
 
     - name: Upload bundle artifact
       uses: actions/upload-artifact@v4
       with:
         name: flatpak-${{ matrix.variant.arch }}
-        path: dist/notion-electron-${{ matrix.variant.arch }}.flatpak
+        path: dist/Notion_Electron-*.flatpak
 
   flatpak-release:
     needs: [build, flatpak]
@@ -108,4 +112,4 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.github_token }}
         GH_REPO: ${{ github.repository }}
-      run: gh release upload "${GITHUB_REF_NAME}" "dist/notion-electron-${{ matrix.arch }}.flatpak" --clobber
+      run: gh release upload "${GITHUB_REF_NAME}" dist/*.flatpak --clobber

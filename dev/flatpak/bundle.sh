@@ -13,9 +13,17 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 ARCH="$(flatpak --default-arch)"
-OUT="${1:-out/notion-electron-${ARCH}.flatpak}"
+VERSION="$(jq -r .version ../../package.json)"
+OUT="${1:-out/Notion_Electron-${VERSION}-${ARCH}.flatpak}"
 APP_ID="io.github.anechunaev.notion-electron"
 MANIFEST="${APP_ID}.local.yaml"
+
+# Stamp the current version into the AppStream <releases> so the local bundle
+# behaves like a real update. Restore the tracked file on exit to keep the tree clean.
+METAINFO="${APP_ID}.metainfo.xml"
+cp "$METAINFO" "$METAINFO.orig"
+trap 'mv "$METAINFO.orig" "$METAINFO"' EXIT
+node stamp-metainfo.mjs --version "$VERSION" --date "$(date -u +%Y-%m-%d)" "$METAINFO"
 
 flatpak-node-generator npm ../../package-lock.json
 
