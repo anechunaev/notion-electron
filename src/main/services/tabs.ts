@@ -18,12 +18,24 @@ import pkg from '../../../package.json';
 export type { TabRequestOptions } from './tabs.types';
 
 const HOME_PAGE = getAppHomeUrl('notes');
+const NOTION_NOTES_HOSTS = new Set(['app.notion.com', 'www.notion.so']);
 
 const PINNED_APP_OPTIONS: Partial<Record<AppName, keyof OptionValues>> = {
 	calendar: 'tabs-show-calendar',
 	mail: 'tabs-show-mail',
 };
 const USER_AGENT = `Mozilla/5.0 (${process.env.XDG_SESSION_TYPE ?? 'X11'}; Linux ${process.arch}) Notion_Еlectron/${pkg.version} Chrome/${process.versions.chrome}`;
+
+function getKnownNotesUrl(url: string): string | undefined {
+	let parsed: URL;
+	try {
+		parsed = new URL(url);
+	} catch {
+		return undefined;
+	}
+	if (!NOTION_NOTES_HOSTS.has(parsed.hostname)) return undefined;
+	return parsed.pathname === '/' ? undefined : parsed.toString();
+}
 
 async function sendKey(
 	entry: { keyCode: string; modifiers?: string[] },
@@ -316,7 +328,20 @@ class TabsService implements TabReader, TabCommands {
 		this.revealTab(id, skipChange);
 	}
 
+	private getNewTabUrl(app: AppName | undefined): string {
+		if (app && app !== 'notes') return getAppHomeUrl(app);
+
+		const currentUrl = this.currentView()?.webContents.getURL();
+		if (currentUrl) {
+			const notesUrl = getKnownNotesUrl(currentUrl);
+			if (notesUrl) return notesUrl;
+		}
+
+		return HOME_PAGE;
+	}
+
 	private createTabView(tabId: string, url: string | undefined, app: AppName | undefined, isPinned: boolean): void {
+		const tabUrl = url ?? this.getNewTabUrl(app);
 		const view = new WebContentsView({
 			webPreferences: {
 				preload: resolvePreload('docs.cjs'),
@@ -331,7 +356,7 @@ class TabsService implements TabReader, TabCommands {
 		view.setBounds(this.layout.contentBounds());
 
 		view.webContents
-			.loadURL(url ?? HOME_PAGE, {
+			.loadURL(tabUrl, {
 				userAgent: USER_AGENT,
 			})
 			.then(() => {
@@ -381,7 +406,7 @@ class TabsService implements TabReader, TabCommands {
 
 		this.tabViews[tabId] = view;
 		this.pinnedMap[tabId] = isPinned;
-		this.tabApp[tabId] = app ?? getAppFromUrl(url ?? HOME_PAGE);
+		this.tabApp[tabId] = app ?? getAppFromUrl(tabUrl);
 		this.tabOrder.push(tabId);
 	}
 

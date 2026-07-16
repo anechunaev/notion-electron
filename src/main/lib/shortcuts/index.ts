@@ -23,10 +23,11 @@ export function detectShortcut(
 	const accelString = accelerator.join('+');
 	const shortcut = Object.values(shortcutMap).find((s) => s.accelerator === accelString);
 	if (shortcut) {
+		event.preventDefault();
+		if (input.type !== 'keyDown') return;
 		shortcut.action({
 			pageWebContents,
 			titlebarWebContents,
 		});
-		event.preventDefault();
 	}
 }
