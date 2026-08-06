@@ -54,7 +54,7 @@
 		"electron-vite": "^5.0.0",
 		"eslint": "^10.6.0",
 		"eslint-plugin-prettier": "^5.5.6",
-		"globals": "^17.6.0",
+		"globals": "^17.7.0",
 		"husky": "^9.1.7",
 		"prettier": "^3.9.1",
 		"typescript": "^6.0.3",
