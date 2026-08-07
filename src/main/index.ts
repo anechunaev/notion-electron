@@ -67,20 +67,26 @@ if (!app.requestSingleInstanceLock()) {
 				const windowPositionService = new WindowPositionService(store);
 				const savedPosition = windowPositionService.getPosition();
 
+				const useSystemTitleBar = optionsService.getOption('show-system-title-bar');
+
 				mainWindow = new BaseWindow({
 					title: DEFAULT_WINDOW_TITLE,
 					minWidth: DEFAULT_WINDOW_WIDTH,
 					minHeight: DEFAULT_WINDOW_HEIGHT,
 					width: savedPosition.bounds.width,
 					height: savedPosition.bounds.height,
-					titleBarStyle: 'hidden',
 					icon: resolveAsset('icons/desktop.png'),
 					show: optionsService.getOption('general-show-window-on-start'),
-					titleBarOverlay: {
-						color: bgColor,
-						height: TITLEBAR_HEIGHT,
-					},
 					backgroundColor: bgColor,
+					...(useSystemTitleBar
+						? { titleBarStyle: 'default' }
+						: {
+								titleBarStyle: 'hidden' as const,
+								titleBarOverlay: {
+									color: bgColor,
+									height: TITLEBAR_HEIGHT,
+								},
+							}),
 				});
 
 				windowPositionService.subscribeToPositionChange(mainWindow);

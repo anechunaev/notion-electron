@@ -35,6 +35,7 @@ export interface TabsStatePayload {
 export interface GlobalOptions {
 	initialTabId: string | null;
 	sidebarContinueToTitlebar: boolean;
+	systemTitleBar: boolean;
 }
 
 export interface AppMetadata {

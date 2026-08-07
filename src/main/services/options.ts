@@ -17,6 +17,9 @@ class OptionsService {
 			'hide-to-tray': false,
 			'hide-window-on-close': false,
 		},
+		i3: {
+			'show-system-title-bar': true,
+		},
 	};
 
 	private static buildEnvDefaults(env: NodeJS.ProcessEnv): Partial<OptionValues> {

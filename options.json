@@ -76,6 +76,14 @@
 				"default": true
 			}
 		},
+		"show-system-title-bar": {
+			"group": "g2",
+			"name": "Show System Window Title Bar",
+			"value": {
+				"type": "checkbox",
+				"default": false
+			}
+		},
 		"update-check-interval": {
 			"group": "g3",
 			"name": "Automatically Check For Updates",

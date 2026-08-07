@@ -10,6 +10,9 @@
 
 	--font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
 	--font: 500 14px/22px var(--font-family);
+
+	/* Space reserved for the window controls Electron paints over the titlebar view */
+	--window-controls-width: 96px;
 }
 
 @media (prefers-color-scheme: light) {
@@ -35,7 +38,7 @@ body {
 
 .titlebar {
 	display: flex;
-	width: calc(100% - 96px);
+	width: calc(100% - var(--window-controls-width));
 	height: 40px;
 	background-color: var(--bg-sidebar);
 	align-items: center;
@@ -43,6 +46,10 @@ body {
 	color: var(--color);
 	font: var(--font);
 	box-sizing: border-box;
+}
+
+.titlebar.system-title-bar {
+	--window-controls-width: 0px;
 }
 
 .controls {

@@ -163,6 +163,7 @@ class TabsService implements TabReader, TabCommands {
 			const options = {
 				initialTabId: this.currentTabId,
 				sidebarContinueToTitlebar: this.options.getOption('tabs-continue-sidebar'),
+				systemTitleBar: this.options.getOption('show-system-title-bar'),
 			};
 			event.sender.send('global-options', options);
 		});

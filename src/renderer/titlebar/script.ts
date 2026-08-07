@@ -207,6 +207,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		window.notionElectronAPI.subscribeOnTabsState(renderTabs);
 		window.notionElectronAPI.subscribeOnTabInfo(onTabInfo);
 		window.notionElectronAPI.subscribeOnGlobalOptions((options) => {
+			titlebar.classList.toggle('system-title-bar', options.systemTitleBar);
+
 			if (options.sidebarContinueToTitlebar) {
 				titlebarSidebar.classList.remove('hidden');
 				window.notionElectronAPI.subscribeOnSidebarChange(onSidebarStateChange);

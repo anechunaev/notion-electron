@@ -30,6 +30,7 @@ export interface OptionValues {
 	'tabs-show-mail': boolean;
 	'tabs-reopen-on-start': boolean;
 	'tabs-continue-sidebar': boolean;
+	'show-system-title-bar': boolean;
 	'update-check-interval': 'never' | 'daily' | 'weekly' | 'monthly';
 	'update-auto-download': boolean;
 	'update-auto-install': boolean;
