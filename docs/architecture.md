@@ -191,8 +191,12 @@ Things to know when touching these:
   `options.json` default **<** desktop-environment preset (`#DE_PRESETS`, e.g. GNOME) **<**
   stored value **<** CLI override. `getOption()` returns CLI overrides directly; everything
   else flows through `getPersistentOption()` → `store.get(id, fallback)`.
-- **`update.ts` splits by package format.** AppImage gets in-app download/install; other
-  formats (rpm/deb/Flatpak/Snap) defer to the package manager. It honors the
+- **`update.ts` splits by package format.** `lib/packaging.ts` detects how the app was
+  installed — Flatpak (`/.flatpak-info`), Snap (`SNAP*` env), AppImage (`APPIMAGE` env),
+  then deb/rpm/pacman via the `resources/package-type` file electron-builder writes for
+  those targets — and maps it to an update mode. AppImage gets in-app download/install;
+  every other format is read-only and the options window shows a per-format stage
+  (`stage-manual-deb`, `stage-manual-flatpak`, …) instead. It honors the
   `--disable-update-functionality` flag / `disable-update-functionality` option. Pure
   helpers live in `lib/` (`semver.ts`, `bytes.ts`); quit/relaunch go through `lib/quit.ts`
   (`quitApp` / `relaunchApp`), the single place that sets `app.isQuiting`.

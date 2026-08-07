@@ -6,7 +6,8 @@ import { getSystemFormattedDate } from '../lib/dateFormat';
 import { isSemverBigger } from '../lib/semver';
 import { bytesSizeToHuman } from '../lib/bytes';
 import { quitApp, relaunchApp } from '../lib/quit';
-import type { ChangelogItem } from '../../shared/ipc';
+import { detectPackageFormat, getPackageFormatLabel, getUpdateMode } from '../lib/packaging';
+import type { ChangelogItem, PackageFormat, UpdateMode } from '../../shared/ipc';
 import type { AppStore } from '../types';
 import type OptionsService from './options';
 import type NotificationService from './notifications';
@@ -33,6 +34,8 @@ class UpdateService extends EventEmitter {
 	private checkInterval = ONE_DAY_MS;
 	private availableVersion: string;
 	private localVersion: string;
+	private packageFormat: PackageFormat = detectPackageFormat();
+	private updateMode: UpdateMode = getUpdateMode(this.packageFormat);
 	private stage: UpdateStage = 'latest';
 	private percentage = 0;
 	private downloaded = '';
@@ -112,7 +115,7 @@ class UpdateService extends EventEmitter {
 				});
 			}
 
-			if (process.env.APPIMAGE && this.options.getOption('update-auto-download')) {
+			if (this.updateMode === 'in-app' && this.options.getOption('update-auto-download')) {
 				this.downloadUpdate();
 			} else {
 				this.stage = isSemverBigger(this.availableVersion, this.localVersion) ? 'available' : 'latest';
@@ -142,7 +145,7 @@ class UpdateService extends EventEmitter {
 			this.sendStatus();
 		});
 		this.updater.on('update-downloaded', () => {
-			if (process.env.APPIMAGE && this.options.getOption('update-auto-install')) {
+			if (this.updateMode === 'in-app' && this.options.getOption('update-auto-install')) {
 				this.installUpdate();
 			} else {
 				this.stage = 'ready';
@@ -168,7 +171,9 @@ class UpdateService extends EventEmitter {
 			lastCheckedFormatted: getSystemFormattedDate(this.lastChecked),
 			availableVersion: this.availableVersion,
 			localVersion: this.localVersion,
-			canAutoUpdate: Boolean(process.env.APPIMAGE),
+			packageFormat: this.packageFormat,
+			packageFormatLabel: getPackageFormatLabel(this.packageFormat),
+			updateMode: this.updateMode,
 			releaseUrl: this.releaseUrl,
 			stage: this.stage,
 			percentage: this.percentage,
@@ -202,7 +207,7 @@ class UpdateService extends EventEmitter {
 	}
 
 	private downloadUpdate() {
-		if (!process.env.APPIMAGE) {
+		if (this.updateMode !== 'in-app') {
 			shell.openExternal(this.releaseUrl);
 			return;
 		}
@@ -225,6 +230,9 @@ class UpdateService extends EventEmitter {
 	}
 
 	private installUpdate() {
+		// On deb/rpm installs electron-updater would run dpkg/rpm under pkexec, which is never offered by the UI.
+		if (this.updateMode !== 'in-app') return;
+
 		if (app.isPackaged) {
 			this.stage = 'installing';
 			this.sendStatus();

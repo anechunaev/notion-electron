@@ -67,12 +67,18 @@ export interface ChangelogItem {
 	url: string;
 }
 
+export type PackageFormat = 'appimage' | 'flatpak' | 'snap' | 'deb' | 'rpm' | 'pacman' | 'unpacked' | 'development';
+
+export type UpdateMode = 'in-app' | 'package-manager' | 'store' | 'none';
+
 export interface UpdateStatus {
 	lastChecked: string;
 	lastCheckedFormatted: string;
 	availableVersion: string;
 	localVersion: string;
-	canAutoUpdate: boolean;
+	packageFormat: PackageFormat;
+	packageFormatLabel: string;
+	updateMode: UpdateMode;
 	releaseUrl: string;
 	stage: string;
 	percentage: number;

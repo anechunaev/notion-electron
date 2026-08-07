@@ -1,4 +1,18 @@
-import type { ChangelogItem, OptionsPayload, RendererOptionDefinition } from '../../shared/ipc';
+import type {
+	ChangelogItem,
+	OptionsPayload,
+	PackageFormat,
+	RendererOptionDefinition,
+	UpdateMode,
+} from '../../shared/ipc';
+
+const AUTO_UPDATE_OPTION_IDS = [
+	'update-check-interval',
+	'update-auto-download',
+	'update-auto-install',
+	'update-notification',
+];
+const IN_APP_ONLY_OPTION_IDS = ['update-auto-download', 'update-auto-install'];
 
 function escapeHtml(value: string): string {
 	return value
@@ -97,15 +111,25 @@ document.addEventListener('DOMContentLoaded', () => {
 	const stageLatest = document.querySelector('.stage-latest') as HTMLElement;
 	const stageChecking = document.querySelector('.stage-checking') as HTMLElement;
 	const stageAvailable = document.querySelector('.stage-available') as HTMLElement;
-	const stageManual = document.querySelector('.stage-manual') as HTMLElement;
 	const stageDownloading = document.querySelector('.stage-downloading') as HTMLElement;
 	const stageReady = document.querySelector('.stage-ready') as HTMLElement;
 	const stageInstalling = document.querySelector('.stage-installing') as HTMLElement;
 	const stageInstalled = document.querySelector('.stage-installed') as HTMLElement;
 	const stageError = document.querySelector('.stage-error') as HTMLElement;
+	const manualStages: Record<PackageFormat, HTMLElement | null> = {
+		appimage: null,
+		deb: document.querySelector<HTMLElement>('.stage-manual-deb'),
+		rpm: document.querySelector<HTMLElement>('.stage-manual-rpm'),
+		pacman: document.querySelector<HTMLElement>('.stage-manual-pacman'),
+		flatpak: document.querySelector<HTMLElement>('.stage-manual-flatpak'),
+		snap: document.querySelector<HTMLElement>('.stage-manual-snapd'),
+		unpacked: document.querySelector<HTMLElement>('.stage-manual-unpacked'),
+		development: document.querySelector<HTMLElement>('.stage-manual-unpacked'),
+	};
 	const statusDate = document.getElementById('status-date') as HTMLElement;
 	const statusAvailable = document.getElementById('status-available') as HTMLElement;
 	const statusLocal = document.getElementById('status-local') as HTMLElement;
+	const statusFormat = document.getElementById('status-format') as HTMLElement;
 	const updateManually = document.getElementById('update-manually') as HTMLButtonElement;
 	const updateDownload = document.getElementById('update-download') as HTMLButtonElement;
 	const updateProgress = document.getElementById('update-progress') as HTMLProgressElement;
@@ -115,19 +139,28 @@ document.addEventListener('DOMContentLoaded', () => {
 	const updateSpeed = document.getElementById('update-speed') as HTMLElement;
 	const updateInstall = document.getElementById('update-install') as HTMLButtonElement;
 	const updateError = document.getElementById('update-error') as HTMLElement;
-	const updateManualLink = document.getElementById('update-manual-link') as HTMLAnchorElement;
-	const updateStages = [
-		stageLatest,
-		stageChecking,
-		stageAvailable,
-		stageManual,
-		stageDownloading,
-		stageReady,
-		stageInstalling,
-		stageInstalled,
-		stageError,
-	];
+	const updateManualLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('.update-manual-link'));
+	const updateStages = Array.from(document.querySelectorAll<HTMLElement>('.update-stage'));
 	const changelogElement = document.getElementById('changelog');
+	let updateMode: UpdateMode = 'none';
+
+	function refreshUpdateControls(): void {
+		const disableUpdates = Boolean(
+			(document.getElementById('disable-update-functionality') as HTMLInputElement | null)?.checked,
+		);
+		for (const id of AUTO_UPDATE_OPTION_IDS) {
+			const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
+			if (!el) continue;
+			const inAppOnly = IN_APP_ONLY_OPTION_IDS.includes(id) && updateMode !== 'in-app';
+			el.disabled = disableUpdates || inAppOnly;
+			el.title = inAppOnly ? 'Available only for packages that can update themselves' : '';
+			el.closest('.grid-row')?.classList.toggle('disabled', el.disabled);
+		}
+		for (const btn of [updateManually, updateDownload, updateInstall]) {
+			btn.disabled = disableUpdates;
+		}
+		updateManually.title = disableUpdates ? 'Update functionality is disabled, see Options' : '';
+	}
 
 	function selectTab(tabId: string): void {
 		if (tabId === currentTab) return;
@@ -210,35 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		optionsPanel.append(...Object.values(groups).map((group) => group.el));
 
 		const autoUpdateCheckbox = document.getElementById('disable-update-functionality') as HTMLInputElement | null;
-		const autoUpdateDepIds = [
-			'update-check-interval',
-			'update-auto-download',
-			'update-auto-install',
-			'update-notification',
-		];
-
-		function setUpdateOptionsDisabled(disabled: boolean): void {
-			for (const id of autoUpdateDepIds) {
-				const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
-				if (!el) continue;
-				el.closest('.grid-row')?.classList.toggle('disabled', disabled);
-				el.disabled = disabled;
-			}
-			for (const btn of [updateManually, updateDownload, updateInstall]) {
-				if (!btn) continue;
-				btn.disabled = disabled;
-			}
-			if (updateManually) {
-				updateManually.title = disabled ? 'Update functionality is disabled, see Options' : '';
-			}
-		}
-
-		if (autoUpdateCheckbox) {
-			setUpdateOptionsDisabled(autoUpdateCheckbox.checked);
-			autoUpdateCheckbox.addEventListener('change', (e) => {
-				setUpdateOptionsDisabled((e.currentTarget as HTMLInputElement).checked);
-			});
-		}
+		refreshUpdateControls();
+		autoUpdateCheckbox?.addEventListener('change', refreshUpdateControls);
 	});
 	window.notionElectronAPI.subscribeOnTabChange((tabId) => {
 		window.location.hash = tabId;
@@ -265,9 +271,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			lastCheckedFormatted,
 			availableVersion,
 			localVersion,
-			canAutoUpdate,
+			packageFormat,
+			packageFormatLabel,
 			releaseUrl,
 		} = data;
+		updateMode = data.updateMode;
+		refreshUpdateControls();
 		updateStages.forEach((s) => {
 			s.classList.add('hidden');
 		});
@@ -281,12 +290,14 @@ document.addEventListener('DOMContentLoaded', () => {
 				break;
 			case 'available':
 				toggleIndicator('updates', true);
-				if (canAutoUpdate) {
+				if (updateMode === 'in-app') {
 					stageAvailable.classList.remove('hidden');
 				} else {
-					updateManualLink.setAttribute('href', releaseUrl);
-					updateManualLink.textContent = `Download version ${availableVersion}`;
-					stageManual.classList.remove('hidden');
+					for (const link of updateManualLinks) {
+						link.setAttribute('href', releaseUrl);
+						link.replaceChildren(`Download version ${availableVersion}`);
+					}
+					manualStages[packageFormat]?.classList.remove('hidden');
 				}
 				break;
 			case 'downloading':
@@ -314,6 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		statusDate.textContent = lastCheckedFormatted;
 		statusAvailable.textContent = availableVersion;
 		statusLocal.textContent = localVersion;
+		statusFormat.textContent = packageFormatLabel;
 	});
 	window.notionElectronAPI.subscribeOnUpdateChangelog((items) => {
 		changelog = renderChangelog(items);
