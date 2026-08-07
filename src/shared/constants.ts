@@ -1,5 +1,7 @@
 export const TITLEBAR_HEIGHT = 40;
 
+export const DEFAULT_WINDOW_TITLE = 'Notion Electron';
+
 export const NOTION_NOTES_HOST = 'https://app.notion.com';
 export const NOTION_CALENDAR_HOST = 'https://calendar.notion.so';
 export const NOTION_MAIL_HOST = 'https://mail.notion.so';

@@ -12,6 +12,7 @@ import TabPersistence from './tabPersistence';
 import type { AppName, AppStore, OptionValues } from '../types';
 import type { TabCommands, TabReader, TabRequestOptions } from './tabs.types';
 import type { TabsStatePayload, TabState } from '../../shared/ipc';
+import { DEFAULT_WINDOW_TITLE } from '../../shared/constants';
 import type OptionsService from './options';
 import pkg from '../../../package.json';
 
@@ -273,6 +274,11 @@ class TabsService implements TabReader, TabCommands {
 		this.titleBarView.webContents.send('tabs-state', payload);
 	}
 
+	private syncWindowTitle(): void {
+		const title = this.currentTabId ? this.titlesMap[this.currentTabId] : undefined;
+		this.window.setTitle(title ?? DEFAULT_WINDOW_TITLE);
+	}
+
 	private setVisibleTabs(tabId: string): void {
 		Object.entries(this.tabViews).forEach(([viewId, view]) => {
 			const visible = viewId === tabId;
@@ -284,6 +290,7 @@ class TabsService implements TabReader, TabCommands {
 		});
 
 		this.currentTabId = tabId;
+		this.syncWindowTitle();
 	}
 
 	private selectTab(tabId: string): void {
@@ -351,6 +358,7 @@ class TabsService implements TabReader, TabCommands {
 			if (!title || !this.tabViews[tabId]) return;
 			this.titlesMap[tabId] = title;
 			this.sendTabInfo(tabId, { title, icon: null });
+			if (tabId === this.currentTabId) this.syncWindowTitle();
 			this.saveTabs();
 		});
 
@@ -464,6 +472,7 @@ class TabsService implements TabReader, TabCommands {
 			const fallback = this.tabOrder[this.tabOrder.length - 1];
 			this.currentTabId = fallback ?? null;
 			if (fallback) this.setVisibleTabs(fallback);
+			else this.syncWindowTitle();
 		}
 		this.saveTabs();
 		this.pushState();

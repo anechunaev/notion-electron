@@ -16,7 +16,12 @@ import ThemeService from './services/theme';
 import { createMonitorBus } from './lib/dbus';
 import { registerMainWindowLifecycle, registerOptionsWindowLifecycle } from './lib/windowLifecycle';
 import { resolveAsset, resolvePreload, loadRendererPage } from './lib/resources';
-import { TITLEBAR_HEIGHT, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT } from '../shared/constants';
+import {
+	TITLEBAR_HEIGHT,
+	DEFAULT_WINDOW_WIDTH,
+	DEFAULT_WINDOW_HEIGHT,
+	DEFAULT_WINDOW_TITLE,
+} from '../shared/constants';
 import type { OptionsConfig, StoreSchema } from './types';
 
 let mainWindow: BaseWindow | null = null;
@@ -63,7 +68,7 @@ if (!app.requestSingleInstanceLock()) {
 				const savedPosition = windowPositionService.getPosition();
 
 				mainWindow = new BaseWindow({
-					title: 'Notion Electron',
+					title: DEFAULT_WINDOW_TITLE,
 					minWidth: DEFAULT_WINDOW_WIDTH,
 					minHeight: DEFAULT_WINDOW_HEIGHT,
 					width: savedPosition.bounds.width,

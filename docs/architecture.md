@@ -86,12 +86,19 @@ Each layer maps to specific locations in the tree:
 
 The app runs the Electron main process plus several web views, each with its own preload:
 
-| Surface       | Host type         | Content                            | Preload                      |
-| ------------- | ----------------- | ---------------------------------- | ---------------------------- |
-| Main          | Node.js           | `src/main/index.ts` (composition)  | —                            |
-| Titlebar      | `WebContentsView` | `src/renderer/titlebar.html`       | `src/preload/tab-preload.ts` |
-| Tab (per tab) | `WebContentsView` | Notion / Calendar / Mail URLs      | `src/preload/docs-preload.ts`|
-| Options       | `BrowserWindow`   | `src/renderer/options.html`        | `src/preload/options-preload.ts` |
+| Surface       | Host type         | Content                                  | Preload                  |
+| ------------- | ----------------- | ---------------------------------------- | ------------------------ |
+| Main          | Node.js           | `src/main/index.ts` (composition)        | —                        |
+| Titlebar      | `WebContentsView` | `src/renderer/titlebar/index.html`       | `src/preload/tab.ts`     |
+| Tab (per tab) | `WebContentsView` | Notion / Calendar / Mail URLs            | `src/preload/docs.ts`    |
+| Options       | `BrowserWindow`   | `src/renderer/options/index.html`        | `src/preload/options.ts` |
+
+Each renderer page is a directory under `src/renderer/` holding `index.html` + `script.ts` +
+`style.css`, loaded through `loadRendererPage(target, page)` (`src/main/lib/resources.ts`),
+which resolves the dev server URL or the packaged file path. A fourth page,
+`src/renderer/offline/`, is loaded **into a tab view** in place of the Notion page when
+`docs.ts` reports the page went offline (`tabs.ts`, `show-offline-screen`). Preloads are
+emitted as `.cjs` and resolved by name via `resolvePreload('tab.cjs' | 'docs.cjs' | 'options.cjs')`.
 
 The main window is a **`BaseWindow`** (not a `BrowserWindow`) with
 `titleBarStyle: 'hidden'`. Its content is composed from `WebContentsView`s: one renders
@@ -122,14 +129,17 @@ reading top-to-bottom; the sequence matters.
    for _both_ the theme query and Electron readiness before creating the main window;
    `ThemeService.resolveBackgroundColor()` then computes the color. This is what prevents
    a wrong-theme background flash on first paint.
-5. **Services constructed and wired by hand** — `TabService`, `WindowPositionService`, and
-   `MainWindowService` are created against the main window; then a deferred
-   `setTimeout(initApp, 1)` creates the options `BrowserWindow` and the services that
-   depend on it (`UpdateService`, `TrayService`, `ContextMenuService`,
-   `NotificationService`, `ChangelogService`). The 1 ms defer guarantees the main window's
-   internal state is fully initialized before dependent services reference it. The
-   controller itself holds **no behaviour** — theme resolution lives in `ThemeService`,
-   window-lifecycle handling (minimize/close/quit) in `MainWindowService`.
+5. **Services constructed and wired by hand** — `WindowPositionService` subscribes to the
+   main window and `TabService` is created against it, then `registerMainWindowLifecycle()`
+   attaches the minimize/close/quit handlers. A deferred `setTimeout(initApp, 1)` creates
+   the options `BrowserWindow` and the services that depend on it (`UpdateService`,
+   `TrayService`, `ContextMenuService`, `NotificationService`, `ChangelogService`). The 1 ms
+   defer guarantees the main window's internal state is fully initialized before dependent
+   services reference it. The controller itself holds **no behaviour** — theme resolution
+   lives in `ThemeService`, and window-lifecycle handling is the stateless
+   `registerMainWindowLifecycle` / `registerOptionsWindowLifecycle` pair in
+   `src/main/lib/windowLifecycle.ts` (there is no window *service*: window lifecycle needs no
+   state of its own, so per the layering rule it lives in a library).
 6. **D-Bus desktop actions** — `onDBusSignal('Options' | 'Updates' | 'About', …)` wires
    `.desktop` file Actions to show the corresponding tab in the options window.
 
@@ -156,7 +166,6 @@ Each file is one class owning one concern, constructed in `src/main/index.ts`:
 | `OptionsService`        | `src/main/services/options.ts`         | Reads `options.json`, layers option sources, serves the options window          |
 | `UpdateService`         | `src/main/services/update.ts`          | Wraps `electron-updater`; AppImage vs. package-manager update paths             |
 | `ThemeService`          | `src/main/services/theme.ts`           | D-Bus color-scheme query + initial background-color decision                    |
-| `MainWindowService`     | `src/main/services/mainWindow.ts`      | Main/options window lifecycle (hide-to-tray, hide-on-close, quit)               |
 | `TrayService`           | `src/main/services/tray.ts`            | System tray icon and menu                                                       |
 | `ContextMenuService`    | `src/main/services/contextMenu.ts`     | Right-click context menus                                                       |
 | `NotificationService`   | `src/main/services/notifications.ts`   | Native OS notifications                                                         |
@@ -175,9 +184,9 @@ Things to know when touching these:
   and selection; it pushes the whole picture to the titlebar as a `tabs-state` payload and
   acts on intents the titlebar sends back (see _Preloads & IPC_). The wrapped apps —
   `notes` (base, `HOME_PAGE`), `calendar`, `mail` — are defined once as data in
-  **`src/shared/apps.ts`** (`APP_DEFINITIONS`, `getAppFromUrl`), imported by both the main
-  process and the titlebar renderer so classification never drifts. The auth-popup host
-  list lives in `lib/windowOpenPolicy.ts`.
+  **`src/shared/apps.ts`** (`APP_DEFINITIONS`, `getAppFromUrl`, `createAppMap`) so
+  classification never drifts across `tabs.ts`, `tabPersistence.ts` and `main/types.ts`.
+  The auth-popup host list lives in `lib/windowOpenPolicy.ts`.
 - **`options.ts` layers four sources.** Effective value precedence, lowest to highest:
   `options.json` default **<** desktop-environment preset (`#DE_PRESETS`, e.g. GNOME) **<**
   stored value **<** CLI override. `getOption()` returns CLI overrides directly; everything
@@ -197,7 +206,7 @@ Things to know when touching these:
 There are two different security postures here — match the one already used by the window
 you are touching:
 
-- **`tab-preload.ts`** exposes `window.notionElectronAPI` via `contextBridge` — the full
+- **`tab.ts`** exposes `window.notionElectronAPI` via `contextBridge` — the full
   IPC surface between the titlebar UI and the main process. Because the main process is the
   source of truth for tabs, the surface is **intents up, state down**:
     - **Commands** (user intents) — `selectTab`, `addTab`, `closeTab`, `closeCurrentTab`,
@@ -211,11 +220,11 @@ you are touching:
       `subscribeOnSidebarChange`, `subscribeOnGlobalOptions`, `subscribeOnAction`, …
     - Tab context-menu actions are handled in the main process (`ContextMenuService` calls
       `TabService` directly); there is no render-side command round-trip.
-- **`docs-preload.ts`** is injected into Notion pages. It uses `ipcRenderer` **directly**,
+- **`docs.ts`** is injected into Notion pages. It uses `ipcRenderer` **directly**,
   without a `contextBridge` wrapper — acceptable because Notion URLs are trusted
   first-party content, not arbitrary user input. It detects offline state and observes the
   page DOM (sidebar, etc.) to keep the titlebar in sync.
-- **`options-preload.ts`** backs the options window's IPC.
+- **`options.ts`** backs the options window's IPC.
 
 The bridge API shapes and IPC payload types live in `src/shared/ipc.ts`, shared by the
 preloads and the renderer entries (`src/renderer/global.d.ts` types `window.notionElectronAPI`).
@@ -250,8 +259,9 @@ converts favicons (uses `sharp`/`jimp`); `lib/dateFormat.ts` formats changelog d
 - **CLI flags** (handled in `OptionsService`): `--hide-on-startup`,
   `--disable-spellcheck`, `--disable-update-functionality`. Each maps to a corresponding
   option id as a CLI override.
-- **`electron.vite.config.ts`** — electron-vite build config for the three targets
-  (main / preload / renderer). Output goes to `out/`; preloads are emitted as `.cjs`.
+- **`config/electron.vite.config.ts`** — electron-vite build config for the three targets
+  (main / preload / renderer), passed explicitly via `-c ./config/electron.vite.config.ts` in
+  every npm script. Output goes to `out/`; preloads are emitted as `.cjs`.
 - **`tsconfig*.json`** — strict type-check projects: `tsconfig.node.json` (main),
   `tsconfig.preload.json` (preload + DOM lib), `tsconfig.web.json` (renderer), and the root
   `tsconfig.json` referencing all three. Run with `npm run typecheck`.
@@ -269,7 +279,7 @@ converts favicons (uses `sharp`/`jimp`); `lib/dateFormat.ts` formats changelog d
 | Add a user-facing setting                    | Add it to `options.json`; read via `OptionsService.getOption(id)`       |
 | React to a setting change in another service | Listen for `option-changed` on `mainBus`                                |
 | Persist some state                           | Write through a service to `store` — never from a renderer              |
-| Add titlebar ↔ main behaviour                | Add the method to `src/preload/tab-preload.ts` (+ its type in `src/shared/ipc.ts`) and the handler in `tabs.ts` |
+| Add titlebar ↔ main behaviour                | Add the method to `src/preload/tab.ts` (+ its type in `src/shared/ipc.ts`) and the handler in `tabs.ts` |
 | Add a whole new concern                      | New class in `src/main/services/`, constructed and wired in `src/main/index.ts` |
 | Add a `.desktop` action                      | Register it in `package.json` `build` + handle it via `onDBusSignal`    |
 
