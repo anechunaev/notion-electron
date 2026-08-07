@@ -218,8 +218,10 @@ class TabsService implements TabReader, TabCommands {
 			this.titleBarView.webContents.openDevTools({ mode: 'detach' });
 		}
 
-		if (this.options.getOption('tabs-reopen-on-start')) {
-			this.reopenTabs(this.persistence.getSavedTabs());
+		const savedTabs = this.options.getOption('tabs-reopen-on-start') ? this.persistence.getSavedTabs() : {};
+
+		if (Object.keys(savedTabs).length > 0) {
+			this.reopenTabs(savedTabs);
 		} else {
 			this.openTab({ url: HOME_PAGE, app: 'notes' });
 		}
