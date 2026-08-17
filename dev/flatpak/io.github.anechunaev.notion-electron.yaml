@@ -39,7 +39,10 @@ modules:
       - cp -a dist/linux*unpacked /app/main
 
       - install -Dm755 ../run.sh /app/bin/notion-electron
-      - install -Dm644 ./dev/flatpak/io.github.anechunaev.notion-electron.metainfo.xml -t /app/share/metainfo/
+      # From the build root, NOT ./dev/flatpak/ under `subdir: main`: that path is
+      # the git checkout of the tag, so the version/release-notes stamping CI does
+      # on the workspace copy (build.yml) would never reach the exported app.
+      - install -Dm644 ../io.github.anechunaev.notion-electron.metainfo.xml -t /app/share/metainfo/
       - install -Dm644 ./dev/flatpak/io.github.anechunaev.notion-electron.desktop -t /app/share/applications/
 
       - install -Dm644 ./dev/flatpak/io.github.anechunaev.notion-electron.svg -t /app/share/icons/hicolor/scalable/apps/
@@ -51,6 +54,8 @@ modules:
         tag: 'test/flatpak-1'
         dest: main
       - generated-sources.json
+      - type: file
+        path: io.github.anechunaev.notion-electron.metainfo.xml
       - type: script
         dest-filename: run.sh
         commands:

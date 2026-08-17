@@ -12,6 +12,12 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      formats:
+        description: Which artifacts to publish
+        type: choice
+        options: [all, flatpak]
+        default: all
 
 permissions:
   contents: read
@@ -24,12 +30,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1) Get the already-built packages from the latest release assets
+      # 1) Get the already-built packages from the latest release assets.
+      #    `formats: flatpak` re-publishes the bundle alone: re-adding a rebuilt
+      #    deb of an already-indexed version makes aptly carry two packages with
+      #    the same version but different checksums.
       - name: Download release assets
         uses: robinraju/release-downloader@v1
         with:
           latest: true
-          fileName: "*"
+          fileName: ${{ inputs.formats == 'flatpak' && '*.flatpak' || '*' }}
           out-file-path: dist
 
       # 2) Import the MAINTAINER key (passphrase-protected, package signing identity)

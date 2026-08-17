@@ -47,6 +47,9 @@ jobs:
         build_script_name: snap-build
 
   flatpak:
+    # Runs after `build` only so the GitHub release exists: its body is the source
+    # of the AppStream release notes stamped into the bundle below.
+    needs: build
     if: startsWith(github.ref, 'refs/tags/')
     strategy:
       fail-fast: false
@@ -63,21 +66,29 @@ jobs:
     - name: Install flatpak toolchain
       run: |
         sudo apt-get update
-        sudo apt-get install -y flatpak flatpak-builder python3-pip
+        sudo apt-get install -y flatpak flatpak-builder python3-pip appstream
         pip3 install --user --break-system-packages flatpak-node-generator \
           || pip3 install --user flatpak-node-generator
         echo "$HOME/.local/bin" >> "$GITHUB_PATH"
         flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
     - name: Build flatpak bundle (${{ matrix.variant.arch }})
+      env:
+        GH_TOKEN: ${{ secrets.github_token }}
       run: |
         cd dev/flatpak
         VERSION="$(jq -r .version ../../package.json)"
         DATE="$(git show -s --format=%cs HEAD)"
         # Build the exact commit that triggered this run (the npm-version tag).
         sed -i "s|^\(\s*tag:\).*|\1 '${GITHUB_REF_NAME}'|" io.github.anechunaev.notion-electron.yaml
-        # Keep AppStream <releases> in sync so Discover sees this as an update, not a refresh.
-        node stamp-metainfo.mjs --version "$VERSION" --date "$DATE" io.github.anechunaev.notion-electron.metainfo.xml
+        # Keep AppStream <releases> in sync so Discover sees this as an update, not
+        # a refresh. The manifest installs this workspace copy via a `type: file`
+        # source, so what is stamped here is what the exported app carries.
+        NOTES="$RUNNER_TEMP/release-notes.md"
+        gh release view "$GITHUB_REF_NAME" --json body --jq .body > "$NOTES" || : > "$NOTES"
+        node stamp-metainfo.mjs --version "$VERSION" --date "$DATE" --notes "$NOTES" \
+          io.github.anechunaev.notion-electron.metainfo.xml
+        appstreamcli validate --no-net --explain io.github.anechunaev.notion-electron.metainfo.xml
         # generated-sources.json goes stale on dependency bumps; refresh it.
         flatpak-node-generator npm ../../package-lock.json
         flatpak-builder --user --install-deps-from=flathub --repo=_repo \
