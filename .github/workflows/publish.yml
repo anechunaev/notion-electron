@@ -8,9 +8,15 @@
 #   REPO_KNOWN_HOSTS           output of `ssh-keyscan repo.example.com`
 name: Sign and publish packages
 
+# Called by flatpak.yml once the bundles are attached to the release, rather than
+# triggered by `release: published` itself, which ran before they existed.
 on:
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      formats:
+        description: Which artifacts to publish
+        type: string
+        default: all
   workflow_dispatch:
     inputs:
       formats:

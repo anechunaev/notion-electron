@@ -158,7 +158,10 @@ You usually don't need to build to contribute, but for reference:
 - Flatpak/Snap helpers live under `dev/` (`npm run flatpak-build`, `npm run snap-build`, …).
 
 CI (`.github/workflows/build.yml`) builds and releases **only on `v*` tags**, so pull requests are
-not auto-built — reviewers verify locally.
+not auto-built — reviewers verify locally. The flatpak bundles are built later, by
+`.github/workflows/flatpak.yml` on **release publication**, so that the AppStream release notes
+stamped into them come from the published release body; that workflow then calls
+`.github/workflows/publish.yml` to sign everything and push it to the package repo.
 
 ## Commit messages
 

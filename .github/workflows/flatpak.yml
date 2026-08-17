@@ -1,0 +1,115 @@
+# Triggered by publishing the release, not by the tag push that builds it: the
+# AppStream <releases> entry stamped into the bundle takes its notes from the
+# release body, which is written between those two moments. The publish job then
+# chains the repo-server upload so it cannot start before the bundles exist.
+name: Build and publish flatpak bundles
+
+permissions:
+  contents: write
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to build (a tag without a release builds with no notes)
+        type: string
+      publish:
+        description: Push the rebuilt bundles to the package repo
+        type: boolean
+        default: false
+
+jobs:
+  flatpak:
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.variant.runner }}
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: ${{ inputs.tag || github.event.release.tag_name }}
+
+    - name: Install flatpak toolchain
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y flatpak flatpak-builder python3-pip appstream jq
+        pip3 install --user --break-system-packages flatpak-node-generator \
+          || pip3 install --user flatpak-node-generator
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+        flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+    - name: Build flatpak bundle (${{ matrix.variant.arch }})
+      env:
+        GH_TOKEN: ${{ secrets.github_token }}
+      run: |
+        cd dev/flatpak
+        VERSION="$(jq -r .version ../../package.json)"
+        DATE="$(git show -s --format=%cs HEAD)"
+        # Build the exact commit that triggered this run (the npm-version tag).
+        sed -i "s|^\(\s*tag:\).*|\1 '${TAG}'|" io.github.anechunaev.notion-electron.yaml
+        # Keep AppStream <releases> in sync so Discover sees this as an update, not
+        # a refresh. The manifest installs this workspace copy via a `type: file`
+        # source, so what is stamped here is what the exported app carries.
+        NOTES="$RUNNER_TEMP/release-notes.md"
+        gh release view "$TAG" --json body --jq .body > "$NOTES" || : > "$NOTES"
+        node stamp-metainfo.mjs --version "$VERSION" --date "$DATE" --notes "$NOTES" \
+          io.github.anechunaev.notion-electron.metainfo.xml
+        appstreamcli validate --no-net --explain io.github.anechunaev.notion-electron.metainfo.xml
+        # generated-sources.json goes stale on dependency bumps; refresh it.
+        flatpak-node-generator npm ../../package-lock.json
+        flatpak-builder --user --install-deps-from=flathub --repo=_repo \
+          --force-clean --disable-rofiles-fuse --arch="${{ matrix.variant.arch }}" \
+          build io.github.anechunaev.notion-electron.yaml
+        mkdir -p "$GITHUB_WORKSPACE/dist"
+        flatpak build-bundle --arch="${{ matrix.variant.arch }}" _repo \
+          "$GITHUB_WORKSPACE/dist/Notion_Electron-${VERSION}-${{ matrix.variant.arch }}.flatpak" \
+          io.github.anechunaev.notion-electron
+
+    - name: Upload bundle artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: flatpak-${{ matrix.variant.arch }}
+        path: dist/Notion_Electron-*.flatpak
+
+  attach:
+    needs: flatpak
+    runs-on: ubuntu-24.04
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+    steps:
+    - name: Download bundle artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: flatpak-*
+        merge-multiple: true
+        path: dist
+
+    - name: Attach bundles to the release
+      env:
+        GH_TOKEN: ${{ secrets.github_token }}
+        GH_REPO: ${{ github.repository }}
+      run: |
+        if gh release view "$TAG" >/dev/null 2>&1; then
+          gh release upload "$TAG" dist/*.flatpak --clobber
+        else
+          echo "no release for $TAG; the bundles stay on this run as artifacts"
+        fi
+
+  # Chained rather than left on its own `release: published` trigger, which fired
+  # while the bundles were still building.
+  publish:
+    needs: attach
+    if: github.event_name == 'release' || inputs.publish
+    uses: ./.github/workflows/publish.yml
+    with:
+      formats: ${{ github.event_name == 'release' && 'all' || 'flatpak' }}
+    secrets: inherit
