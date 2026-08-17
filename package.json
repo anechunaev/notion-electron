@@ -46,7 +46,7 @@
 		"@electron/packager": "^20.0.3",
 		"@eslint/js": "^10.0.1",
 		"@eslint/json": "^2.0.0",
-		"@eslint/markdown": "^8.0.2",
+		"@eslint/markdown": "^8.0.3",
 		"@types/node": "^26.0.1",
 		"@types/sortablejs": "^1.15.9",
 		"electron": "^42.4.1",
