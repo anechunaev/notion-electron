@@ -123,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		pacman: document.querySelector<HTMLElement>('.stage-manual-pacman'),
 		flatpak: document.querySelector<HTMLElement>('.stage-manual-flatpak'),
 		snap: document.querySelector<HTMLElement>('.stage-manual-snapd'),
+		nix: document.querySelector<HTMLElement>('.stage-manual-nix'),
 		unpacked: document.querySelector<HTMLElement>('.stage-manual-unpacked'),
 		development: document.querySelector<HTMLElement>('.stage-manual-unpacked'),
 	};
