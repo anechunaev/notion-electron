@@ -24,7 +24,7 @@ const PINNED_APP_OPTIONS: Partial<Record<AppName, keyof OptionValues>> = {
 	calendar: 'tabs-show-calendar',
 	mail: 'tabs-show-mail',
 };
-const USER_AGENT = `Mozilla/5.0 (${process.env.XDG_SESSION_TYPE ?? 'X11'}; Linux ${process.arch}) Notion_Еlectron/${pkg.version} Chrome/${process.versions.chrome}`;
+const USER_AGENT = `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36 notion-electron/${pkg.version}`;
 
 async function sendKey(
 	entry: { keyCode: string; modifiers?: string[] },
