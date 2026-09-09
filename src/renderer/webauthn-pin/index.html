@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Security Key PIN</title>
+	<link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+	<h1>Security key PIN</h1>
+	<p id="message">Waiting for the security key…</p>
+	<p id="error" class="hidden"></p>
+	<form id="pin-form">
+		<input id="pin" type="password" inputmode="numeric" autocomplete="off" autofocus />
+		<div class="actions">
+			<button id="cancel" type="button">Cancel</button>
+			<button id="unlock" type="submit">Continue</button>
+		</div>
+	</form>
+
+	<script type="module" src="./script.ts"></script>
+</body>
+
+</html>
