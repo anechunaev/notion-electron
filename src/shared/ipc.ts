@@ -68,7 +68,8 @@ export interface ChangelogItem {
 	url: string;
 }
 
-export type PackageFormat = 'appimage' | 'flatpak' | 'snap' | 'deb' | 'rpm' | 'pacman' | 'unpacked' | 'development';
+export type PackageFormat =
+	'appimage' | 'flatpak' | 'snap' | 'deb' | 'rpm' | 'pacman' | 'nix' | 'unpacked' | 'development';
 
 export type UpdateMode = 'in-app' | 'package-manager' | 'store' | 'none';
 

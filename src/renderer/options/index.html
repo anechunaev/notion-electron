@@ -126,6 +126,11 @@
 					<a class="align-end update-manual-link" href="#" target="_blank">Open download page</a>
 				</div>
 
+				<div class="update-stage stage-manual stage-manual-nix hidden">
+					<p class="stage-label">New version is available!</p>
+					<p>This build was installed via Nix, so it cannot update itself. Bump the package's pin in your NixOS configuration and rebuild the system.</p>
+				</div>
+
 				<div class="update-stage stage-downloading hidden">
 					<p class="stage-label">Downloading update...</p>
 					<progress class="stage-progress" id="update-progress" value="0" max="100"></progress>

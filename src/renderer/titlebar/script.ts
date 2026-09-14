@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		group: 'tabs',
 		animation: 100,
 		direction: 'horizontal',
-		setData: (dataTransfer, dragEl) => {
+		setData: (dataTransfer: DataTransfer, dragEl: HTMLElement) => {
 			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? NOTION_NOTES_HOST);
 		},
 		onEnd: sendReorder,
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		group: 'tabs',
 		animation: 100,
 		direction: 'horizontal',
-		setData: (dataTransfer, dragEl) => {
+		setData: (dataTransfer: DataTransfer, dragEl: HTMLElement) => {
 			dataTransfer.setData('text/uri-list', dragEl.dataset.documentUrl ?? NOTION_NOTES_HOST);
 		},
 		onEnd: sendReorder,

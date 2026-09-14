@@ -5,6 +5,7 @@ import type { PackageFormat, UpdateMode } from '../../shared/ipc';
 
 const FLATPAK_INFO_PATH = '/.flatpak-info';
 const FPM_FORMATS = ['deb', 'rpm', 'pacman'];
+const NIX_STORE_PREFIX = '/nix/store/';
 
 const FORMAT_LABELS: Record<PackageFormat, string> = {
 	appimage: 'AppImage',
@@ -13,6 +14,7 @@ const FORMAT_LABELS: Record<PackageFormat, string> = {
 	deb: 'deb package',
 	rpm: 'rpm package',
 	pacman: 'pacman package',
+	nix: 'Nix package',
 	unpacked: 'Unpacked build',
 	development: 'Development build',
 };
@@ -24,6 +26,7 @@ const UPDATE_MODES: Record<PackageFormat, UpdateMode> = {
 	deb: 'package-manager',
 	rpm: 'package-manager',
 	pacman: 'package-manager',
+	nix: 'package-manager',
 	unpacked: 'none',
 	development: 'none',
 };
@@ -39,11 +42,19 @@ function readFpmFormat(): PackageFormat | null {
 	}
 }
 
+// Nix runs upstream electron against an unpacked app dir, so `app.isPackaged`
+// is false; the install marker distinguishes it from a dev checkout.
+function isNixPackaged(): boolean {
+	const appPath = app.getAppPath();
+	return existsSync(path.join(appPath, 'nix-package-type')) || appPath.startsWith(NIX_STORE_PREFIX);
+}
+
 function resolvePackageFormat(): PackageFormat {
 	if (existsSync(FLATPAK_INFO_PATH) || process.env.FLATPAK_ID) return 'flatpak';
 	if (process.env.SNAP && process.env.SNAP_NAME) return 'snap';
 	// `npm start` sets APPIMAGE=/ so the in-app update flow stays testable in dev.
 	if (process.env.APPIMAGE) return 'appimage';
+	if (isNixPackaged()) return 'nix';
 	if (!app.isPackaged) return 'development';
 	return readFpmFormat() ?? 'unpacked';
 }
