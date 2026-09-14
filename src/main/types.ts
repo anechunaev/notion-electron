@@ -27,7 +27,6 @@ export interface OptionValues {
 	'general-show-window-on-start': boolean;
 	'disable-update-functionality': boolean;
 	'tabs-show-calendar': boolean;
-	'tabs-show-mail': boolean;
 	'tabs-reopen-on-start': boolean;
 	'tabs-continue-sidebar': boolean;
 	'show-system-title-bar': boolean;

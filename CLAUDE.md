@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-An unofficial Electron desktop client that wraps Notion's web apps (Notion, Calendar, Mail) to give Linux users a native-like experience: custom titlebar, multi-tab browsing, system tray, native notifications, and self-updating packages. Linux-only — there is no Windows/macOS path.
+An unofficial Electron desktop client that wraps Notion's web apps (Notion, Calendar) to give Linux users a native-like experience: custom titlebar, multi-tab browsing, system tray, native notifications, and self-updating packages. Linux-only — there is no Windows/macOS path.
 
 ## Commands
 
@@ -58,13 +58,13 @@ All application logic runs in the **Electron main process** (ESM). There is no r
 
 Two shared objects are passed into services as the integration layer:
 - **`store`** — an `electron-store` instance for persisted state (window position, tabs, options, update metadata).
-- **`mainBus`** — a plain Node `EventEmitter` for cross-service events (e.g. `option-changed` → tabs service closes calendar/mail tabs).
+- **`mainBus`** — a plain Node `EventEmitter` for cross-service events (e.g. `option-changed` → tabs service closes calendar tabs).
 
 The main window is a **`BaseWindow`** (not `BrowserWindow`) with `titleBarStyle: 'hidden'`. Content is composed from `WebContentsView`s: one view renders the custom titlebar (`src/renderer/titlebar/index.html`), and each tab is its own `WebContentsView`. The Notion website is loaded directly into tab views; the app does not proxy or rewrite Notion's pages.
 
 ### Services (`src/main/services/`)
 Each file is a single class owning one concern, constructed in `src/main/index.ts`:
-- `tabs.ts` — the core. Manages `WebContentsView` tabs, pinned Calendar/Mail/Notes apps, titlebar communication, keyboard shortcuts, icons/titles, and persistence. Largest and most central file.
+- `tabs.ts` — the core. Manages `WebContentsView` tabs, pinned Calendar/Notes apps, titlebar communication, keyboard shortcuts, icons/titles, and persistence. Largest and most central file.
 - `options.ts` — reads the declarative schema in `options.json`, layers defaults < desktop-environment presets (e.g. GNOME) < CLI overrides < stored values, and serves the options window. `getOption` is typed per-option via `OptionValues` in `src/main/types.ts`.
 - `update.ts` — wraps `electron-updater`; AppImage gets in-app download/install, other formats defer to the package manager. Honors `--disable-update-functionality`.
 - `tray.ts`, `contextMenu.ts`, `notifications.ts`, `changelog.ts`, `windowPosition.ts` — tray icon, right-click menus, native notifications, GitHub changelog fetch, and window geometry persistence.

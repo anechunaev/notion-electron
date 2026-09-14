@@ -1,6 +1,6 @@
 # <sub><picture><source media="(prefers-color-scheme: dark)" srcset="assets/logo-small-light.svg"><source media="(prefers-color-scheme: light)" srcset="assets/logo-small-dark.svg"><img src="assets/logo-small.svg" width="36" alt="⚡" /></picture></sub> Notion Electron – Unofficial Notion Client for Linux
 
-Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 43). Fully functional clients for Notion Calendar and Notion Mail included as dedicated tabs.
+Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 43). A fully functional client for Notion Calendar is included as a dedicated tab.
 
 > [!NOTE]
 > 🎉 Thank you all for your amazing support! I'm excited to share that we’ve reached **25,000 Monthly Active Users**! If you enjoy using Notion Electron, please consider leaving a ⭐ on the repository. It really motivates to continue the work and means a lot!
@@ -114,7 +114,7 @@ pkill -f notion-electron
 
 This is not a complete feature list, but here are some of the key highlights of the application:
 
-- **Integrated Notion Tools** — Fully functional dedicated tabs for Notion Calendar and Notion Mail within the same application. This approach saves system memory by reusing a single Electron process compared to running separate clients.
+- **Integrated Notion Tools** — A fully functional dedicated tab for Notion Calendar within the same application. This approach saves system memory by reusing a single Electron process compared to running separate clients.
 - **Cross-Distribution Support** — Distributed as a universal AppImage, allowing the app to run seamlessly on any Linux distribution, with automatic updates built in.
 - **Simple Manual Builds** — Predefined scripts make it easy to build manually, even on uncommon architectures.
 - **Ready Out of the Box** — Works immediately after installation without the need for extra flags or configuration. At the same time, it remains flexible enough to integrate into custom workflows.
@@ -124,7 +124,7 @@ This is not a complete feature list, but here are some of the key highlights of 
 - **Google Login Support** — Fully functional Google social login integration.
 - **Performance Tweaks** — Optimized to reduce startup time for faster access.
 - **Browser-Like Tabs** — Tabs behave just like in a web browser: each has its own history, can be reordered, pinned, or even dragged from Notion Electron to your browser.
-- **Native Notifications** — Uses the system’s native notification system for better desktop integration (Notifications for Calendar and Mail are coming).
+- **Native Notifications** — Uses the system’s native notification system for better desktop integration (Notifications for Calendar are coming).
 
 ## Contributing
 

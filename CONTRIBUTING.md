@@ -7,7 +7,7 @@ pull request.
 ## Scope
 
 Notion Electron is an **unofficial, Linux-only** Electron desktop client that wraps Notion's web
-apps (Notion, Calendar, Mail). There is **no Windows or macOS path** by design — please don't open
+apps (Notion, Calendar). There is **no Windows or macOS path** by design — please don't open
 PRs that add cross-platform support or other operating-system targets, as they're out of scope and
 will not be merged.
 
@@ -174,7 +174,7 @@ Examples:
 
 ```text
 fix: Fixed wrong-theme flash on first paint
-feature: Added pinned Mail tab persistence
+feature: Added pinned Calendar tab persistence
 docs: Updated the disable-update-functionality flag description
 ```
 

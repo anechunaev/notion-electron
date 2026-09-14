@@ -22,7 +22,6 @@ const HOME_PAGE = getAppHomeUrl('notes');
 
 const PINNED_APP_OPTIONS: Partial<Record<AppName, keyof OptionValues>> = {
 	calendar: 'tabs-show-calendar',
-	mail: 'tabs-show-mail',
 };
 const USER_AGENT = `Mozilla/5.0 (${process.env.XDG_SESSION_TYPE ?? 'X11'}; Linux ${process.arch}) Notion_Еlectron/${pkg.version} Chrome/${process.versions.chrome}`;
 
@@ -68,9 +67,6 @@ class TabsService implements TabReader, TabCommands {
 		this.mainBus.on('option-changed', (optionId: string, value: unknown) => {
 			if (optionId === 'tabs-show-calendar' && value === false) {
 				this.closeTabsByApp('calendar');
-			}
-			if (optionId === 'tabs-show-mail' && value === false) {
-				this.closeTabsByApp('mail');
 			}
 		});
 
@@ -561,8 +557,9 @@ class TabsService implements TabReader, TabCommands {
 	private reopenTabs(tabs: Record<string, string>): void {
 		const titles = this.persistence.getSavedTitles();
 		Object.entries(tabs).forEach(([tabId, url]) => {
-			const isPinned = this.persistence.isPinned(tabId);
 			const app = this.persistence.getAppForTab(tabId);
+			if (!app) return;
+			const isPinned = this.persistence.isPinned(tabId);
 			this.openTab({ url, tabId, isPinned, app, skipChange: true });
 			const savedTitle = titles[tabId];
 			if (savedTitle) {

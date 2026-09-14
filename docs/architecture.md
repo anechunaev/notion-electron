@@ -12,7 +12,7 @@ existing patterns.
 ## Overview
 
 notion-electron is an **unofficial Electron desktop client** that wraps Notion's web apps
-(Notion, Calendar, Mail) to give Linux users a native-like shell: custom titlebar,
+(Notion, Calendar) to give Linux users a native-like shell: custom titlebar,
 multi-tab browsing, system tray, native notifications, and self-updating packages. It is
 **Linux-only** — there is no Windows/macOS path.
 
@@ -90,7 +90,7 @@ The app runs the Electron main process plus several web views, each with its own
 | ------------- | ----------------- | ---------------------------------------- | ------------------------ |
 | Main          | Node.js           | `src/main/index.ts` (composition)        | —                        |
 | Titlebar      | `WebContentsView` | `src/renderer/titlebar/index.html`       | `src/preload/tab.ts`     |
-| Tab (per tab) | `WebContentsView` | Notion / Calendar / Mail URLs            | `src/preload/docs.ts`    |
+| Tab (per tab) | `WebContentsView` | Notion / Calendar URLs                   | `src/preload/docs.ts`    |
 | Options       | `BrowserWindow`   | `src/renderer/options/index.html`        | `src/preload/options.ts` |
 
 Each renderer page is a directory under `src/renderer/` holding `index.html` + `script.ts` +
@@ -153,8 +153,7 @@ shared objects passed into their constructors:
   the store directly** — every read/write goes through a main-process service over IPC.
 - **`mainBus`** — a plain Node `EventEmitter` for cross-service events. The canonical
   example: `OptionsService.setOption()` emits `option-changed`, and `TabService` listens
-  for it to close the Calendar/Mail pinned tabs when `tabs-show-calendar` /
-  `tabs-show-mail` are turned off.
+  for it to close the Calendar pinned tab when `tabs-show-calendar` is turned off.
 
 ## Services (`src/main/services/`)
 
@@ -183,7 +182,7 @@ Things to know when touching these:
   tabs.** It owns tab identity (it generates ids), order, app classification, pinned state,
   and selection; it pushes the whole picture to the titlebar as a `tabs-state` payload and
   acts on intents the titlebar sends back (see _Preloads & IPC_). The wrapped apps —
-  `notes` (base, `HOME_PAGE`), `calendar`, `mail` — are defined once as data in
+  `notes` (base, `HOME_PAGE`) and `calendar` — are defined once as data in
   **`src/shared/apps.ts`** (`APP_DEFINITIONS`, `getAppFromUrl`, `createAppMap`) so
   classification never drifts across `tabs.ts`, `tabPersistence.ts` and `main/types.ts`.
   The auth-popup host list lives in `lib/windowOpenPolicy.ts`.

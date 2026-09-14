@@ -65,9 +65,6 @@ export function selectFavicon(app: AppName, favicons: string[]): string | undefi
 	if (app === 'calendar') {
 		return favicons.find((url) => url.endsWith('.svg')) ?? last;
 	}
-	if (app === 'mail') {
-		return favicons.find((url) => url.includes('32x32')) ?? last;
-	}
 	return last;
 }
 

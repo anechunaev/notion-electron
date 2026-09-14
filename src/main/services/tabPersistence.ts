@@ -1,4 +1,4 @@
-import { createAppMap } from '../../shared/apps';
+import { createAppMap, isAppName } from '../../shared/apps';
 import type { AppName, AppStore, TabAppMap } from '../types';
 import type OptionsService from './options';
 
@@ -37,18 +37,16 @@ class TabPersistence {
 		return this.store.get('tabs-pinned', {})[tabId] ?? false;
 	}
 
-	public getAppForTab(tabId: string): AppName {
+	// Returns null for a tab persisted under an app this version no longer supports, so the
+	// caller drops it instead of restoring a tab that can no longer be pinned or closed.
+	public getAppForTab(tabId: string): AppName | null {
 		const apps = this.store.get(
 			'tab-apps',
 			createAppMap<string[]>(() => []),
 		);
-		let app: AppName = 'notes';
-		(Object.entries(apps) as [AppName, string[]][]).forEach(([appName, tabIds]) => {
-			if (tabIds.includes(tabId)) {
-				app = appName;
-			}
-		});
-		return app;
+		const entry = Object.entries(apps).find(([, tabIds]) => tabIds.includes(tabId));
+		if (!entry) return 'notes';
+		return isAppName(entry[0]) ? entry[0] : null;
 	}
 
 	public save(state: PersistedTabState): void {

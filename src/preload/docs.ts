@@ -83,13 +83,11 @@ function addStyleTag(style: string): void {
 
 function getCurrentApp() {
 	const isCalendarApp = document.location.hostname.startsWith('calendar');
-	const isMailApp = document.location.hostname.startsWith('mail');
 
 	return {
 		isCalendarApp,
-		isMailApp,
-		isNotesApp: !isCalendarApp && !isMailApp,
-		app: isCalendarApp ? 'calendar' : isMailApp ? 'mail' : 'notes',
+		isNotesApp: !isCalendarApp,
+		app: isCalendarApp ? 'calendar' : 'notes',
 	};
 }
 
@@ -171,7 +169,7 @@ function reportSidebarWidth({
 let sidebarContinueToTitlebar = false;
 
 document.addEventListener('DOMContentLoaded', function () {
-	const { isCalendarApp, isMailApp } = getCurrentApp();
+	const { isCalendarApp } = getCurrentApp();
 
 	// Sidebar event handling
 	function sendSignalFoldingStop() {
@@ -198,29 +196,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			attributes: true,
 			attributeFilter: ['style'],
 		});
-	} else if (isMailApp) {
-		// Sidebar is re-created each time you fold it
-		let previousSidebar: HTMLElement | null = null;
-		const observer = new SelectorObserver((mutations) => {
-			mutations.forEach((mutation) => {
-				if (mutation.target.style.transform) {
-					const sidebar = mutation.target;
-					if (sidebar) {
-						if (previousSidebar) {
-							previousSidebar.removeEventListener('pointerenter', sendSignalFoldingStop);
-							previousSidebar.removeEventListener('pointerleave', sendSignalFold);
-						}
-						previousSidebar = sidebar;
-						sidebar.addEventListener('pointerenter', sendSignalFoldingStop);
-						sidebar.addEventListener('pointerleave', sendSignalFold);
-					}
-				}
-			});
-		});
-		observer.observe('.app>div>div>div:first-child', {
-			attributes: true,
-			attributeFilter: ['style', 'class'],
-		});
 	} else {
 		waitForElement('.notion-sidebar')
 			.then((sidebar) => {
@@ -237,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 document.addEventListener('visibilitychange', () => {
 	if (document.visibilityState === 'visible' && sidebarContinueToTitlebar) {
-		const { isCalendarApp, isMailApp } = getCurrentApp();
+		const { isCalendarApp } = getCurrentApp();
 
 		if (isCalendarApp) {
 			reportSidebarWidth({
@@ -245,30 +220,18 @@ document.addEventListener('visibilitychange', () => {
 				getCollapsedValue: (_, elementStyle) => elementStyle.transform !== 'none',
 				getReportedWidth: (computedStyle) => `${parseInt(computedStyle.width, 10) + 1}px`,
 			});
-		} else if (isMailApp) {
-			reportSidebarWidth({
-				selector: '.app>div>div>div:first-child',
-				getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
-				getReportedWidth: (computedStyle) => computedStyle.width,
-			});
 		}
 	}
 });
 
 ipcRenderer.on('request-sidebar-data', () => {
-	const { isCalendarApp, isMailApp } = getCurrentApp();
+	const { isCalendarApp } = getCurrentApp();
 
 	if (isCalendarApp) {
 		reportSidebarWidth({
 			selector: '#main>div:first-child>div:nth-child(2)>div',
 			getCollapsedValue: (_, elementStyle) => elementStyle.transform !== 'none',
 			getReportedWidth: (computedStyle) => `${parseInt(computedStyle.width, 10) + 1}px`,
-		});
-	} else if (isMailApp) {
-		reportSidebarWidth({
-			selector: '.app>div>div>div:first-child',
-			getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
-			getReportedWidth: (computedStyle) => computedStyle.width,
 		});
 	} else {
 		reportSidebarWidth({
@@ -283,7 +246,7 @@ ipcRenderer.on('global-options', (event, options: { sidebarContinueToTitlebar: b
 	sidebarContinueToTitlebar = options.sidebarContinueToTitlebar;
 
 	if (options.sidebarContinueToTitlebar) {
-		const { isCalendarApp, isMailApp } = getCurrentApp();
+		const { isCalendarApp } = getCurrentApp();
 
 		if (isCalendarApp) {
 			reportSidebarWidth({
@@ -291,14 +254,6 @@ ipcRenderer.on('global-options', (event, options: { sidebarContinueToTitlebar: b
 				getCollapsedValue: (_, elementStyle) => elementStyle.transform !== 'none',
 				getReportedWidth: (computedStyle) => `${parseInt(computedStyle.width, 10) + 1}px`,
 				useSelectorObserver: true,
-			});
-		} else if (isMailApp) {
-			reportSidebarWidth({
-				selector: '.app>div>div>div:first-child',
-				getCollapsedValue: (computedStyle) => computedStyle.position === 'absolute',
-				getReportedWidth: (computedStyle) => computedStyle.width,
-				useSelectorObserver: true,
-				addStyle: `.app>div>div>div:first-child>div:first-child{display:none !important}.app>div>div>div:first-child>div:last-child{padding-top:0 !important;display:block !important}`,
 			});
 		} else {
 			reportSidebarWidth({
@@ -315,18 +270,6 @@ function foldCalendarSidebar(collapsed: boolean): void {
 	const sidebar = document.querySelector<HTMLElement>('#main>div:first-child>div:nth-child(2)>div');
 	if (!sidebar || sidebar.style.transform === 'none') return;
 	sidebar.style.transform = collapsed ? 'translateX(calc(-100% - 40px))' : 'translateX(calc(0% - 0px))';
-}
-
-function foldMailSidebar(collapsed: boolean): void {
-	const sidebar = document.querySelector<HTMLElement>('.app>div>div>div:first-child');
-	if (!sidebar || !sidebar.style.top) return;
-	if (collapsed) {
-		sidebar.style.boxShadow = 'none';
-		sidebar.style.transform = 'translateX(-100%)';
-	} else {
-		sidebar.style.boxShadow = 'rgb(49, 49, 49) 0px 0px 0px 1px, rgba(0, 0, 0, 0.56) 0px 20px 48px -8px';
-		sidebar.style.transform = 'translateX(0px)';
-	}
 }
 
 function foldNotesSidebar(collapsed: boolean): void {
@@ -356,11 +299,9 @@ function foldNotesSidebar(collapsed: boolean): void {
 }
 
 ipcRenderer.on('sidebar-fold', (event, collapsed: boolean) => {
-	const { isCalendarApp, isMailApp } = getCurrentApp();
+	const { isCalendarApp } = getCurrentApp();
 	if (isCalendarApp) {
 		foldCalendarSidebar(collapsed);
-	} else if (isMailApp) {
-		foldMailSidebar(collapsed);
 	} else {
 		foldNotesSidebar(collapsed);
 	}

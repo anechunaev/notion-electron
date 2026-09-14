@@ -17,13 +17,12 @@
 
   <description>
     <p>Unofficial desktop application for Notion, built as an Electron wrapper with additional
-      features. Fully functional clients for Notion Calendar and Notion Mail included as dedicated
-      tabs.</p>
+      features. A fully functional client for Notion Calendar is included as a dedicated tab.</p>
     <p>Some of notable features include:</p>
     <ul>
-      <li><em>Integrated Notion Tools</em> — Fully functional dedicated tabs for Notion Calendar and
-        Notion Mail within the same application. This approach saves system memory by reusing a
-        single Electron process compared to running separate clients.</li>
+      <li><em>Integrated Notion Tools</em> — A fully functional dedicated tab for Notion Calendar
+        within the same application. This approach saves system memory by reusing a single Electron
+        process compared to running separate clients.</li>
       <li><em>Theme Support</em> — Switch effortlessly between light and dark UI themes.</li>
       <li><em>Tray Icon</em> — Minimize the application to the system tray for quick access. For
         environments without the tray like Gnome, there are actions available to access app options
