@@ -3,7 +3,7 @@
 Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 43). A fully functional client for Notion Calendar is included as a dedicated tab.
 
 > [!NOTE]
-> 🎉 Thank you all for your amazing support! I'm excited to share that we’ve reached **25,000 Monthly Active Users**! If you enjoy using Notion Electron, please consider leaving a ⭐ on the repository. It really motivates to continue the work and means a lot!
+> 🎉 Thank you all for your amazing support! I'm excited to share that we’ve reached **30,000 Monthly Active Users**! If you enjoy using Notion Electron, please consider leaving a ⭐ on the repository. It really motivates to continue the work and means a lot!
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/anechunaev/notion-electron)
 
@@ -15,7 +15,7 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 
 ## Installation
 
-<a href="https://github.com/anechunaev/notion-electron/releases/download/v2.4.0/Notion_Electron-2.4.0-x86_64.AppImage">
+<a href="https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/Notion_Electron-2.4.1-x86_64.AppImage">
 	<picture>
 		<source media="(prefers-color-scheme: dark)" srcset="./docs/banner-appimage-dark.svg">
 		<source media="(prefers-color-scheme: light)" srcset="./docs/banner-appimage-light.svg">
@@ -32,17 +32,17 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 The recommended installation method is the AppImage. Alternatively, you can add the [custom repository](https://repo.nechunaev.com/) to install `.deb`, `.rpm`, or Flatpak packages and receive automatic updates.
 
 - **Any Distribution `.AppImage`**
-    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.0/Notion_Electron-2.4.0-x86_64.AppImage)
-    - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.0/Notion_Electron-2.4.0-arm64.AppImage)
+    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/Notion_Electron-2.4.1-x86_64.AppImage)
+    - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/Notion_Electron-2.4.1-arm64.AppImage)
 - **Any Distribution `.flatpak`**
-    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.0/notion-electron-x86_64.flatpak)
-    - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.0/notion-electron-aarch64.flatpak)
+    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/notion-electron-x86_64.flatpak)
+    - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/notion-electron-aarch64.flatpak)
 - **Ubuntu / Debian `.deb` package**
-    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.0/Notion_Electron-2.4.0-amd64.deb)
-    - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.0/Notion_Electron-2.4.0-arm64.deb)
+    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/Notion_Electron-2.4.1-amd64.deb)
+    - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/Notion_Electron-2.4.1-arm64.deb)
 - **Fedora / CentOS / OpenSUSE `.rpm` package**
-    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.0/Notion_Electron-2.4.0-x86_64.rpm)
-    - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.0/Notion_Electron-2.4.0-aarch64.rpm)
+    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/Notion_Electron-2.4.1-x86_64.rpm)
+    - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/Notion_Electron-2.4.1-aarch64.rpm)
 
 ### Manual Installation
 
