@@ -35,7 +35,7 @@ The recommended installation method is the AppImage. Alternatively, you can add 
     - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/Notion_Electron-2.4.1-x86_64.AppImage)
     - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/Notion_Electron-2.4.1-arm64.AppImage)
 - **Any Distribution `.flatpak`**
-    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/notion-electron-x86_64.flatpak)
+    - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/Notion_Electron-2.4.1-x86_64.flatpak)
     - [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/notion-electron-aarch64.flatpak)
 - **Ubuntu / Debian `.deb` package**
     - [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.4.1/Notion_Electron-2.4.1-amd64.deb)
