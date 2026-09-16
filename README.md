@@ -10,7 +10,7 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="docs/screenshot_dark.png">
 	<source media="(prefers-color-scheme: light)" srcset="docs/screenshot_light.png">
-	<img alt="Screenshot" src="docs/screenshot_both.png" width="800">
+	<img alt="Screenshot" src="docs/screenshot_both.png" width="1032">
 </picture>
 
 ## Installation
@@ -21,7 +21,7 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 		<source media="(prefers-color-scheme: light)" srcset="./docs/banner-appimage-light.svg">
 		<img alt="Download as AppImage" src="./docs/banner-appimage-dark.svg">
 	</picture>
-</a> <a href="https://snapcraft.io/notionelectron">
+</a>   <a href="https://snapcraft.io/notionelectron">
 	<picture>
 		<source media="(prefers-color-scheme: dark)" srcset="./docs/banner-snap-store-dark.svg">
 		<source media="(prefers-color-scheme: light)" srcset="./docs/banner-snap-store-light.svg">
