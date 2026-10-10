@@ -1,14 +1,6 @@
 import decodeIco from 'decode-ico';
 import sharp from 'sharp';
-import { createJimp } from '@jimp/core';
-import png from '@jimp/js-png';
-import * as resize from '@jimp/plugin-resize';
 import type { AppName } from '../types';
-
-const Jimp = createJimp({
-	plugins: [resize.methods],
-	formats: [png],
-});
 
 export function downloadIconAsDataString(url: string): Promise<string | null> {
 	return fetch(url, {
@@ -36,12 +28,11 @@ export function downloadIconAsDataString(url: string): Promise<string | null> {
 						return Promise.resolve(Buffer.from(bestSizeBuffer.data));
 					}
 					if (bestSizeBuffer.type === 'bmp') {
-						const img = Jimp.fromBitmap({
-							data: Buffer.from(bestSizeBuffer.data),
-							width: bestSizeBuffer.width,
-							height: bestSizeBuffer.height,
-						});
-						return img.getBuffer('image/png');
+						return sharp(Buffer.from(bestSizeBuffer.data), {
+							raw: { width: bestSizeBuffer.width, height: bestSizeBuffer.height, channels: 4 },
+						})
+							.png()
+							.toBuffer();
 					}
 					return Promise.resolve(Buffer.from([]));
 				} catch (error) {
