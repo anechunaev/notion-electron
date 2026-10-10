@@ -17,6 +17,7 @@ finish-args:
   - --socket=pulseaudio
   - --share=network
   - --own-name=io.github.anechunaev.NotionElectron
+  - --talk-name=org.kde.StatusNotifierWatcher
   - --env=XCURSOR_PATH=/run/host/user-share/icons:/run/host/share/icons
 
 build-options:

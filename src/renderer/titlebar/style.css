@@ -11,8 +11,7 @@
 	--font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
 	--font: 500 14px/22px var(--font-family);
 
-	/* Space reserved for the window controls Electron paints over the titlebar view */
-	--window-controls-width: 96px;
+	--window-controls-width: 72px;
 }
 
 @media (prefers-color-scheme: light) {

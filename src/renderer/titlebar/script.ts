@@ -143,6 +143,13 @@ document.addEventListener('DOMContentLoaded', () => {
 		titlebarSidebar.style.flex = `0 0 ${w}`;
 	}
 
+	function syncWindowControlsWidth(): void {
+		const overlay = navigator.windowControlsOverlay;
+		if (!overlay || titlebar.classList.contains('system-title-bar') || window.innerWidth === 0) return;
+		const reserved = Math.round(window.innerWidth - overlay.getTitlebarAreaRect().width);
+		document.documentElement.style.setProperty('--window-controls-width', `${reserved}px`);
+	}
+
 	function sendReorder(): void {
 		const ids = (group: HTMLElement) =>
 			Array.from(group.querySelectorAll<HTMLElement>('.tab'))
@@ -208,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		window.notionElectronAPI.subscribeOnTabInfo(onTabInfo);
 		window.notionElectronAPI.subscribeOnGlobalOptions((options) => {
 			titlebar.classList.toggle('system-title-bar', options.systemTitleBar);
+			syncWindowControlsWidth();
 
 			if (options.sidebarContinueToTitlebar) {
 				titlebarSidebar.classList.remove('hidden');
@@ -276,6 +284,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 
 		window.notionElectronAPI.notifyReady();
+	}
+
+	if (navigator.windowControlsOverlay) {
+		navigator.windowControlsOverlay.ongeometrychange = syncWindowControlsWidth;
+		window.addEventListener('resize', syncWindowControlsWidth);
+		syncWindowControlsWidth();
 	}
 
 	Sortable.create(tabgroup, {

@@ -42,8 +42,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y flatpak flatpak-builder python3-pip appstream jq
-        pip3 install --user --break-system-packages flatpak-node-generator \
-          || pip3 install --user flatpak-node-generator
+        # PyPI's flatpak-node-generator release lags upstream (missing the Electron
+        # v44+ linux-armv7l drop fix), so install straight from the source repo.
+        FNG_PKG="flatpak-node-generator @ git+https://github.com/flatpak/flatpak-builder-tools.git#subdirectory=node"
+        pip3 install --user --break-system-packages "$FNG_PKG" \
+          || pip3 install --user "$FNG_PKG"
         echo "$HOME/.local/bin" >> "$GITHUB_PATH"
         flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
