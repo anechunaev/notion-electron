@@ -18,6 +18,18 @@ interface RendererLoadable {
 	loadFile(filePath: string, options?: { query?: Record<string, string> }): Promise<void>;
 }
 
+// The dev server can reject the first load with a transient error (e.g. a slow
+// cold-start Vite dependency-optimization pass), so retry a few times instead
+// of leaving the view permanently blank for the rest of the session.
+function loadWithRetry(target: RendererLoadable, url: string, attempt = 0): Promise<void> {
+	return target.loadURL(url).catch((error: unknown) => {
+		if (attempt >= 5) throw error;
+		return new Promise<void>((resolve) => {
+			setTimeout(resolve, 300);
+		}).then(() => loadWithRetry(target, url, attempt + 1));
+	});
+}
+
 export function loadRendererPage(
 	target: RendererLoadable,
 	page: string,
@@ -26,7 +38,7 @@ export function loadRendererPage(
 	const devUrl = process.env.ELECTRON_RENDERER_URL;
 	if (devUrl) {
 		const search = query ? `?${new URLSearchParams(query)}` : '';
-		return target.loadURL(`${devUrl}/${page}/index.html${search}`);
+		return loadWithRetry(target, `${devUrl}/${page}/index.html${search}`);
 	}
 	const file = path.join(dirname, `../renderer/${page}/index.html`);
 	return query ? target.loadFile(file, { query }) : target.loadFile(file);

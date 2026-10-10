@@ -54,6 +54,10 @@ export default defineConfig({
 		publicDir: resolve('assets'),
 		// Relative base so built asset URLs work under the file:// protocol.
 		base: './',
+		// Pin to IPv4: an unset host resolves to 'localhost', which can let the
+		// dev server listen on one address family while Electron's loadURL
+		// resolves to the other, causing an intermittent ERR_CONNECTION_RESET.
+		server: { host: '127.0.0.1' },
 		build: {
 			rollupOptions: {
 				input: {
