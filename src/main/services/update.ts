@@ -1,11 +1,11 @@
 import { ipcMain, app, autoUpdater, shell, type BrowserWindow } from 'electron';
 import electronUpdater from 'electron-updater';
-import { execSync, execFile } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { getSystemFormattedDate } from '../lib/dateFormat';
 import { isSemverBigger } from '../lib/semver';
 import { bytesSizeToHuman } from '../lib/bytes';
-import { quitApp, relaunchApp } from '../lib/quit';
+import { relaunchApp } from '../lib/quit';
 import { detectPackageFormat, getPackageFormatLabel, getUpdateMode } from '../lib/packaging';
 import type { ChangelogItem, PackageFormat, UpdateMode } from '../../shared/ipc';
 import type { AppStore } from '../types';
@@ -244,15 +244,6 @@ class UpdateService extends EventEmitter {
 
 				setImmediate(() => {
 					autoUpdater.emit('before-quit-for-update');
-					if (process.env.APPIMAGE) {
-						try {
-							execFile(process.env.APPIMAGE, process.argv);
-						} catch (relaunchError) {
-							console.error('>> Error in auto-updater. ', relaunchError);
-						}
-						quitApp();
-						return;
-					}
 					relaunchApp();
 				});
 			}
