@@ -118,6 +118,20 @@ export interface NotionTitlebarAPI {
 	subscribeOnAction(callback: (action: string, data: unknown) => void): void;
 }
 
+export interface WebAuthnPinRequest {
+	relyingPartyId: string;
+	reason: 'challenge' | 'set' | 'change';
+	error: string | null;
+	minPinLength: number;
+	attemptsRemaining: number | null;
+}
+
+export interface NotionWebAuthnPinAPI {
+	submitPin(pin: string): void;
+	cancel(): void;
+	subscribeOnPinRequest(callback: (request: WebAuthnPinRequest) => void): void;
+}
+
 export interface NotionOptionsAPI {
 	restartApp(): void;
 	closeWindow(): void;

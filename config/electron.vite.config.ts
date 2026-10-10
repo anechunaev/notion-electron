@@ -37,6 +37,7 @@ export default defineConfig({
 					tab: resolve('src/preload/tab.ts'),
 					docs: resolve('src/preload/docs.ts'),
 					options: resolve('src/preload/options.ts'),
+					webauthnPin: resolve('src/preload/webauthnPin.ts'),
 				},
 				// Sandboxed renderers (Electron's default) only support CommonJS
 				// preloads, so emit .cjs rather than the ESM .mjs default.
@@ -57,9 +58,10 @@ export default defineConfig({
 		build: {
 			rollupOptions: {
 				input: {
-					titlebar: resolve('src/renderer/titlebar/index.html'),
-					options: resolve('src/renderer/options/index.html'),
-					offline: resolve('src/renderer/offline/index.html'),
+					'titlebar': resolve('src/renderer/titlebar/index.html'),
+					'options': resolve('src/renderer/options/index.html'),
+					'offline': resolve('src/renderer/offline/index.html'),
+					'webauthn-pin': resolve('src/renderer/webauthn-pin/index.html'),
 				},
 			},
 		},

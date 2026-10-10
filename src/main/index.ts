@@ -13,6 +13,7 @@ import UpdateService from './services/update';
 import ChangelogService from './services/changelog';
 import NotificationService from './services/notifications';
 import ThemeService from './services/theme';
+import WebAuthnService from './services/webauthn';
 import { createMonitorBus } from './lib/dbus';
 import { registerMainWindowLifecycle, registerOptionsWindowLifecycle } from './lib/windowLifecycle';
 import { resolveAsset, resolvePreload, loadRendererPage } from './lib/resources';
@@ -131,6 +132,8 @@ if (!app.requestSingleInstanceLock()) {
 					// TODO: convert to function
 					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					const contextMenuService = new ContextMenuService(mainWindow, tabService, mainBus);
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					const webAuthnService = new WebAuthnService();
 
 					optionsService.setOptionsWindow(optionsWindow);
 
