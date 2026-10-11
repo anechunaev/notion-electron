@@ -127,7 +127,8 @@
 				"confinement": "strict",
 				"plugs": [
 					"default",
-					"browser-support"
+					"browser-support",
+					"home"
 				]
 			}
 		},

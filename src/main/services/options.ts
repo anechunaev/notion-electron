@@ -9,6 +9,7 @@ class OptionsService {
 	private config: OptionsConfig;
 	private store: AppStore;
 	private cliOverrides: Partial<OptionValues> = {};
+	private cliExtensions: Set<string> = new Set();
 	private envDefaults: Partial<OptionValues> = {};
 	private mainBus: EventEmitter;
 
@@ -42,6 +43,10 @@ class OptionsService {
 		if (argv.includes('--hide-on-startup')) this.cliOverrides['general-show-window-on-start'] = false;
 		if (argv.includes('--disable-spellcheck')) this.cliOverrides['general-enable-spellcheck'] = false;
 		if (argv.includes('--disable-update-functionality')) this.cliOverrides['disable-update-functionality'] = true;
+
+		argv.forEach((arg, index) => {
+			if (arg === '--extension' && argv[index + 1]) this.cliExtensions.add(argv[index + 1]!);
+		});
 
 		ipcMain.on('restart', this.restartApp.bind(this));
 
@@ -97,6 +102,10 @@ class OptionsService {
 	public getOption<K extends keyof OptionValues>(optionId: K): OptionValues[K] {
 		if (optionId in this.cliOverrides) return this.cliOverrides[optionId] as OptionValues[K];
 		return this.getPersistentOption(optionId);
+	}
+
+	public getExtensionPaths(): string[] {
+		return Array.from(this.cliExtensions);
 	}
 
 	public getPersistentOption<K extends keyof OptionValues>(optionId: K): OptionValues[K] {

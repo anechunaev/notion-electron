@@ -79,6 +79,7 @@ Run program with this flags to enable features:
 - `--hide-on-startup` — This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
 - `--disable-spellcheck` — Disables OS-defined spellcheck.
 - `--disable-update-functionality` — Disables all update functionality (automatic checks, downloads, and installs). Recommended for sandboxed package formats like nix, where updates are managed by the package manager, regardless of the in-app setting.
+- `--extension <path>` — Loads an unpacked Chrome extension (path to its directory, or directly to its `manifest.json`) into Notion Electron. Repeat the flag to load multiple extensions, e.g. `--extension /path/to/ext-one --extension /path/to/ext-two`.
 
 ### Spellcheck dictionaries
 

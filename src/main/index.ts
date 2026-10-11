@@ -14,6 +14,7 @@ import ChangelogService from './services/changelog';
 import NotificationService from './services/notifications';
 import ThemeService from './services/theme';
 import { createMonitorBus } from './lib/dbus';
+import { loadExtensions } from './lib/extensions';
 import { registerMainWindowLifecycle, registerOptionsWindowLifecycle } from './lib/windowLifecycle';
 import { resolveAsset, resolvePreload, loadRendererPage } from './lib/resources';
 import {
@@ -59,100 +60,102 @@ if (!app.requestSingleInstanceLock()) {
 			console.error('Failed to connect to D-Bus:', error);
 		})
 		.finally(() => {
-			Promise.all([themeProxyPromise, app.whenReady()]).then(([dBusColorScheme]) => {
-				Menu.setApplicationMenu(null);
-				themeService.applyThemeSource();
-				const bgColor = themeService.resolveBackgroundColor(dBusColorScheme);
+			Promise.all([themeProxyPromise, app.whenReady(), loadExtensions(optionsService.getExtensionPaths())]).then(
+				([dBusColorScheme]) => {
+					Menu.setApplicationMenu(null);
+					themeService.applyThemeSource();
+					const bgColor = themeService.resolveBackgroundColor(dBusColorScheme);
 
-				const windowPositionService = new WindowPositionService(store);
-				const savedPosition = windowPositionService.getPosition();
+					const windowPositionService = new WindowPositionService(store);
+					const savedPosition = windowPositionService.getPosition();
 
-				const useSystemTitleBar = optionsService.getOption('show-system-title-bar');
+					const useSystemTitleBar = optionsService.getOption('show-system-title-bar');
 
-				mainWindow = new BaseWindow({
-					title: DEFAULT_WINDOW_TITLE,
-					minWidth: DEFAULT_WINDOW_WIDTH,
-					minHeight: DEFAULT_WINDOW_HEIGHT,
-					width: savedPosition.bounds.width,
-					height: savedPosition.bounds.height,
-					icon: resolveAsset('icons/desktop.png'),
-					show: optionsService.getOption('general-show-window-on-start'),
-					backgroundColor: bgColor,
-					...(useSystemTitleBar
-						? { titleBarStyle: 'default' }
-						: {
-								titleBarStyle: 'hidden' as const,
-								titleBarOverlay: {
-									color: bgColor,
-									height: TITLEBAR_HEIGHT,
-								},
-							}),
-				});
-
-				windowPositionService.subscribeToPositionChange(mainWindow);
-
-				const tabService = new TabService(mainWindow, optionsService, store, mainBus);
-				registerMainWindowLifecycle(mainWindow, {
-					shouldHideToTray: () => optionsService.getOption('hide-to-tray'),
-					shouldHideOnClose: () => optionsService.getOption('hide-window-on-close'),
-					onBeforeQuit: () => dBusMonitorDisconnect(),
-				});
-
-				setTimeout(function initApp() {
-					if (!mainWindow) return;
-					const optionsWindow = new BrowserWindow({
+					mainWindow = new BaseWindow({
+						title: DEFAULT_WINDOW_TITLE,
 						minWidth: DEFAULT_WINDOW_WIDTH,
 						minHeight: DEFAULT_WINDOW_HEIGHT,
-						width: screen.getPrimaryDisplay().workAreaSize.width * 0.5,
-						height: screen.getPrimaryDisplay().workAreaSize.height * 0.5,
-						show: false,
-						parent: mainWindow,
-						webPreferences: {
-							spellcheck: false,
-							preload: resolvePreload('options.cjs'),
-						},
-						title: 'Notion Electron Options',
+						width: savedPosition.bounds.width,
+						height: savedPosition.bounds.height,
 						icon: resolveAsset('icons/desktop.png'),
+						show: optionsService.getOption('general-show-window-on-start'),
 						backgroundColor: bgColor,
-					});
-					loadRendererPage(optionsWindow, 'options');
-					registerOptionsWindowLifecycle(optionsWindow);
-
-					const notificationService = new NotificationService();
-					const changelogService = new ChangelogService(pkg.repository.owner, pkg.repository.name);
-					const updateService = new UpdateService(
-						optionsWindow,
-						notificationService,
-						changelogService,
-						store,
-						optionsService,
-					);
-					const trayService = new TrayService(mainWindow, optionsWindow);
-					// TODO: convert to function
-					// eslint-disable-next-line @typescript-eslint/no-unused-vars
-					const contextMenuService = new ContextMenuService(mainWindow, tabService, mainBus);
-
-					optionsService.setOptionsWindow(optionsWindow);
-
-					updateService.on('update-available', trayService.onUpdateAvailable);
-					updateService.on('update-not-available', trayService.onUpdateNotAvailable);
-
-					onDBusSignal('Options', () => {
-						optionsWindow.webContents.send('show-tab', 'options');
-						optionsWindow.show();
+						...(useSystemTitleBar
+							? { titleBarStyle: 'default' }
+							: {
+									titleBarStyle: 'hidden' as const,
+									titleBarOverlay: {
+										color: bgColor,
+										height: TITLEBAR_HEIGHT,
+									},
+								}),
 					});
 
-					onDBusSignal('Updates', () => {
-						optionsWindow.webContents.send('show-tab', 'updates');
-						optionsWindow.show();
+					windowPositionService.subscribeToPositionChange(mainWindow);
+
+					const tabService = new TabService(mainWindow, optionsService, store, mainBus);
+					registerMainWindowLifecycle(mainWindow, {
+						shouldHideToTray: () => optionsService.getOption('hide-to-tray'),
+						shouldHideOnClose: () => optionsService.getOption('hide-window-on-close'),
+						onBeforeQuit: () => dBusMonitorDisconnect(),
 					});
 
-					onDBusSignal('About', () => {
-						optionsWindow.webContents.send('show-tab', 'about');
-						optionsWindow.show();
-					});
-				}, 1); // Guaranteed to run on next tick despite engine optimizations
-				windowPositionService.restorePosition(mainWindow);
-			});
+					setTimeout(function initApp() {
+						if (!mainWindow) return;
+						const optionsWindow = new BrowserWindow({
+							minWidth: DEFAULT_WINDOW_WIDTH,
+							minHeight: DEFAULT_WINDOW_HEIGHT,
+							width: screen.getPrimaryDisplay().workAreaSize.width * 0.5,
+							height: screen.getPrimaryDisplay().workAreaSize.height * 0.5,
+							show: false,
+							parent: mainWindow,
+							webPreferences: {
+								spellcheck: false,
+								preload: resolvePreload('options.cjs'),
+							},
+							title: 'Notion Electron Options',
+							icon: resolveAsset('icons/desktop.png'),
+							backgroundColor: bgColor,
+						});
+						loadRendererPage(optionsWindow, 'options');
+						registerOptionsWindowLifecycle(optionsWindow);
+
+						const notificationService = new NotificationService();
+						const changelogService = new ChangelogService(pkg.repository.owner, pkg.repository.name);
+						const updateService = new UpdateService(
+							optionsWindow,
+							notificationService,
+							changelogService,
+							store,
+							optionsService,
+						);
+						const trayService = new TrayService(mainWindow, optionsWindow);
+						// TODO: convert to function
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						const contextMenuService = new ContextMenuService(mainWindow, tabService, mainBus);
+
+						optionsService.setOptionsWindow(optionsWindow);
+
+						updateService.on('update-available', trayService.onUpdateAvailable);
+						updateService.on('update-not-available', trayService.onUpdateNotAvailable);
+
+						onDBusSignal('Options', () => {
+							optionsWindow.webContents.send('show-tab', 'options');
+							optionsWindow.show();
+						});
+
+						onDBusSignal('Updates', () => {
+							optionsWindow.webContents.send('show-tab', 'updates');
+							optionsWindow.show();
+						});
+
+						onDBusSignal('About', () => {
+							optionsWindow.webContents.send('show-tab', 'about');
+							optionsWindow.show();
+						});
+					}, 1); // Guaranteed to run on next tick despite engine optimizations
+					windowPositionService.restorePosition(mainWindow);
+				},
+			);
 		});
 }
