@@ -1,3 +1,8 @@
+> [!IMPORTANT]
+> **💼 I'm currently open to new opportunities!**
+>
+> I'm looking for a role as a Full-Stack or Frontend Engineer. TypeScript, React, Vue.js, Node.js, Go, Python, PostgreSQL, Docker, Kubernetes, AWS, CI/CD/GitHub Actions. Ready to work remotely or relocate. If you're hiring or know of an interesting opportunity, feel free to reach out. I'd love to connect! [LinkedIn](https://www.linkedin.com/in/artem-nechunaev/), [artem@nechunaev.com](mailto:artem@nechunaev.com)
+
 # <sub><picture><source media="(prefers-color-scheme: dark)" srcset="assets/logo-small-light.svg"><source media="(prefers-color-scheme: light)" srcset="assets/logo-small-dark.svg"><img src="assets/logo-small.svg" width="36" alt="⚡" /></picture></sub> Notion Electron – Unofficial Notion Client for Linux
 
 Notion Electron is an unofficial desktop application for Notion, built using Electron. This project aims to provide a seamless and native-like experience for Notion users on desktop Linux (tested on Fedora 43). A fully functional client for Notion Calendar is included as a dedicated tab.
